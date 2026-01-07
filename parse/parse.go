@@ -1,4 +1,4 @@
-package yaml
+package parse
 
 import (
 	"errors"
@@ -23,6 +23,7 @@ type ParsedYaml struct {
     Bin map[string]string `yaml:"bin"`
 }
 
+// TODO: support source/extra_packages
 type rawSource struct {
     Id string `yaml:"id"`
     // TODO: add more

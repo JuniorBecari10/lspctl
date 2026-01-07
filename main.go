@@ -2,7 +2,7 @@ package main
 
 import (
     "fmt"
-    "lspctl/yaml"
+    "lspctl/parse"
 )
 
 // ---
@@ -30,12 +30,12 @@ neovim:
   lspconfig: svelte`
 
 func main() {
-    parsed, err := yaml.ParseYaml(file)
+    parsed, err := parse.ParseYaml(file)
     if err != nil {
         panic(err)
     }
 
-    install, err := yaml.ConvertInstall(parsed)
+    install, err := parse.ConvertInstall(parsed)
     if err != nil {
         panic(err)
     }
