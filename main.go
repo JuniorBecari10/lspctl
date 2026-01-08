@@ -1,10 +1,7 @@
 package main
 
-import (
-	"lspctl/repo"
-	"os"
-)
+import "lspctl/cli"
 
 func main() {
-    repo.CheckRepo(len(os.Args) > 1)
+	cli.Cli()
 }
