@@ -2,6 +2,7 @@ package repo
 
 import (
 	"lspctl/util"
+	"lspctl/print"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,7 +26,7 @@ func AppDir() string {
     // the variable doesn't exist. get from absolute path
     home, err := os.UserHomeDir()
     if err != nil {
-        util.Fail("Cannot determine home directory")
+        print.Fail("Cannot determine home directory")
     }
 
     return filepath.Join(home, ".local", "share", AppDirName)
@@ -48,46 +49,46 @@ func BinDir() string {
 // Check the registry local repository.
 // If it exists, use the provided flag to perform the pull (i.e. update the local "cache") or not.
 // If it doesn't, perform a clone anyway.
-func CheckRepo(pull bool) {
+func CheckRepo(sync bool) {
     if util.DirExists(RegistryDir()) {
-        util.Log("Local registry exists. %s", PullMsg(pull))
+        print.Logf("Local registry exists. %s", SyncMsg(sync))
 
-        if pull {
+        if sync {
             PullRepo()
-            util.Log("Pull complete.")
+            print.Log("Pull complete.")
         }
     } else {
-        util.Log("Local registry doesn't exist. Cloning...")
+        print.Log("Local registry doesn't exist. Cloning...")
         CloneRepo()
-        util.Log("Clone complete.")
+        print.Log("Clone complete.")
     }
 }
 
 func PullRepo() {
     err := exec.Command("git", "-C", RegistryDir(), "fetch").Run()
     if err != nil {
-        util.Fail("Failed to fetch repo: %s", err)
+        print.Failf("Failed to fetch repo: %s", err)
     }
 
     err = exec.Command("git", "-C", RegistryDir(), "pull", "--ff-only").Run()
     if err != nil {
-        util.Fail("Failed to pull repo: %s", err)
+        print.Failf("Failed to pull repo: %s", err)
     }
 }
 
 func CloneRepo() {
     err := exec.Command("git", "clone", MasonRegistryRepo, RegistryDir()).Run()
     if err != nil {
-        util.Fail("Failed to clone repo: %s", err)
+        print.Failf("Failed to clone repo: %s", err)
     }
 }
 
 // ---
 
-func PullMsg(pull bool) string {
-    if pull {
-        return "Pulling changes..."
+func SyncMsg(sync bool) string {
+    if sync {
+        return "Syncing changes..."
     } else {
-        return "Not pulling changes."
+        return "Not syncing changes."
     }
 }

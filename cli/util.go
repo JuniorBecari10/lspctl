@@ -7,13 +7,14 @@ import (
 )
 
 func errorUsage() {
-    usage(os.Stderr)
+    fmt.Fprintln(os.Stderr, "No command provided.")
+    rawUsage(os.Stderr)
 }
 
-func explicitUsage() {
-    usage(os.Stdout)
+func usage() {
+    rawUsage(os.Stdout)
 }
 
-func usage(w io.Writer) {
+func rawUsage(w io.Writer) {
     fmt.Fprintf(w, "lspctl usage\n\n")
 }
