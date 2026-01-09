@@ -1,8 +1,10 @@
 package repo
 
 import (
-	"lspctl/util"
+	"errors"
+	"fmt"
 	"lspctl/print"
+	"lspctl/util"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,6 +18,7 @@ const (
 )
 
 const MasonRegistryRepo = "https://github.com/mason-org/mason-registry"
+var ErrPackageNotFound = errors.New("Package not found")
 
 func AppDir() string {
     // get the folder from the variable
@@ -42,6 +45,29 @@ func PackagesDir() string {
 
 func BinDir() string {
     return filepath.Join(AppDir(), BinDirName)
+}
+
+// ---
+
+func registryYamlDir() string {
+    return filepath.Join(RegistryDir(), "packages")
+}
+
+func getPackageYamlPath(name string) string {
+    return filepath.Join(registryYamlDir(), name, "package.yaml")
+}
+
+func GetPackageYaml(name string) (string, error) {
+    data, err := os.ReadFile(getPackageYamlPath(name))
+    if err != nil {
+        if errors.Is(err, os.ErrNotExist) {
+            return "", fmt.Errorf("%w: %s", ErrPackageNotFound, name)
+        }
+        
+        return "", err
+    }
+
+    return string(data), nil
 }
 
 // ---

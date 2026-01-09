@@ -6,15 +6,18 @@ import (
 	"lspctl/util"
 )
 
-func install(packages []string, sync, yes bool) {
+func install(names []string, sync, yes bool) {
     repo.CheckRepo(sync)
 
-    // TODO: check if the package exists, fetching its yaml and if it doesn't exist, the package doesn't exist
+    pkgs, err := repo.GetPackages(names)
+    if err != nil {
+        print.Fail(err.Error())
+    }
     
     print.Log("\nPackages to be installed:")
 
-    for _, pkg := range packages {
-        print.Logf("- %s", pkg)
+    for _, pkg := range pkgs {
+        print.Logf("- %s", pkg.Name)
     }
 
     print.Log("")
