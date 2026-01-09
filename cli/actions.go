@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"lspctl/packages"
 	"lspctl/print"
 	"lspctl/repo"
 	"lspctl/util"
@@ -27,5 +28,7 @@ func install(names []string, sync, yes bool) {
     }
 
     print.Log("Installing!")
-    // TODO: install
+    if err = packages.InstallPackages(pkgs); err != nil {
+        print.Fail(err.Error())
+    }
 }
