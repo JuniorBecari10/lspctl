@@ -26,6 +26,7 @@ type ParsedYaml struct {
 // TODO: support source/extra_packages
 type rawSource struct {
     Id string `yaml:"id"`
+    ExtraPkgs []string `yaml:"extra_packages"` // do not make this nil.
     // TODO: add more
 }
 
@@ -56,6 +57,7 @@ type Source struct {
     PkgSource PackageSource
     Name string
     Version string
+    ExtraPkgs []string // no more info because it's assumed to use the same source and no pinned version
 }
 
 // ---
@@ -63,6 +65,10 @@ type Source struct {
 func formatParsed(p *ParsedYaml) {
     p.Desc = strings.ReplaceAll(p.Desc, "\n", " ") // make the entire description a single line
     p.Desc = strings.TrimSpace(p.Desc) // prevent leading and trailing spaces
+
+    if p.Source.ExtraPkgs == nil {
+        p.Source.ExtraPkgs = []string{}
+    }
 }
 
 func parsePurl(id string) (parsedPurl, error) {
@@ -106,7 +112,7 @@ func normalizeSource(raw string) (PackageSource, error) {
     }
 }
 
-func parseSource(purl parsedPurl) (Source, error) {
+func parseSource(purl parsedPurl, extraPkgs []string) (Source, error) {
     normal, err := normalizeSource(purl.RawSource)
     if err != nil {
         return Source{}, err
@@ -116,6 +122,7 @@ func parseSource(purl parsedPurl) (Source, error) {
         PkgSource: normal,
         Name: purl.Name,
         Version: purl.Version,
+        ExtraPkgs: extraPkgs,
     }, nil
 }
 
@@ -127,7 +134,7 @@ func ParseYaml(file string) (ParsedYaml, error) {
 	    return ParsedYaml{}, err
 	}
 
-    formatParsed(&parsed)   
+    formatParsed(&parsed)
     return parsed, nil
 }
 
@@ -146,7 +153,7 @@ func ConvertInstall(parsed ParsedYaml) (InstallYaml, error) {
         return InstallYaml{}, err
     }
     
-    source, err := parseSource(purl)
+    source, err := parseSource(purl, parsed.Source.ExtraPkgs)
     if err != nil {
         return InstallYaml{}, err
     }
