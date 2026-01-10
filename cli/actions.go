@@ -15,10 +15,14 @@ func install(names []string, sync, yes bool) {
         print.Fail(err.Error())
     }
     
-    print.Log("\nPackages to be installed:")
+    print.Logf("\nPackages to be installed (%d):", len(pkgs))
 
     for _, pkg := range pkgs {
-        print.Logf("- %s", pkg.Name)
+        print.Logf("- %s (%s)", pkg.Name, pkg.Source.PkgSource)
+
+        for _, extra := range pkg.Source.ExtraPkgs {
+            print.Logf("    - %s", extra)
+        }
     }
 
     print.Log("")
@@ -27,7 +31,6 @@ func install(names []string, sync, yes bool) {
         return
     }
 
-    print.Log("Installing!")
     if err = packages.InstallPackages(pkgs); err != nil {
         print.Fail(err.Error())
     }

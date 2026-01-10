@@ -3,8 +3,9 @@ package parse
 import (
 	"errors"
 	"fmt"
-	"iter"
+	"lspctl/print"
 	"maps"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -51,16 +52,6 @@ func parsePurl(id string) (parsedPurl, error) {
     }, nil
 }
 
-func normalizeSource(raw string) (PackageSource, error) {
-    switch raw {
-        case "golang": return SourceGo, nil
-        case "npm": return SourceNpm, nil
-        case "github": return SourceGitHub, nil
-        case "generic": return SourceGeneric, nil
-        default: return SourceUnknown, fmt.Errorf("Unsupported source: '%s'", raw)
-    }
-}
-
 func parseSource(purl parsedPurl, extraPkgs []string) (Source, error) {
     normal, err := normalizeSource(purl.RawSource)
     if err != nil {
@@ -88,15 +79,21 @@ func ParseYaml(file string) (ParsedYaml, error) {
 }
 
 func ConvertInstall(parsed ParsedYaml) (InstallYaml, error) {
-    keys := maps.Keys(parsed.Bin)
-    next, stop := iter.Pull(keys)
-    defer stop()
-
-    binName, ok := next()
-    if !ok {
-        return InstallYaml{}, errors.New("Empty 'bin'")
+    if len(parsed.Bin) == 0 {
+        return InstallYaml{}, errors.New("empty 'bin' field")
     }
 
+    names := slices.Collect(maps.Keys(parsed.Bin))
+    slices.Sort(names)
+
+    bins := make([]Bin, 0, len(names))
+    for _, name := range names {
+        bins = append(bins, Bin{
+            Name:   name,
+            Target: parsed.Bin[name],
+        })
+    }
+      
     purl, err := parsePurl(parsed.Source.Id)
     if err != nil {
         return InstallYaml{}, err
@@ -110,6 +107,33 @@ func ConvertInstall(parsed ParsedYaml) (InstallYaml, error) {
     return InstallYaml{
         Name: parsed.Name,
         Source: source,
-        BinName: binName,
+        Bins: bins,
     }, nil
+}
+
+// ---
+
+func normalizeSource(raw string) (PackageSource, error) {
+    switch raw {
+        case "golang": return SourceGo, nil
+        case "npm": return SourceNpm, nil
+        case "github": return SourceGitHub, nil
+        case "generic": return SourceGeneric, nil
+        case "pypi": return SourcePypi, nil
+        default: return SourceUnknown, fmt.Errorf("Unsupported source: '%s'", raw)
+    }
+}
+
+func (src PackageSource) String() string {
+    switch src {
+        case SourceGo: return "golang"
+        case SourceNpm: return "npm"
+        case SourceGitHub: return "github"
+        case SourceGeneric: return "generic"
+        case SourcePypi: return "pypi"
+
+        default:
+            print.Failf("Unknown source: '%#v'", src)
+            return "unknown" // shouldn't reach here.
+    }
 }

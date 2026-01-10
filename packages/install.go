@@ -26,7 +26,8 @@ func install(pkg parse.InstallYaml) error {
             installFn = installGitHub
         case parse.SourceGeneric:
             installFn = installGeneric
-
+        case parse.SourcePypi:
+            installFn = installPypi
         default:
             print.Fail("Unknown package source.")
     }
@@ -37,16 +38,25 @@ func install(pkg parse.InstallYaml) error {
 // ---
 
 func installNpm(pkg parse.InstallYaml) error {
-    
+    print.Fail("npm not supported yet")
+    return nil
 }
 
 func installGo(pkg parse.InstallYaml) error {
-    
+    print.Fail("go not supported yet")
+    return nil
 }
 func installGitHub(pkg parse.InstallYaml) error {
-    
+    print.Fail("github not supported yet")
+    return nil
 }
 
 func installGeneric(pkg parse.InstallYaml) error {
-    
+    print.Fail("generic not supported yet")
+    return nil
+}
+
+func installPypi(pkg parse.InstallYaml) error {
+    print.Fail("pypi not supported yet")
+    return nil
 }

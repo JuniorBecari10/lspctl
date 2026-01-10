@@ -25,7 +25,12 @@ type rawSource struct {
 type InstallYaml struct {
     Name string
     Source Source
-    BinName string
+    Bins []Bin
+}
+
+type Bin struct {
+    Name string
+    Target string
 }
 
 type parsedPurl struct {
@@ -40,6 +45,7 @@ const (
     SourceNpm
     SourceGitHub
     SourceGeneric
+    SourcePypi
     SourceUnknown
 )
 
