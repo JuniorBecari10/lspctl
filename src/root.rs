@@ -2,10 +2,10 @@ use std::path::PathBuf;
 
 use crate::consts;
 
-pub fn root_dir() -> PathBuf {
+fn root_dir() -> PathBuf {
     dirs::data_local_dir()
-        .expect("Could not determine home directory")
-        .join("lspctl")
+        .expect("Could not determine home directory.")
+        .join(consts::APP_NAME)
 }
 
 pub fn registry_dir() -> PathBuf {
