@@ -1,21 +1,18 @@
-use std::path::PathBuf;
+use std::fs::create_dir_all;
 
-use crate::consts;
+use crate::{folders, registry};
 
-fn root_dir() -> PathBuf {
-    dirs::data_local_dir()
-        .expect("Could not determine home directory.")
-        .join(consts::APP_NAME)
+pub fn setup_root() -> anyhow::Result<()> {
+    ensure_folders()?;
+    registry::download_registry()?;
+
+    Ok(())
 }
 
-pub fn registry_dir() -> PathBuf {
-    root_dir().join(consts::REGISTRY_DIR)
-}
+fn ensure_folders() -> anyhow::Result<()> {
+    create_dir_all(folders::bin_dir())?;
+    create_dir_all(folders::registry_dir())?;
+    create_dir_all(folders::packages_dir())?;
 
-pub fn packages_dir() -> PathBuf {
-    root_dir().join(consts::PACKAGES_DIR)
-}
-
-pub fn bin_dir() -> PathBuf {
-    root_dir().join(consts::BIN_DIR)
+    Ok(())
 }

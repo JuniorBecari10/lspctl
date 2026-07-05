@@ -1,12 +1,11 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Release {
-    pub tag_name: String,
     pub assets: Vec<Asset>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Asset {
     pub name: String,
     pub browser_download_url: String,

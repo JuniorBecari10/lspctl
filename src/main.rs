@@ -1,5 +1,6 @@
 mod cli;
 mod consts;
+mod folders;
 mod operations;
 mod registry;
 mod root;
