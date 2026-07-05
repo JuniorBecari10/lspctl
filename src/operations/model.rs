@@ -19,11 +19,7 @@ pub struct RemoveArgs {
     /// List of packages to remove
     pub pkgs: Vec<String>,
 
-    /// Install the packages even if already installed
-    #[arg(short, long)]
-    pub force: bool,
-
-    /// Install without confirmation prompts
+    /// Remove without confirmation prompts
     #[arg(short, long)]
     pub yes: bool,
 }
