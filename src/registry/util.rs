@@ -4,12 +4,13 @@ use std::{
     path::PathBuf,
 };
 
+use const_format::concatcp;
 use zip::ZipArchive;
 
 use crate::{consts, folders};
 
 pub const REG_NAME: &str = "registry.json";
-pub const REG_ZIP_NAME: &str = const_format::concatcp!(REG_NAME, ".zip");
+pub const REG_ZIP_NAME: &str = concatcp!(REG_NAME, ".zip");
 
 pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
     let data = perform_request(url)?;
