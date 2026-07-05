@@ -1,4 +1,4 @@
-use crate::consts;
+use crate::{consts, operations};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -14,11 +14,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    Install { name: String },
+    Install { pkgs: Vec<String> },
 }
 
 pub fn cli() {
     match Cli::parse().command {
-        Command::Install { name } => println!("{name}"),
+        Command::Install { pkgs } => operations::install(pkgs),
     }
 }
