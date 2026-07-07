@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use crate::consts;
 
+const STATE_FILE_NAME: &str = "state.json";
+
 fn root_dir() -> PathBuf {
     dirs::data_local_dir()
         .expect("Could not determine home directory.")
@@ -18,4 +20,8 @@ pub fn packages_dir() -> PathBuf {
 
 pub fn bin_dir() -> PathBuf {
     root_dir().join(consts::BIN_DIR)
+}
+
+pub fn state_file() -> PathBuf {
+    root_dir().join(STATE_FILE_NAME)
 }

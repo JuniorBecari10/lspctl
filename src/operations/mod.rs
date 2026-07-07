@@ -1,13 +1,13 @@
 pub mod model;
 
 pub fn install(args: model::InstallArgs) {
-    for pkg in args.pkgs {
-        println!("{pkg}");
-    }
+    dbg!(args);
 }
 
 pub fn remove(args: model::RemoveArgs) {
-    for pkg in args.pkgs {
-        println!("{pkg}");
-    }
+    dbg!(args);
+}
+
+pub fn list(args: model::ListArgs) {
+    dbg!(args);
 }

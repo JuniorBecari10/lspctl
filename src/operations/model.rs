@@ -1,6 +1,6 @@
 use clap::Args;
 
-#[derive(Args)]
+#[derive(Args, Debug)]
 pub struct InstallArgs {
     /// List of packages to install
     pub pkgs: Vec<String>,
@@ -14,7 +14,7 @@ pub struct InstallArgs {
     pub yes: bool,
 }
 
-#[derive(Args)]
+#[derive(Args, Debug)]
 pub struct RemoveArgs {
     /// List of packages to remove
     pub pkgs: Vec<String>,
@@ -22,4 +22,11 @@ pub struct RemoveArgs {
     /// Remove without confirmation prompts
     #[arg(short, long)]
     pub yes: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct ListArgs {
+    /// List installed packages instead
+    #[arg(short, long)]
+    pub installed: bool,
 }

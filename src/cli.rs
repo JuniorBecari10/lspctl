@@ -21,6 +21,10 @@ enum Command {
     /// Remove packages
     #[command(visible_alias = "r")]
     Remove(operations::model::RemoveArgs),
+
+    /// List all packages or installed ones
+    #[command(visible_alias = "l")]
+    List(operations::model::ListArgs),
 }
 
 pub fn cli() {
@@ -30,5 +34,6 @@ pub fn cli() {
     match Cli::parse().command {
         Command::Install(args) => operations::install(args),
         Command::Remove(args) => operations::remove(args),
+        Command::List(args) => operations::list(args),
     }
 }
