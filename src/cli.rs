@@ -1,4 +1,4 @@
-use crate::{consts, operations, root};
+use crate::{consts, operations};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -28,9 +28,6 @@ enum Command {
 }
 
 pub fn cli() {
-    // TODO: run this only before commands that require modification
-    root::setup_root().expect("Cannot create root folder structure");
-
     match Cli::parse().command {
         Command::Install(args) => operations::install(args),
         Command::Remove(args) => operations::remove(args),

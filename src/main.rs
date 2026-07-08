@@ -6,6 +6,6 @@ mod registry;
 mod root;
 
 fn main() {
-    env_logger::init();
+    colog::init();
     cli::cli();
 }
