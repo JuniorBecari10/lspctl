@@ -4,7 +4,8 @@ use anyhow::anyhow;
 
 use crate::folders;
 
-mod model;
+pub mod model;
+mod parser;
 mod util;
 
 // Export for other packages to use as well

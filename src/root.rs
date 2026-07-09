@@ -11,7 +11,8 @@ pub fn setup_root() -> anyhow::Result<()> {
             Ok(())
         }
 
-        _ => registry::download_registry(), // covers Ok(false) and Err(_)
+        // covers Ok(false) and Err(_)
+        _ => registry::download_registry(),
     }
 }
 

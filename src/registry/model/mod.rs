@@ -1,5 +1,8 @@
-mod registry;
+mod parsed;
+mod raw;
 mod release;
 
-pub use registry::*;
+// Reexport declarations as part of model
+pub use parsed::*;
+pub use raw::*;
 pub use release::*;
