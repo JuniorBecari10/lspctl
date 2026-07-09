@@ -3,22 +3,6 @@ use std::collections::HashMap;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
-pub struct Release {
-    pub assets: Vec<ReleaseAsset>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ReleaseAsset {
-    pub name: String,
-
-    #[serde(rename = "browser_download_url")]
-    pub url: String,
-}
-
-// ---
-// TODO: add these in another file
-
-#[derive(Deserialize, Debug)]
 pub struct RawRegistry(Vec<RawEntry>);
 
 #[derive(Deserialize, Debug)]
@@ -38,8 +22,11 @@ struct RawEntry {
 struct RawSource {
     id: String,
     extra_packages: Option<Vec<String>>,
+
+    #[serde(rename = "asset")]
+    assets: Option<OneOrMany<Asset>>,
     // download: Option<Vec<String>>, // not supported for now
-    build: Option<Options<Build>>,
+    build: Option<OneOrMany<Build>>,
     supported_platforms: Option<Vec<String>>,
     bin: Option<String>, // for js-debug-adapter (edge case)
 }
@@ -49,23 +36,30 @@ struct RawSource {
 #[derive(Deserialize, Debug)]
 struct Build {
     run: String,
-    target: Option<Options<String>>,
-    bin: Option<MapOptions>,
+    target: Option<OneOrMany<String>>,
+    bin: Option<OneOrMap>,
     env: Option<HashMap<String, String>>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Asset {
+    target: Option<OneOrMany<String>>,
+    file: OneOrMany<String>,
+    bin: Option<OneOrMap>,
 }
 
 // ---
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-enum Options<T> {
-    Array(Vec<T>),
-    Single(T),
+enum OneOrMany<T> {
+    One(T),
+    Many(Vec<T>),
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-enum MapOptions {
+enum OneOrMap {
+    One(String),
     Map(HashMap<String, String>),
-    Single(String),
 }

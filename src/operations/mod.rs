@@ -4,7 +4,6 @@ pub mod model;
 
 // TODO: load registry here and pass to the functions
 fn prelude() {
-    // TODO: skip this if the files (registry) already exists
     root::setup_root().expect("Cannot create root folder structure");
 }
 

@@ -4,9 +4,15 @@ use crate::{folders, registry};
 
 pub fn setup_root() -> anyhow::Result<()> {
     ensure_root_items()?;
-    registry::download_registry()?;
 
-    Ok(())
+    match folders::registry_file().try_exists() {
+        Ok(true) => {
+            log::info!("Registry already exists.");
+            Ok(())
+        }
+
+        _ => registry::download_registry(), // covers Ok(false) and Err(_)
+    }
 }
 
 fn ensure_root_items() -> anyhow::Result<()> {
