@@ -25,10 +25,24 @@ struct RawSource {
 
     #[serde(rename = "asset")]
     assets: Option<OneOrMany<Asset>>,
-    // download: Option<Vec<String>>, // not supported for now
+    download: Option<Downloads>,
     build: Option<OneOrMany<Build>>,
     supported_platforms: Option<Vec<String>>,
     bin: Option<String>, // for js-debug-adapter (edge case)
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(untagged)]
+enum Downloads {
+    Simple { file: String },
+    Detailed(OneOrMany<Download>),
+}
+
+#[derive(Deserialize, Debug)]
+struct Download {
+    target: Option<OneOrMany<String>>,
+    files: HashMap<String, String>,
+    bin: Option<String>, // this may change with a Mason update
 }
 
 // this has 'bool staged' and
