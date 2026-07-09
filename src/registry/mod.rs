@@ -26,7 +26,7 @@ fn get_latest_release() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn find_registry_asset(release: &model::Release) -> anyhow::Result<&model::Asset> {
+fn find_registry_asset(release: &model::Release) -> anyhow::Result<&model::ReleaseAsset> {
     release
         .assets
         .iter()
@@ -46,7 +46,8 @@ pub fn download_registry() -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn read_registry() -> anyhow::Result<model::Registry> {
+// TODO: parse this before returning and make RawRegistry private
+pub fn read_registry() -> anyhow::Result<model::RawRegistry> {
     let mut contents = Vec::new();
 
     File::open(folders::registry_file())?.read_to_end(&mut contents)?;
