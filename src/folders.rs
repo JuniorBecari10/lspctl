@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::consts;
+use crate::{consts, registry};
 
 const STATE_FILE_NAME: &str = "state.json";
 
@@ -22,6 +22,12 @@ pub fn bin_dir() -> PathBuf {
     root_dir().join(consts::BIN_DIR)
 }
 
+// ---
+
 pub fn state_file() -> PathBuf {
     root_dir().join(STATE_FILE_NAME)
+}
+
+pub fn registry_file() -> PathBuf {
+    registry_dir().join(registry::REG_NAME)
 }

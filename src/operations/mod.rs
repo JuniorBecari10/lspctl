@@ -1,4 +1,4 @@
-use crate::root;
+use crate::{registry, root};
 
 pub mod model;
 
@@ -9,6 +9,9 @@ fn prelude() {
 pub fn install(args: model::InstallArgs) {
     prelude();
     dbg!(args);
+
+    let registry = registry::read_registry().expect("Cannot read registry");
+    dbg!(registry);
 }
 
 pub fn remove(args: model::RemoveArgs) {

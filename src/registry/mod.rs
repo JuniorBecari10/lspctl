@@ -1,7 +1,14 @@
+use std::{fs::File, io::Read};
+
 use anyhow::anyhow;
+
+use crate::folders;
 
 mod model;
 mod util;
+
+// Export for other packages to use as well
+pub use util::REG_NAME;
 
 const MASON_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases/latest";
 
@@ -10,7 +17,7 @@ fn get_latest_release() -> anyhow::Result<()> {
     let asset = find_registry_asset(&data)?;
 
     let mut temp_zip = tempfile::tempfile()?;
-    util::download_file(&asset.browser_download_url, &mut temp_zip)?;
+    util::download_file(&asset.url, &mut temp_zip)?;
 
     // maybe use this to pass the json around to not read it again
     let extracted = util::extract_to_memory(&temp_zip)?;
@@ -37,4 +44,11 @@ pub fn download_registry() -> anyhow::Result<()> {
     log::info!("Fetching complete.");
 
     Ok(())
+}
+
+pub fn read_registry() -> anyhow::Result<model::Registry> {
+    let mut contents = Vec::new();
+
+    File::open(folders::registry_file())?.read_to_end(&mut contents)?;
+    Ok(serde_json::from_slice(&contents)?)
 }
