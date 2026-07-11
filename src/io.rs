@@ -7,10 +7,9 @@ use anyhow::anyhow;
 use tempfile::NamedTempFile;
 
 fn new_temp_in(p: &Path) -> anyhow::Result<NamedTempFile> {
-    Ok(NamedTempFile::new_in(
-        p.parent()
-            .ok_or_else(|| anyhow!("Path does not have a parent"))?,
-    )?)
+    Ok(NamedTempFile::new_in(p.parent().ok_or_else(|| {
+        anyhow!("Path {:?} does not have a parent directory", p)
+    })?)?)
 }
 
 fn persist(temp: NamedTempFile, p: &Path) -> anyhow::Result<()> {

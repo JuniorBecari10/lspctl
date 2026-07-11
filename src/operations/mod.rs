@@ -2,9 +2,9 @@ use crate::{registry, root};
 
 pub mod model;
 
-// TODO: parse the registry
+// TODO: when we add file locks, return it here as well in a tuple
 /// Setups the root folder structure, reads the registry, parses it and hands over the result to the caller.
-fn prelude() -> registry::model::RawRegistry {
+fn prelude() -> registry::model::Registry {
     root::setup_root().expect("Cannot create root folder structure");
     registry::read_registry().expect("Cannot read registry")
 }

@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use anyhow::anyhow;
 
-use crate::folders;
+use crate::{folders, registry::model::RawRegistry};
 
 pub mod model;
 mod parser;
@@ -47,10 +47,10 @@ pub fn download_registry() -> anyhow::Result<()> {
     Ok(())
 }
 
-// TODO: parse this before returning and make RawRegistry private
-pub fn read_registry() -> anyhow::Result<model::RawRegistry> {
+pub fn read_registry() -> anyhow::Result<model::Registry> {
     let mut contents = Vec::new();
-
     File::open(folders::registry_file())?.read_to_end(&mut contents)?;
-    Ok(serde_json::from_slice(&contents)?)
+
+    let raw: RawRegistry = serde_json::from_slice(&contents)?;
+    Ok(parser::parse_registry(raw))
 }
