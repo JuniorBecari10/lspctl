@@ -23,26 +23,26 @@ struct RawEntry {
 // TODO: add Asset
 #[derive(Deserialize, Debug, Clone)]
 struct RawSource {
-    id: String,
+    id: String, // (purl)
     extra_packages: Option<Vec<String>>,
 
     #[serde(rename = "asset")]
-    assets: Option<OneOrMany<Asset>>,
-    download: Option<Downloads>,
-    build: Option<OneOrMany<Build>>,
+    assets: Option<OneOrMany<RawAsset>>,
+    download: Option<RawDownloads>,
+    build: Option<OneOrMany<RawBuild>>,
     supported_platforms: Option<Vec<String>>,
     bin: Option<String>, // for js-debug-adapter (edge case)
 }
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
-enum Downloads {
+enum RawDownloads {
     Simple { file: String },
-    Detailed(OneOrMany<Download>),
+    Detailed(OneOrMany<RawDownload>),
 }
 
 #[derive(Deserialize, Debug, Clone)]
-struct Download {
+struct RawDownload {
     target: Option<OneOrMany<String>>,
     files: HashMap<String, String>,
     bin: Option<String>, // this may change with a Mason update
@@ -51,7 +51,7 @@ struct Download {
 // this has 'bool staged' and
 // 'erlang_ls' and 'els_dap' are their own fields in these packages
 #[derive(Deserialize, Debug, Clone)]
-struct Build {
+struct RawBuild {
     run: String,
     target: Option<OneOrMany<String>>,
     bin: Option<OneOrMap>,
@@ -59,7 +59,7 @@ struct Build {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-struct Asset {
+struct RawAsset {
     target: Option<OneOrMany<String>>,
     file: OneOrMany<String>,
     bin: Option<OneOrMap>,
@@ -69,19 +69,9 @@ struct Asset {
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
-enum OneOrMany<T: Clone> {
+pub(super) enum OneOrMany<T: Clone> {
     One(T),
     Many(Vec<T>),
-}
-
-// TODO: optimize so that this is moved rather than cloned
-impl<T: Clone> OneOrMany<T> {
-    pub fn to_vec(&self) -> Vec<T> {
-        match self {
-            OneOrMany::One(t) => vec![t.clone()],
-            OneOrMany::Many(t) => t.clone(),
-        }
-    }
 }
 
 #[derive(Deserialize, Debug, Clone)]

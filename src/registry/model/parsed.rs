@@ -1,5 +1,12 @@
-use std::collections::HashMap;
+// TODO: remove this as soon as they are actually used
+#![allow(unused)]
 
+use std::{collections::HashMap, fs::OpenOptions};
+
+use packageurl::PackageUrl;
+
+// TODO: cache this once parsed (JSON serialized structs) and invalidate it when updating.
+// if the cache file is missing, parse again.
 // OneOrMany becomes a vec of one element if the variant is One
 
 #[derive(Debug)]
@@ -19,8 +26,10 @@ pub struct Entry {
 
 #[derive(Debug)]
 pub struct Source {
-    id: String, // parse purl
+    purl: Purl,
     variant: SourceVariant,
+    supported_platforms: Option<Vec<Platform>>,
+    bin: Option<String>, // for js-debug-adapter (edge case)
 }
 
 #[derive(Debug)]
@@ -30,16 +39,63 @@ pub enum SourceVariant {
         extra_packages: Option<Vec<String>>,
     },
 
-    Asset {
-        assets: Vec<Asset>,
-    },
-
-    Download {},
+    Asset(Vec<Asset>),
+    Download(Option<Downloads>),
 
     Build {},
 }
 
+// implements TryFrom<PackageUrl>
+#[derive(Debug)]
+pub struct Purl {
+    pub kind: InstallKind,
+    pub namespace: Option<String>,
+    pub name: String,
+    pub version: Option<String>,
+    pub qualifiers: HashMap<String, String>,
+    pub subpath: Option<String>,
+}
+
+#[derive(Debug)]
+pub enum InstallKind {
+    GitHub,
+    Npm,
+    Pypi,
+    Golang,
+    Cargo,
+    Gem,
+    Generic,
+    OpenVsx,
+    Composer,
+    LuaRocks,
+    Opam,
+    Nuget,
+}
+
+#[derive(Debug)]
+pub enum Platform {
+    Unix,
+    Darwin,
+    Linux,
+    Windows,
+}
+
 #[derive(Debug)]
 pub struct Asset {
-    targets: Vec<String>,
+    targets: Option<Vec<String>>,
+    files: Vec<String>,
+    // bin
+}
+
+#[derive(Debug)]
+pub enum Downloads {
+    Simple { file: String },
+    Detailed(Vec<Download>),
+}
+
+#[derive(Debug)]
+pub struct Download {
+    targets: Option<Vec<String>>,
+    files: Vec<String>,
+    bin: Option<String>,
 }
