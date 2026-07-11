@@ -9,6 +9,8 @@ use packageurl::PackageUrl;
 // if the cache file is missing, parse again.
 // OneOrMany becomes a vec of one element if the variant is One
 
+// TODO: resolve strings like {{ version | strip_prefix "v" }}
+
 #[derive(Debug)]
 pub struct Registry(Vec<Entry>);
 
@@ -41,8 +43,7 @@ pub enum SourceVariant {
 
     Asset(Vec<Asset>),
     Download(Option<Downloads>),
-
-    Build {},
+    Build(Vec<Build>),
 }
 
 // implements TryFrom<PackageUrl>
@@ -98,4 +99,12 @@ pub struct Download {
     targets: Option<Vec<String>>,
     files: Vec<String>,
     bin: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct Build {
+    command: String,
+    target: Option<Vec<String>>,
+    // bin
+    env: Option<HashMap<String, String>>,
 }
