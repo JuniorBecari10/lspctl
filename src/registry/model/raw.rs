@@ -26,10 +26,12 @@ struct RawSource {
     id: String, // (purl)
     extra_packages: Option<Vec<String>>,
 
+    // one and only one of these 3 will be present at once
     #[serde(rename = "asset")]
-    assets: Option<OneOrMany<RawAsset>>,
-    download: Option<RawDownloads>,
+    assets: Option<OneOrMany<RawAsset>>, // github
+    download: Option<RawDownloads>, // generic / openvsx
     build: Option<OneOrMany<RawBuild>>,
+
     supported_platforms: Option<Vec<String>>,
     bin: Option<String>, // for js-debug-adapter (edge case)
 }
@@ -63,6 +65,9 @@ struct RawAsset {
     target: Option<OneOrMany<String>>,
     file: OneOrMany<String>,
     bin: Option<OneOrMap>,
+
+    #[serde(flatten)]
+    extra: HashMap<String, String>,
 }
 
 // ---

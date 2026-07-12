@@ -37,7 +37,8 @@ pub struct Source {
 #[derive(Debug)]
 pub enum SourceVariant {
     PackageManager {
-        // package_manager
+        // value from purl.kind but restrained to package managers
+        manager: PackageManager,
         extra_packages: Option<Vec<String>>,
     },
 
@@ -59,14 +60,27 @@ pub struct Purl {
 
 #[derive(Debug)]
 pub enum InstallKind {
-    GitHub,
     Npm,
     Pypi,
     Golang,
     Cargo,
     Gem,
+    Composer,
+    LuaRocks,
+    Opam,
+    Nuget,
+    GitHub,
     Generic,
     OpenVsx,
+}
+
+#[derive(Debug)]
+pub enum PackageManager {
+    Npm,
+    Pypi,
+    Golang,
+    Cargo,
+    Gem,
     Composer,
     LuaRocks,
     Opam,
