@@ -3,15 +3,19 @@ use std::{
     path::Path,
 };
 
-use anyhow::anyhow;
 use tempfile::NamedTempFile;
 
-fn new_temp_in(p: &Path) -> anyhow::Result<NamedTempFile> {
-    Ok(NamedTempFile::new_in(p.parent().ok_or_else(|| {
-        anyhow!("Path {:?} does not have a parent directory", p)
-    })?)?)
+use crate::folders;
+
+/// creates a new temporary file in lspctl/tmp.
+/// requires tmp to exist. error if not.
+/// it doesn't create it because it is expected to exist at this point.
+fn new_temp() -> anyhow::Result<NamedTempFile> {
+    Ok(NamedTempFile::new_in(folders::tmp_dir())?)
 }
 
+// this function must be atomic
+// TODO: make persist_replace since some features need it
 fn persist(temp: NamedTempFile, p: &Path) -> anyhow::Result<()> {
     match temp.persist_noclobber(p) {
         Ok(_) => Ok(()),
@@ -21,13 +25,13 @@ fn persist(temp: NamedTempFile, p: &Path) -> anyhow::Result<()> {
 }
 
 pub fn new_file_atomic(p: &Path) -> anyhow::Result<()> {
-    let temp = new_temp_in(p)?;
+    let temp = new_temp()?;
     persist(temp, p)?;
     Ok(())
 }
 
 pub fn new_file_atomic_write(p: &Path, contents: &[u8]) -> anyhow::Result<()> {
-    let mut temp = new_temp_in(p)?;
+    let mut temp = new_temp()?;
     temp.write_all(contents)?;
     persist(temp, p)?;
     Ok(())

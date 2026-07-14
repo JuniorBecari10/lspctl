@@ -22,6 +22,10 @@ pub fn bin_dir() -> PathBuf {
     root_dir().join(consts::BIN_DIR)
 }
 
+pub fn tmp_dir() -> PathBuf {
+    root_dir().join(consts::TMP_DIR)
+}
+
 // ---
 
 pub fn state_file() -> PathBuf {
