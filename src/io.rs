@@ -26,13 +26,11 @@ fn persist(temp: NamedTempFile, p: &Path) -> anyhow::Result<()> {
 
 pub fn new_file_atomic(p: &Path) -> anyhow::Result<()> {
     let temp = new_temp()?;
-    persist(temp, p)?;
-    Ok(())
+    persist(temp, p)
 }
 
 pub fn new_file_atomic_write(p: &Path, contents: &[u8]) -> anyhow::Result<()> {
     let mut temp = new_temp()?;
     temp.write_all(contents)?;
-    persist(temp, p)?;
-    Ok(())
+    persist(temp, p)
 }
