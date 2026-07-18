@@ -3,12 +3,11 @@ use packageurl::PackageUrl;
 
 use crate::registry::model::{InstallKind, OneOrMany, Purl};
 
-// TODO: optimize so that this is moved rather than cloned
-impl<T: Clone> OneOrMany<T> {
-    pub fn to_vec(&self) -> Vec<T> {
-        match self {
-            OneOrMany::One(t) => vec![t.clone()],
-            OneOrMany::Many(t) => t.clone(),
+impl<T> From<OneOrMany<T>> for Vec<T> {
+    fn from(value: OneOrMany<T>) -> Self {
+        match value {
+            OneOrMany::One(t) => vec![t],
+            OneOrMany::Many(t) => t,
         }
     }
 }

@@ -7,10 +7,12 @@ use std::{
 use const_format::concatcp;
 use zip::ZipArchive;
 
-use crate::{consts, folders, io};
+use crate::{consts, io, paths};
 
-pub const REG_NAME: &str = "registry.json";
-pub const REG_ZIP_NAME: &str = concatcp!(REG_NAME, ".zip");
+consts::consts!(
+    REGISTRY_FILE = "registry.json",
+    REGISTRY_ZIP = concatcp!(REGISTRY_FILE, ".zip"),
+);
 
 pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
     let data = perform_request(url)?;
@@ -21,7 +23,7 @@ pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
 
 pub fn extract_to_memory(zip: &File) -> anyhow::Result<Vec<u8>> {
     let mut archive = ZipArchive::new(zip)?;
-    let mut entry = archive.by_name(REG_NAME)?;
+    let mut entry = archive.by_name(REGISTRY_FILE)?;
     let mut contents = Vec::new();
 
     entry.read_to_end(&mut contents)?;
@@ -40,5 +42,5 @@ pub fn perform_request(url: &str) -> anyhow::Result<Vec<u8>> {
 }
 
 pub fn get_registry_path() -> PathBuf {
-    folders::registry_dir().join(REG_NAME)
+    paths::registry_dir().join(REGISTRY_FILE)
 }

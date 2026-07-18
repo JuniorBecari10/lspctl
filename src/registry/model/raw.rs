@@ -23,7 +23,7 @@ struct RawEntry {
     deprecation: Option<Deprecation>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug)]
 struct RawSource {
     id: String, // (purl)
 
@@ -33,7 +33,7 @@ struct RawSource {
     version_overrides: Option<Vec<RawVersionOverride>>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug)]
 struct RawSourceVariant {
     // one and only one of these will be present at once
     #[serde(rename = "asset")]
@@ -44,7 +44,7 @@ struct RawSourceVariant {
     bin: Option<String>,                 // for js-debug-adapter (edge case)
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug)]
 struct RawVersionOverride {
     constraint: String,
     id: String,
@@ -54,21 +54,21 @@ struct RawVersionOverride {
     supported_platforms: Option<Vec<String>>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug)]
 #[serde(untagged)]
 enum RawDownloads {
     Simple { file: String },
     Detailed(OneOrMany<RawDownload>),
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug)]
 struct RawDownload {
     target: Option<OneOrMany<String>>,
     files: HashMap<String, String>,
     bin: Option<String>, // this may change with a Mason update
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug)]
 struct RawBuild {
     run: String,
     target: Option<OneOrMany<String>>,
@@ -80,7 +80,7 @@ struct RawBuild {
     els_dap: Option<String>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug)]
 struct RawAsset {
     target: Option<OneOrMany<String>>,
     file: OneOrMany<String>,
@@ -89,7 +89,7 @@ struct RawAsset {
     extra: HashMap<String, AssetExtra>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug)]
 #[serde(untagged)]
 enum AssetExtra {
     Path(String),
@@ -98,14 +98,14 @@ enum AssetExtra {
 
 // ---
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug)]
 #[serde(untagged)]
-pub(super) enum OneOrMany<T: Clone> {
+pub(super) enum OneOrMany<T> {
     One(T),
     Many(Vec<T>),
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug)]
 #[serde(untagged)]
 enum OneOrMap {
     One(String),

@@ -1,11 +1,11 @@
 use std::fs;
 
-use crate::{folders, io, registry};
+use crate::{paths, io, registry};
 
 pub fn setup_root() -> anyhow::Result<()> {
     ensure_root_items()?;
 
-    match folders::registry_file().try_exists() {
+    match paths::registry_file().try_exists() {
         Ok(true) => {
             log::info!("Registry already exists.");
             Ok(())
@@ -17,11 +17,11 @@ pub fn setup_root() -> anyhow::Result<()> {
 }
 
 fn ensure_root_items() -> anyhow::Result<()> {
-    fs::create_dir_all(folders::bin_dir())?;
-    fs::create_dir_all(folders::tmp_dir())?;
-    fs::create_dir_all(folders::registry_dir())?;
-    fs::create_dir_all(folders::packages_dir())?;
-    io::new_file_atomic(&folders::state_file())?;
+    fs::create_dir_all(paths::bin_dir())?;
+    fs::create_dir_all(paths::tmp_dir())?;
+    fs::create_dir_all(paths::registry_dir())?;
+    fs::create_dir_all(paths::packages_dir())?;
+    io::new_file_atomic(&paths::state_file())?;
 
     Ok(())
 }

@@ -2,14 +2,14 @@ use std::{fs::File, io::Read};
 
 use anyhow::anyhow;
 
-use crate::{folders, registry::model::RawRegistry};
+use crate::{paths, registry::model::RawRegistry};
 
 pub mod model;
 mod parser;
 mod util;
 
 // Export for other packages to use as well
-pub use util::REG_NAME;
+pub use util::REGISTRY_FILE;
 
 const MASON_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases/latest";
 
@@ -31,8 +31,8 @@ fn find_registry_asset(release: &model::Release) -> anyhow::Result<&model::Relea
     release
         .assets
         .iter()
-        .find(|a| a.name == util::REG_ZIP_NAME) // TODO: fetch 'checksums.txt' as well
-        .ok_or_else(|| anyhow!("'{}' not found in release assets.", util::REG_ZIP_NAME))
+        .find(|a| a.name == util::REGISTRY_ZIP) // TODO: fetch 'checksums.txt' as well
+        .ok_or_else(|| anyhow!("'{}' not found in release assets.", util::REGISTRY_ZIP))
 }
 
 fn parse_release(raw_json: &[u8]) -> anyhow::Result<model::Release> {
@@ -49,7 +49,7 @@ pub fn download_registry() -> anyhow::Result<()> {
 
 pub fn read_registry() -> anyhow::Result<model::Registry> {
     let mut contents = Vec::new();
-    File::open(folders::registry_file())?.read_to_end(&mut contents)?;
+    File::open(paths::registry_file())?.read_to_end(&mut contents)?;
 
     let raw: RawRegistry = serde_json::from_slice(&contents)?;
     Ok(parser::parse_registry(raw))

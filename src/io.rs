@@ -5,13 +5,13 @@ use std::{
 
 use tempfile::NamedTempFile;
 
-use crate::folders;
+use crate::paths;
 
 /// creates a new temporary file in lspctl/tmp.
 /// requires tmp to exist. error if not.
 /// it doesn't create it because it is expected to exist at this point.
 fn new_temp() -> anyhow::Result<NamedTempFile> {
-    Ok(NamedTempFile::new_in(folders::tmp_dir())?)
+    Ok(NamedTempFile::new_in(paths::tmp_dir())?)
 }
 
 // this function must be atomic

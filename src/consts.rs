@@ -1,14 +1,15 @@
-macro_rules! new_const {
-    ($name: ident = $value: expr) => {
-        pub const $name: &str = $value;
+macro_rules! consts {
+    ($($name: ident = $value: expr),+ $(,)?) => {
+        $(
+            pub const $name: &str = $value;
+        )+
     };
 }
 
-new_const!(APP_NAME = "lspctl");
-new_const!(APP_VERSION = "alpha v0.1");
-new_const!(APP_DESC = "A TUI and CLI tool to manage installed LSPs, based on Mason's repository.");
+pub(crate) use consts;
 
-new_const!(BIN_DIR = "bin");
-new_const!(TMP_DIR = "tmp");
-new_const!(REGISTRY_DIR = "registry");
-new_const!(PACKAGES_DIR = "packages");
+consts!(
+    APP_NAME = "lspctl",
+    APP_VERSION = "alpha v0.1",
+    APP_DESC = "A TUI and CLI tool to manage installed LSPs, based on Mason's repository.",
+);
