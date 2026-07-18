@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use packageurl::PackageUrl;
 
-use crate::registry::model::{InstallKind, OneOrMany, Platform, Purl};
+use crate::registry::model::{InstallKind, OneOrMany, PackageManager, Platform, Purl};
 
 impl<T> From<OneOrMany<T>> for Vec<T> {
     fn from(value: OneOrMany<T>) -> Self {
@@ -31,6 +31,16 @@ impl<'a> TryFrom<PackageUrl<'a>> for Purl {
                 .collect(),
             subpath: purl.subpath().map(Into::into),
         })
+    }
+}
+
+impl InstallKind {
+    pub fn is_package_manager(&self) -> bool {
+        use InstallKind::*;
+        matches!(
+            self,
+            Npm | Pypi | Golang | Cargo | Gem | Composer | LuaRocks | Opam | Nuget
+        )
     }
 }
 

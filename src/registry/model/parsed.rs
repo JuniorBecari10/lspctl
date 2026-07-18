@@ -5,7 +5,7 @@ use std::{collections::HashMap, fs::OpenOptions};
 
 use packageurl::PackageUrl;
 
-use crate::registry::model::Deprecation;
+use crate::registry::model::{AssetExtra, Deprecation, OneOrMap};
 
 // TODO: cache this once parsed (JSON serialized structs) and invalidate it when updating.
 // if the cache file is missing, parse again.
@@ -34,7 +34,19 @@ pub struct Source {
     pub purl: Purl,
     pub variant: SourceVariant,
     pub supported_platforms: Option<Vec<Platform>>,
+    pub version_overrides: Option<Vec<VersionOverride>>,
     pub bin: Option<String>, // for js-debug-adapter (edge case)
+}
+
+// implements TryFrom<PackageUrl>
+#[derive(Debug)]
+pub struct Purl {
+    pub kind: InstallKind,
+    pub namespace: Option<String>,
+    pub name: String,
+    pub version: Option<String>,
+    pub qualifiers: HashMap<String, String>,
+    pub subpath: Option<String>,
 }
 
 #[derive(Debug)]
@@ -50,18 +62,16 @@ pub enum SourceVariant {
     Build(Vec<Build>),
 }
 
-// implements TryFrom<PackageUrl>
 #[derive(Debug)]
-pub struct Purl {
-    pub kind: InstallKind,
-    pub namespace: Option<String>,
-    pub name: String,
-    pub version: Option<String>,
-    pub qualifiers: HashMap<String, String>,
-    pub subpath: Option<String>,
+pub struct VersionOverride {
+    pub constraint: String,
+    pub id: String,
+
+    pub variant: SourceVariant,
+    pub supported_platforms: Option<Vec<Platform>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum InstallKind {
     Npm,
     Pypi,
@@ -102,7 +112,8 @@ pub enum Platform {
 pub struct Asset {
     targets: Option<Vec<String>>,
     files: Vec<String>,
-    // bin
+    bin: Option<OneOrMap>,
+    extra: HashMap<String, AssetExtra>,
 }
 
 #[derive(Debug)]
@@ -122,6 +133,10 @@ pub struct Download {
 pub struct Build {
     command: String,
     target: Option<Vec<String>>,
-    // bin
+    bin: Option<OneOrMap>,
     env: Option<HashMap<String, String>>,
+
+    staged: Option<bool>,
+    erlang_ls: Option<String>,
+    els_dap: Option<String>,
 }

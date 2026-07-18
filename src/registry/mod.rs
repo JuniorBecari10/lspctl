@@ -47,6 +47,7 @@ pub fn download_registry() -> anyhow::Result<()> {
     Ok(())
 }
 
+// TODO: read from cache if it's there
 pub fn read_registry() -> anyhow::Result<model::Registry> {
     let mut contents = Vec::new();
     File::open(paths::registry_file())?.read_to_end(&mut contents)?;

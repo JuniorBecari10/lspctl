@@ -1,13 +1,13 @@
 mod util;
 
-use anyhow::anyhow;
 use packageurl::PackageUrl;
 
 use crate::registry::{
     model::{
-        Entry, RawEntry, RawRegistry, RawSource, RawSourceVariant, Registry, Source, SourceVariant,
+        Entry, InstallKind, Purl, RawEntry, RawRegistry, RawSource, RawSourceVariant,
+        RawVersionOverride, Registry, Source, SourceVariant, VersionOverride,
     },
-    parser::util::get_platform,
+    parser::util::convert_platforms,
 };
 
 pub fn parse_registry(raw: RawRegistry) -> anyhow::Result<Registry> {
@@ -35,19 +35,36 @@ fn parse_entry(entry: RawEntry) -> anyhow::Result<Entry> {
 }
 
 fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
+    let purl: Purl = PackageUrl::new(raw.id, "purl")?.try_into()?;
+
     Ok(Source {
-        purl: PackageUrl::new(raw.id, "purl")?.try_into()?,
-        variant: get_variant(raw.variant)?,
-        supported_platforms: raw
-            .supported_platforms
-            .map(|v| {
-                v.iter()
-                    .map(|p| get_platform(p).ok_or_else(|| anyhow!("Invalid platform: {}", p)))
+        variant: parse_variant(raw.variant, purl.kind)?,
+        supported_platforms: convert_platforms(raw.supported_platforms)?,
+        version_overrides: raw
+            .version_overrides
+            .map(|os| {
+                os.into_iter()
+                    .map(|o| parse_version_override(o, purl.kind))
                     .collect::<anyhow::Result<Vec<_>>>()
             })
             .transpose()?,
+        purl, // used after because of the borrow checker
         bin: raw.bin,
     })
 }
 
-fn get_variant(variant: RawSourceVariant) -> anyhow::Result<SourceVariant> {}
+fn parse_variant(variant: RawSourceVariant, kind: InstallKind) -> anyhow::Result<SourceVariant> {
+    if kind.is_package_manager() {}
+}
+
+fn parse_version_override(
+    version: RawVersionOverride,
+    kind: InstallKind,
+) -> anyhow::Result<VersionOverride> {
+    Ok(VersionOverride {
+        constraint: version.constraint,
+        id: version.id,
+        variant: parse_variant(version.variant, kind)?,
+        supported_platforms: convert_platforms(version.supported_platforms)?,
+    })
+}

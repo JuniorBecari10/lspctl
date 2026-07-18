@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::registry::model::common::Deprecation;
+use crate::registry::model::{AssetExtra, OneOrMap, common::Deprecation};
 
 #[derive(Deserialize, Debug)]
 pub struct RawRegistry(pub Vec<RawEntry>);
@@ -37,9 +37,9 @@ pub struct RawSource {
 #[derive(Deserialize, Debug)]
 pub struct RawSourceVariant {
     // one and only one of these will be present at once
+    pub extra_packages: Option<Vec<String>>, // any package manager
     #[serde(rename = "asset")]
     pub assets: Option<OneOrMany<RawAsset>>, // github
-    pub extra_packages: Option<Vec<String>>, // any package manager
     pub download: Option<RawDownloads>,      // generic / openvsx
     pub build: Option<OneOrMany<RawBuild>>,  // build
 }
@@ -89,13 +89,6 @@ pub struct RawAsset {
     extra: HashMap<String, AssetExtra>,
 }
 
-#[derive(Deserialize, Debug)]
-#[serde(untagged)]
-pub enum AssetExtra {
-    Path(String),
-    Nested(HashMap<String, String>),
-}
-
 // ---
 
 #[derive(Deserialize, Debug)]
@@ -103,11 +96,4 @@ pub enum AssetExtra {
 pub enum OneOrMany<T> {
     One(T),
     Many(Vec<T>),
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(untagged)]
-enum OneOrMap {
-    One(String),
-    Map(HashMap<String, String>),
 }
