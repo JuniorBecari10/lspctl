@@ -8,68 +8,68 @@ use serde::Deserialize;
 use crate::registry::model::common::Deprecation;
 
 #[derive(Deserialize, Debug)]
-pub struct RawRegistry(Vec<RawEntry>);
+pub struct RawRegistry(pub Vec<RawEntry>);
 
 #[derive(Deserialize, Debug)]
-struct RawEntry {
-    name: String,
-    description: String,
-    homepage: String,
-    licenses: Vec<String>,
-    languages: Vec<String>,
-    categories: Vec<String>,
-    source: RawSource,
-    bin: Option<HashMap<String, String>>,
-    deprecation: Option<Deprecation>,
+pub struct RawEntry {
+    pub name: String,
+    pub description: String,
+    pub homepage: String,
+    pub licenses: Vec<String>,
+    pub languages: Vec<String>,
+    pub categories: Vec<String>,
+    pub source: RawSource,
+    pub bin: Option<HashMap<String, String>>,
+    pub deprecation: Option<Deprecation>,
 }
 
 #[derive(Deserialize, Debug)]
-struct RawSource {
-    id: String, // (purl)
+pub struct RawSource {
+    pub id: String, // (purl)
 
     #[serde(flatten)]
-    variant: RawSourceVariant,
-    supported_platforms: Option<Vec<String>>,
-    version_overrides: Option<Vec<RawVersionOverride>>,
+    pub variant: RawSourceVariant,
+    pub supported_platforms: Option<Vec<String>>,
+    pub version_overrides: Option<Vec<RawVersionOverride>>,
+    pub bin: Option<String>, // for js-debug-adapter (edge case)
 }
 
 #[derive(Deserialize, Debug)]
-struct RawSourceVariant {
+pub struct RawSourceVariant {
     // one and only one of these will be present at once
     #[serde(rename = "asset")]
-    assets: Option<OneOrMany<RawAsset>>, // github
-    extra_packages: Option<Vec<String>>, // any package manager
-    download: Option<RawDownloads>,      // generic / openvsx
-    build: Option<OneOrMany<RawBuild>>,  // build
-    bin: Option<String>,                 // for js-debug-adapter (edge case)
+    pub assets: Option<OneOrMany<RawAsset>>, // github
+    pub extra_packages: Option<Vec<String>>, // any package manager
+    pub download: Option<RawDownloads>,      // generic / openvsx
+    pub build: Option<OneOrMany<RawBuild>>,  // build
 }
 
 #[derive(Deserialize, Debug)]
-struct RawVersionOverride {
-    constraint: String,
-    id: String,
+pub struct RawVersionOverride {
+    pub constraint: String,
+    pub id: String,
 
     #[serde(flatten)]
-    variant: RawSourceVariant,
-    supported_platforms: Option<Vec<String>>,
+    pub variant: RawSourceVariant,
+    pub supported_platforms: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-enum RawDownloads {
+pub enum RawDownloads {
     Simple { file: String },
     Detailed(OneOrMany<RawDownload>),
 }
 
 #[derive(Deserialize, Debug)]
-struct RawDownload {
+pub struct RawDownload {
     target: Option<OneOrMany<String>>,
     files: HashMap<String, String>,
     bin: Option<String>, // this may change with a Mason update
 }
 
 #[derive(Deserialize, Debug)]
-struct RawBuild {
+pub struct RawBuild {
     run: String,
     target: Option<OneOrMany<String>>,
     bin: Option<OneOrMap>,
@@ -81,7 +81,7 @@ struct RawBuild {
 }
 
 #[derive(Deserialize, Debug)]
-struct RawAsset {
+pub struct RawAsset {
     target: Option<OneOrMany<String>>,
     file: OneOrMany<String>,
     bin: Option<OneOrMap>,
@@ -91,7 +91,7 @@ struct RawAsset {
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-enum AssetExtra {
+pub enum AssetExtra {
     Path(String),
     Nested(HashMap<String, String>),
 }
@@ -100,7 +100,7 @@ enum AssetExtra {
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-pub(super) enum OneOrMany<T> {
+pub enum OneOrMany<T> {
     One(T),
     Many(Vec<T>),
 }

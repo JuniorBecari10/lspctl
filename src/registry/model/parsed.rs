@@ -5,6 +5,8 @@ use std::{collections::HashMap, fs::OpenOptions};
 
 use packageurl::PackageUrl;
 
+use crate::registry::model::Deprecation;
+
 // TODO: cache this once parsed (JSON serialized structs) and invalidate it when updating.
 // if the cache file is missing, parse again.
 // OneOrMany becomes a vec of one element if the variant is One
@@ -12,26 +14,27 @@ use packageurl::PackageUrl;
 // TODO: resolve strings like {{ version | strip_prefix "v" }}
 
 #[derive(Debug)]
-pub struct Registry(Vec<Entry>);
+pub struct Registry(pub Vec<Entry>);
 
 #[derive(Debug)]
 pub struct Entry {
-    name: String,
-    description: String,
-    homepage: String,
-    licenses: Vec<String>,
-    languages: Vec<String>,
-    categories: Vec<String>,
-    source: Source,
-    bin: Option<HashMap<String, String>>, // change to Vec<String> of entries?
+    pub name: String,
+    pub description: String,
+    pub homepage: String,
+    pub licenses: Vec<String>,
+    pub languages: Vec<String>,
+    pub categories: Vec<String>,
+    pub source: Source,
+    pub bin: Option<HashMap<String, String>>, // change to Vec<String> of entries?
+    pub deprecation: Option<Deprecation>,
 }
 
 #[derive(Debug)]
 pub struct Source {
-    purl: Purl,
-    variant: SourceVariant,
-    supported_platforms: Option<Vec<Platform>>,
-    bin: Option<String>, // for js-debug-adapter (edge case)
+    pub purl: Purl,
+    pub variant: SourceVariant,
+    pub supported_platforms: Option<Vec<Platform>>,
+    pub bin: Option<String>, // for js-debug-adapter (edge case)
 }
 
 #[derive(Debug)]

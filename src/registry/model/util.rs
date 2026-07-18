@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use packageurl::PackageUrl;
 
-use crate::registry::model::{InstallKind, OneOrMany, Purl};
+use crate::registry::model::{InstallKind, OneOrMany, Platform, Purl};
 
 impl<T> From<OneOrMany<T>> for Vec<T> {
     fn from(value: OneOrMany<T>) -> Self {

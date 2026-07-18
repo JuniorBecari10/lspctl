@@ -52,5 +52,5 @@ pub fn read_registry() -> anyhow::Result<model::Registry> {
     File::open(paths::registry_file())?.read_to_end(&mut contents)?;
 
     let raw: RawRegistry = serde_json::from_slice(&contents)?;
-    Ok(parser::parse_registry(raw))
+    parser::parse_registry(raw)
 }
