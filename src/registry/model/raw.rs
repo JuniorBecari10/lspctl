@@ -5,6 +5,8 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
+use crate::registry::model::common::Deprecation;
+
 #[derive(Deserialize, Debug)]
 pub struct RawRegistry(Vec<RawEntry>);
 
@@ -18,22 +20,38 @@ struct RawEntry {
     categories: Vec<String>,
     source: RawSource,
     bin: Option<HashMap<String, String>>,
+    deprecation: Option<Deprecation>,
 }
 
-// TODO: add Asset
 #[derive(Deserialize, Debug, Clone)]
 struct RawSource {
     id: String, // (purl)
-    extra_packages: Option<Vec<String>>,
 
-    // one and only one of these 3 will be present at once
+    #[serde(flatten)]
+    variant: RawSourceVariant,
+    supported_platforms: Option<Vec<String>>,
+    version_overrides: Option<Vec<RawVersionOverride>>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+struct RawSourceVariant {
+    // one and only one of these will be present at once
     #[serde(rename = "asset")]
     assets: Option<OneOrMany<RawAsset>>, // github
-    download: Option<RawDownloads>, // generic / openvsx
-    build: Option<OneOrMany<RawBuild>>,
+    extra_packages: Option<Vec<String>>, // any package manager
+    download: Option<RawDownloads>,      // generic / openvsx
+    build: Option<OneOrMany<RawBuild>>,  // build
+    bin: Option<String>,                 // for js-debug-adapter (edge case)
+}
 
+#[derive(Deserialize, Debug, Clone)]
+struct RawVersionOverride {
+    constraint: String,
+    id: String,
+
+    #[serde(flatten)]
+    variant: RawSourceVariant,
     supported_platforms: Option<Vec<String>>,
-    bin: Option<String>, // for js-debug-adapter (edge case)
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -50,14 +68,16 @@ struct RawDownload {
     bin: Option<String>, // this may change with a Mason update
 }
 
-// this has 'bool staged' and
-// 'erlang_ls' and 'els_dap' are their own fields in these packages
 #[derive(Deserialize, Debug, Clone)]
 struct RawBuild {
     run: String,
     target: Option<OneOrMany<String>>,
     bin: Option<OneOrMap>,
     env: Option<HashMap<String, String>>,
+
+    staged: Option<bool>,
+    erlang_ls: Option<String>,
+    els_dap: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -65,9 +85,15 @@ struct RawAsset {
     target: Option<OneOrMany<String>>,
     file: OneOrMany<String>,
     bin: Option<OneOrMap>,
-
     #[serde(flatten)]
-    extra: HashMap<String, String>,
+    extra: HashMap<String, AssetExtra>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde(untagged)]
+enum AssetExtra {
+    Path(String),
+    Nested(HashMap<String, String>),
 }
 
 // ---
