@@ -1,5 +1,6 @@
 mod cli;
 mod consts;
+mod global;
 mod io;
 mod operations;
 mod paths;

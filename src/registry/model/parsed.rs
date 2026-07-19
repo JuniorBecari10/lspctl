@@ -19,7 +19,7 @@ pub struct Entry {
     pub languages: Vec<String>,
     pub categories: Vec<String>,
     pub source: Source,
-    pub bin: Option<HashMap<String, String>>,
+    pub bin: Option<HashMap<String, String>>, // has templates
     pub deprecation: Option<Deprecation>,
 }
 
@@ -125,8 +125,8 @@ pub struct Platform {
 #[derive(Debug)]
 pub struct Asset {
     pub targets: Vec<Platform>,
-    pub files: Vec<String>,
-    pub bin: Option<OneOrMap>,
+    pub files: Vec<String>,                 // has templates
+    pub bin: Option<OneOrMap>,              // has templates
     pub extra: HashMap<String, AssetExtra>, // ad-hoc fields like "lsp" / "dap"
 }
 
