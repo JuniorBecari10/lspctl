@@ -1,5 +1,7 @@
 mod util;
 
+use std::str::FromStr;
+
 use packageurl::PackageUrl;
 
 use crate::registry::{
@@ -35,7 +37,7 @@ fn parse_entry(raw: RawEntry) -> anyhow::Result<Entry> {
 }
 
 fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
-    let purl: Purl = PackageUrl::new(raw.id, "purl")?.try_into()?;
+    let purl: Purl = PackageUrl::from_str(&raw.id)?.try_into()?;
 
     Ok(Source {
         variant: parse_variant(raw.variant, purl.kind)?,
@@ -55,13 +57,12 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
 
 fn parse_variant(raw: RawSourceVariant, kind: InstallKind) -> anyhow::Result<SourceVariant> {
     match raw {
-        RawSourceVariant {
-            extra_packages: Some(pkgs),
-            ..
-        } if kind.is_package_manager() => Ok(SourceVariant::PackageManager {
-            manager: kind.try_into()?,
-            extra_packages: pkgs,
-        }),
+        RawSourceVariant { extra_packages, .. } if kind.is_package_manager() => {
+            Ok(SourceVariant::PackageManager {
+                manager: kind.try_into()?,
+                extra_packages: extra_packages.unwrap_or(vec![]),
+            })
+        }
 
         RawSourceVariant {
             assets: Some(assets),
@@ -105,7 +106,7 @@ fn parse_version_override(
 
 fn parse_asset(raw: RawAsset) -> anyhow::Result<Asset> {
     Ok(Asset {
-        targets: convert_platforms(raw.target.map(|t| t.into()))?,
+        targets: convert_platforms(raw.target.map(Into::into))?,
         files: raw.file.into(),
         bin: raw.bin,
         extra: raw.extra,
@@ -126,7 +127,7 @@ fn parse_downloads(raw: RawDownloads) -> anyhow::Result<Downloads> {
 
 fn parse_download(raw: RawDownload) -> anyhow::Result<Download> {
     Ok(Download {
-        targets: convert_platforms(raw.target.map(|t| t.into()))?,
+        targets: convert_platforms(raw.target.map(Into::into))?,
         files: raw.files,
         bin: raw.bin,
     })
@@ -135,7 +136,7 @@ fn parse_download(raw: RawDownload) -> anyhow::Result<Download> {
 fn parse_build(raw: RawBuild) -> anyhow::Result<Build> {
     Ok(Build {
         command: raw.run,
-        targets: convert_platforms(raw.target.map(|t| t.into()))?,
+        targets: convert_platforms(raw.target.map(Into::into))?,
         bin: raw.bin,
         env: raw.env,
         staged: raw.staged,

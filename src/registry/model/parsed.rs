@@ -65,7 +65,7 @@ pub struct VersionOverride {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum InstallKind {
     Npm,
-    Pypi,
+    PyPI,
     Golang,
     Cargo,
     Gem,
@@ -81,7 +81,7 @@ pub enum InstallKind {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum PackageManager {
     Npm,
-    Pypi,
+    PyPI,
     Golang,
     Cargo,
     Gem,

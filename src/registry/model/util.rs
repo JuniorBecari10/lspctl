@@ -41,7 +41,7 @@ impl TryFrom<InstallKind> for PackageManager {
     fn try_from(kind: InstallKind) -> Result<Self, Self::Error> {
         match kind {
             InstallKind::Npm => Ok(PackageManager::Npm),
-            InstallKind::Pypi => Ok(PackageManager::Pypi),
+            InstallKind::PyPI => Ok(PackageManager::PyPI),
             InstallKind::Golang => Ok(PackageManager::Golang),
             InstallKind::Cargo => Ok(PackageManager::Cargo),
             InstallKind::Gem => Ok(PackageManager::Gem),
@@ -61,7 +61,7 @@ impl InstallKind {
         use InstallKind::*;
         matches!(
             self,
-            Npm | Pypi | Golang | Cargo | Gem | Composer | LuaRocks | Opam | NuGet
+            Npm | PyPI | Golang | Cargo | Gem | Composer | LuaRocks | Opam | NuGet
         )
     }
 }
@@ -72,7 +72,7 @@ fn get_install_kind(s: &str) -> Option<InstallKind> {
     match s {
         "github" => Some(GitHub),
         "npm" => Some(Npm),
-        "pypi" => Some(Pypi),
+        "pypi" => Some(PyPI),
         "golang" => Some(Golang),
         "cargo" => Some(Cargo),
         "gem" => Some(Gem),

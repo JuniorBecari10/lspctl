@@ -15,7 +15,8 @@ fn new_temp() -> anyhow::Result<NamedTempFile> {
 }
 
 // this function must be atomic
-// TODO: make persist_replace since some features need it
+// TODO: make persist_replace since some features will eventually need it, such as update.
+// just replace this with persist, since it overrides the file it's there
 fn persist(temp: NamedTempFile, p: &Path) -> anyhow::Result<()> {
     match temp.persist_noclobber(p) {
         Ok(_) => Ok(()),

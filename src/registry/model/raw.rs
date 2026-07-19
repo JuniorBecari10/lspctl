@@ -35,7 +35,7 @@ pub struct RawSource {
 pub struct RawSourceVariant {
     // one and only one of these will be present at once
     // TODO: enforce this rule
-    pub extra_packages: Option<Vec<String>>, // any package manager. kind must be package manager for this to be Some().
+    pub extra_packages: Option<Vec<String>>, // any package manager. kind must be package manager for this to be Some(). kind may be a package manager and this be None, though.
     #[serde(rename = "asset")]
     pub assets: Option<OneOrMany<RawAsset>>, // github
     pub download: Option<RawDownloads>,      // generic / openvsx
