@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use packageurl::PackageUrl;
 
-use crate::registry::model::{InstallKind, OneOrMany, PackageManager, Platform, Purl};
+use crate::registry::model::{InstallKind, OneOrMany, PackageManager, Purl};
 
 impl<T> From<OneOrMany<T>> for Vec<T> {
     fn from(value: OneOrMany<T>) -> Self {
@@ -34,12 +34,34 @@ impl<'a> TryFrom<PackageUrl<'a>> for Purl {
     }
 }
 
+// ooooh boilerplate
+impl TryFrom<InstallKind> for PackageManager {
+    type Error = anyhow::Error;
+
+    fn try_from(kind: InstallKind) -> Result<Self, Self::Error> {
+        match kind {
+            InstallKind::Npm => Ok(PackageManager::Npm),
+            InstallKind::Pypi => Ok(PackageManager::Pypi),
+            InstallKind::Golang => Ok(PackageManager::Golang),
+            InstallKind::Cargo => Ok(PackageManager::Cargo),
+            InstallKind::Gem => Ok(PackageManager::Gem),
+            InstallKind::Composer => Ok(PackageManager::Composer),
+            InstallKind::LuaRocks => Ok(PackageManager::LuaRocks),
+            InstallKind::Opam => Ok(PackageManager::Opam),
+            InstallKind::NuGet => Ok(PackageManager::NuGet),
+            InstallKind::GitHub | InstallKind::Generic | InstallKind::OpenVsx => Err(
+                anyhow::anyhow!("{kind:?} is not a package-manager install kind"),
+            ),
+        }
+    }
+}
+
 impl InstallKind {
     pub fn is_package_manager(&self) -> bool {
         use InstallKind::*;
         matches!(
             self,
-            Npm | Pypi | Golang | Cargo | Gem | Composer | LuaRocks | Opam | Nuget
+            Npm | Pypi | Golang | Cargo | Gem | Composer | LuaRocks | Opam | NuGet
         )
     }
 }
@@ -59,7 +81,7 @@ fn get_install_kind(s: &str) -> Option<InstallKind> {
         "composer" => Some(Composer),
         "luarocks" => Some(LuaRocks),
         "opam" => Some(Opam),
-        "nuget" => Some(Nuget),
+        "nuget" => Some(NuGet),
         _ => None,
     }
 }

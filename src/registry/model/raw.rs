@@ -1,6 +1,3 @@
-// TODO: remove this as soon as they are actually used
-#![allow(unused)]
-
 use std::collections::HashMap;
 
 use serde::Deserialize;
@@ -37,7 +34,8 @@ pub struct RawSource {
 #[derive(Deserialize, Debug)]
 pub struct RawSourceVariant {
     // one and only one of these will be present at once
-    pub extra_packages: Option<Vec<String>>, // any package manager
+    // TODO: enforce this rule
+    pub extra_packages: Option<Vec<String>>, // any package manager. kind must be package manager for this to be Some().
     #[serde(rename = "asset")]
     pub assets: Option<OneOrMany<RawAsset>>, // github
     pub download: Option<RawDownloads>,      // generic / openvsx
@@ -63,30 +61,29 @@ pub enum RawDownloads {
 
 #[derive(Deserialize, Debug)]
 pub struct RawDownload {
-    target: Option<OneOrMany<String>>,
-    files: HashMap<String, String>,
-    bin: Option<String>, // this may change with a Mason update
+    pub target: Option<OneOrMany<String>>,
+    pub files: HashMap<String, String>,
+    pub bin: Option<String>, // this may change with a Mason update
 }
 
 #[derive(Deserialize, Debug)]
 pub struct RawBuild {
-    run: String,
-    target: Option<OneOrMany<String>>,
-    bin: Option<OneOrMap>,
-    env: Option<HashMap<String, String>>,
-
-    staged: Option<bool>,
-    erlang_ls: Option<String>,
-    els_dap: Option<String>,
+    pub run: String,
+    pub target: Option<OneOrMany<String>>,
+    pub bin: Option<OneOrMap>,
+    pub env: Option<HashMap<String, String>>,
+    pub staged: Option<bool>,
+    #[serde(flatten)]
+    pub extra: HashMap<String, String>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct RawAsset {
-    target: Option<OneOrMany<String>>,
-    file: OneOrMany<String>,
-    bin: Option<OneOrMap>,
+    pub target: Option<OneOrMany<String>>,
+    pub file: OneOrMany<String>,
+    pub bin: Option<OneOrMap>,
     #[serde(flatten)]
-    extra: HashMap<String, AssetExtra>,
+    pub extra: HashMap<String, AssetExtra>,
 }
 
 // ---
