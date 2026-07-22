@@ -31,7 +31,11 @@ fn parse_entry(raw: RawEntry) -> anyhow::Result<Entry> {
         languages: raw.languages,
         categories: raw.categories,
         source: parse_source(raw.source)?,
-        bin: raw.bin,
+        bin: raw.bin.map(|m| {
+            m.iter()
+                .map(|(k, v)| (util::parse_template(k), util::parse_template(v)))
+                .collect()
+        }),
         deprecation: raw.deprecation,
     })
 }
@@ -107,8 +111,11 @@ fn parse_version_override(
 fn parse_asset(raw: RawAsset) -> anyhow::Result<Asset> {
     Ok(Asset {
         targets: convert_platforms(raw.target.map(Into::into))?,
-        files: raw.file.into(),
-        bin: raw.bin,
+        files: Into::<Vec<_>>::into(raw.file)
+            .iter()
+            .map(|s| util::parse_template(s))
+            .collect(),
+        bin: raw.bin.map(|m| m.map(|s| util::parse_template(&s))),
         extra: raw.extra,
     })
 }

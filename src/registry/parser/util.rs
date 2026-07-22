@@ -69,3 +69,10 @@ pub fn convert_platforms(platforms: Option<Vec<String>>) -> anyhow::Result<Vec<P
         .collect::<anyhow::Result<Vec<Vec<Platform>>>>()
         .map(|nested| nested.into_iter().flatten().collect())
 }
+
+// TODO: accept version and source as arguments.
+// try to make a way for those to be accepted here
+pub fn parse_template(s: &str) -> String {
+    // TODO
+    s.replace("{{version}}", version)
+}

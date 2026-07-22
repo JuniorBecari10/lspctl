@@ -1,7 +1,9 @@
+use std::iter::Map;
+
 use anyhow::anyhow;
 use packageurl::PackageUrl;
 
-use crate::registry::model::{InstallKind, OneOrMany, PackageManager, Purl};
+use crate::registry::model::{InstallKind, OneOrMany, OneOrMap, PackageManager, Purl};
 
 impl<T> From<OneOrMany<T>> for Vec<T> {
     fn from(value: OneOrMany<T>) -> Self {
@@ -26,7 +28,7 @@ impl<'a> TryFrom<PackageUrl<'a>> for Purl {
             version: purl.version().map(Into::into),
             qualifiers: purl
                 .qualifiers()
-                .iter()
+                .into_iter()
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect(),
             subpath: purl.subpath().map(Into::into),
@@ -52,6 +54,18 @@ impl TryFrom<InstallKind> for PackageManager {
             InstallKind::GitHub | InstallKind::Generic | InstallKind::OpenVsx => Err(
                 anyhow::anyhow!("{kind:?} is not a package-manager install kind"),
             ),
+        }
+    }
+}
+
+impl OneOrMap {
+    pub fn map<F>(self, f: F) -> Self
+    where
+        F: Fn(String) -> String,
+    {
+        match self {
+            OneOrMap::One(s) => OneOrMap::One(f(s)),
+            OneOrMap::Map(m) => OneOrMap::Map(m.into_iter().map(|(k, v)| (f(k), f(v))).collect()),
         }
     }
 }
