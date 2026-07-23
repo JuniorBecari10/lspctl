@@ -4,13 +4,10 @@ use std::str::FromStr;
 
 use packageurl::PackageUrl;
 
-use crate::registry::{
-    model::{
-        Asset, Build, Download, Downloads, Entry, InstallKind, Purl, RawAsset, RawBuild,
-        RawDownload, RawDownloads, RawEntry, RawRegistry, RawSource, RawSourceVariant,
-        RawVersionOverride, Registry, Source, SourceVariant, VersionOverride,
-    },
-    parser::util::convert_platforms,
+use crate::registry::model::{
+    Asset, Build, Download, Downloads, Entry, InstallKind, Purl, RawAsset, RawBuild, RawDownload,
+    RawDownloads, RawEntry, RawRegistry, RawSource, RawSourceVariant, RawVersionOverride, Registry,
+    Source, SourceVariant, VersionOverride,
 };
 
 pub fn parse_registry(raw: RawRegistry) -> anyhow::Result<Registry> {
@@ -18,7 +15,7 @@ pub fn parse_registry(raw: RawRegistry) -> anyhow::Result<Registry> {
         raw.0
             .into_iter()
             .map(parse_entry)
-            .collect::<anyhow::Result<Vec<_>>>()?,
+            .collect::<anyhow::Result<_>>()?,
     ))
 }
 
@@ -31,11 +28,7 @@ fn parse_entry(raw: RawEntry) -> anyhow::Result<Entry> {
         languages: raw.languages,
         categories: raw.categories,
         source: parse_source(raw.source)?,
-        bin: raw.bin.map(|m| {
-            m.iter()
-                .map(|(k, v)| (util::parse_template(k), util::parse_template(v)))
-                .collect()
-        }),
+        bin: raw.bin.map(util::parse_template_hashmap),
         deprecation: raw.deprecation,
     })
 }
@@ -44,55 +37,49 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
     let purl: Purl = PackageUrl::from_str(&raw.id)?.try_into()?;
 
     Ok(Source {
-        variant: parse_variant(raw.variant, purl.kind)?,
-        supported_platforms: convert_platforms(raw.supported_platforms)?,
+        variant: raw
+            .variant
+            .map(|v| parse_variant(v, purl.kind))
+            .transpose()?,
+        supported_platforms: util::convert_platforms(raw.supported_platforms)?,
         version_overrides: raw
             .version_overrides
-            .map(|os| {
-                os.into_iter()
-                    .map(|o| parse_version_override(o, purl.kind))
-                    .collect::<anyhow::Result<Vec<_>>>()
+            .map(|raw_vo| {
+                raw_vo
+                    .into_iter()
+                    .map(|vo| parse_version_override(vo, purl.kind))
+                    .collect::<anyhow::Result<_>>()
             })
             .transpose()?,
         purl, // used after because of the borrow checker
-        bin: raw.bin,
+        bin: raw.bin.map(util::parse_template),
     })
 }
 
 fn parse_variant(raw: RawSourceVariant, kind: InstallKind) -> anyhow::Result<SourceVariant> {
     match raw {
-        RawSourceVariant { extra_packages, .. } if kind.is_package_manager() => {
-            Ok(SourceVariant::PackageManager {
-                manager: kind.try_into()?,
-                extra_packages: extra_packages.unwrap_or(vec![]),
-            })
-        }
-
-        RawSourceVariant {
-            assets: Some(assets),
-            ..
-        } => Ok(SourceVariant::Asset(
-            Into::<Vec<_>>::into(assets)
+        RawSourceVariant::Asset { asset } => Ok(SourceVariant::Asset(
+            Into::<Vec<_>>::into(asset)
                 .into_iter()
                 .map(parse_asset)
-                .collect::<anyhow::Result<Vec<_>>>()?,
+                .collect::<anyhow::Result<_>>()?,
         )),
 
-        RawSourceVariant {
-            download: Some(downloads),
-            ..
-        } => Ok(SourceVariant::Download(parse_downloads(downloads)?)),
+        RawSourceVariant::Download { download } => {
+            Ok(SourceVariant::Download(parse_downloads(download)?))
+        }
 
-        RawSourceVariant {
-            build: Some(build), ..
-        } => Ok(SourceVariant::Build(
+        RawSourceVariant::Build { build } => Ok(SourceVariant::Build(
             Into::<Vec<_>>::into(build)
                 .into_iter()
                 .map(parse_build)
-                .collect::<anyhow::Result<Vec<_>>>()?,
+                .collect::<anyhow::Result<_>>()?,
         )),
 
-        _ => anyhow::bail!("invalid variant {raw:?} and/or kind {kind:?}"), // TODO: pretty-print
+        RawSourceVariant::ExtraPackages { extra_packages } => Ok(SourceVariant::PackageManager {
+            manager: kind.try_into()?,
+            extra_packages,
+        }),
     }
 }
 
@@ -104,49 +91,56 @@ fn parse_version_override(
         constraint: raw.constraint,
         id: raw.id,
         variant: parse_variant(raw.variant, kind)?,
-        supported_platforms: convert_platforms(raw.supported_platforms)?,
+        supported_platforms: util::convert_platforms(raw.supported_platforms)?,
     })
 }
 
 fn parse_asset(raw: RawAsset) -> anyhow::Result<Asset> {
     Ok(Asset {
-        targets: convert_platforms(raw.target.map(Into::into))?,
+        targets: util::convert_platforms(raw.target.map(Into::into))?,
         files: Into::<Vec<_>>::into(raw.file)
-            .iter()
-            .map(|s| util::parse_template(s))
+            .into_iter()
+            .map(util::parse_template)
             .collect(),
-        bin: raw.bin.map(|m| m.map(|s| util::parse_template(&s))),
-        extra: raw.extra,
+        bin: raw.bin.map(|m| m.map(util::parse_template)),
+        variables: raw
+            .variables
+            .into_iter()
+            .map(|(k, v)| (util::parse_template(k), v.map(util::parse_template)))
+            .collect(),
     })
 }
 
 fn parse_downloads(raw: RawDownloads) -> anyhow::Result<Downloads> {
     match raw {
-        RawDownloads::Simple { file } => Ok(Downloads::Simple { file }),
+        RawDownloads::Simple { file } => Ok(Downloads::Simple {
+            file: util::parse_template(file),
+        }),
+
         RawDownloads::Detailed(downs) => Ok(Downloads::Detailed(
             Into::<Vec<_>>::into(downs)
                 .into_iter()
                 .map(parse_download)
-                .collect::<anyhow::Result<Vec<_>>>()?,
+                .collect::<anyhow::Result<_>>()?,
         )),
     }
 }
 
 fn parse_download(raw: RawDownload) -> anyhow::Result<Download> {
     Ok(Download {
-        targets: convert_platforms(raw.target.map(Into::into))?,
-        files: raw.files,
-        bin: raw.bin,
+        targets: util::convert_platforms(raw.target.map(Into::into))?,
+        files: util::parse_template_hashmap(raw.files),
+        bin: raw.bin.map(util::parse_template),
     })
 }
 
 fn parse_build(raw: RawBuild) -> anyhow::Result<Build> {
     Ok(Build {
         command: raw.run,
-        targets: convert_platforms(raw.target.map(Into::into))?,
-        bin: raw.bin,
-        env: raw.env,
+        targets: util::convert_platforms(raw.target.map(Into::into))?,
+        bin: raw.bin.map(|bin| bin.map(util::parse_template)),
+        env: raw.env.map(util::parse_template_hashmap),
         staged: raw.staged,
-        extra: raw.extra,
+        extra: util::parse_template_hashmap(raw.extra),
     })
 }

@@ -1,7 +1,13 @@
 #![allow(unused)]
 
-use crate::registry::model::{AssetExtra, Deprecation, OneOrMap};
+use crate::registry::model::{AssetVars, Deprecation, OneOrMap};
 use std::collections::HashMap;
+
+// All fields like this has templates:
+// - bin
+// - file(s)
+// - every hashmap
+// - env
 
 // TODO: cache this once parsed (JSON serialized structs) and invalidate it when updating.
 // if the cache file is missing, parse again.
@@ -19,14 +25,14 @@ pub struct Entry {
     pub languages: Vec<String>,
     pub categories: Vec<String>,
     pub source: Source,
-    pub bin: Option<HashMap<String, String>>, // has templates
+    pub bin: Option<HashMap<String, String>>,
     pub deprecation: Option<Deprecation>,
 }
 
 #[derive(Debug)]
 pub struct Source {
     pub purl: Purl,
-    pub variant: SourceVariant,
+    pub variant: Option<SourceVariant>,
     pub supported_platforms: Vec<Platform>,
     pub version_overrides: Option<Vec<VersionOverride>>,
     pub bin: Option<String>, // for js-debug-adapter (edge case)
@@ -125,9 +131,9 @@ pub struct Platform {
 #[derive(Debug)]
 pub struct Asset {
     pub targets: Vec<Platform>,
-    pub files: Vec<String>,                 // has templates
-    pub bin: Option<OneOrMap>,              // has templates
-    pub extra: HashMap<String, AssetExtra>, // ad-hoc fields like "lsp" / "dap"
+    pub files: Vec<String>,
+    pub bin: Option<OneOrMap>,
+    pub variables: HashMap<String, AssetVars>, // ad-hoc fields like "lsp" / "dap" / "man"
 }
 
 #[derive(Debug)]

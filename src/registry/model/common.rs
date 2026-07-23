@@ -19,7 +19,7 @@ pub enum OneOrMap {
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-pub enum AssetExtra {
+pub enum AssetVars {
     Path(String),
     Nested(HashMap<String, String>),
 }

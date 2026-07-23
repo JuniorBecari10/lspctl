@@ -1,9 +1,7 @@
-use std::iter::Map;
-
 use anyhow::anyhow;
 use packageurl::PackageUrl;
 
-use crate::registry::model::{InstallKind, OneOrMany, OneOrMap, PackageManager, Purl};
+use crate::registry::model::{AssetVars, InstallKind, OneOrMany, OneOrMap, PackageManager, Purl};
 
 impl<T> From<OneOrMany<T>> for Vec<T> {
     fn from(value: OneOrMany<T>) -> Self {
@@ -28,7 +26,7 @@ impl<'a> TryFrom<PackageUrl<'a>> for Purl {
             version: purl.version().map(Into::into),
             qualifiers: purl
                 .qualifiers()
-                .into_iter()
+                .iter()
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect(),
             subpath: purl.subpath().map(Into::into),
@@ -59,10 +57,7 @@ impl TryFrom<InstallKind> for PackageManager {
 }
 
 impl OneOrMap {
-    pub fn map<F>(self, f: F) -> Self
-    where
-        F: Fn(String) -> String,
-    {
+    pub fn map(self, f: impl Fn(String) -> String) -> Self {
         match self {
             OneOrMap::One(s) => OneOrMap::One(f(s)),
             OneOrMap::Map(m) => OneOrMap::Map(m.into_iter().map(|(k, v)| (f(k), f(v))).collect()),
@@ -70,13 +65,14 @@ impl OneOrMap {
     }
 }
 
-impl InstallKind {
-    pub fn is_package_manager(&self) -> bool {
-        use InstallKind::*;
-        matches!(
-            self,
-            Npm | PyPI | Golang | Cargo | Gem | Composer | LuaRocks | Opam | NuGet
-        )
+impl AssetVars {
+    pub fn map(self, f: impl Fn(String) -> String) -> Self {
+        match self {
+            AssetVars::Path(p) => AssetVars::Path(f(p)),
+            AssetVars::Nested(n) => {
+                AssetVars::Nested(n.into_iter().map(|(k, v)| (f(k), f(v))).collect())
+            }
+        }
     }
 }
 

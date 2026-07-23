@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::registry::model::{AssetExtra, OneOrMap, common::Deprecation};
+use crate::registry::model::{AssetVars, OneOrMap, common::Deprecation};
 
 #[derive(Deserialize, Debug)]
 pub struct RawRegistry(pub Vec<RawEntry>);
@@ -23,23 +23,20 @@ pub struct RawEntry {
 #[derive(Deserialize, Debug)]
 pub struct RawSource {
     pub id: String, // (purl)
-
     #[serde(flatten)]
-    pub variant: RawSourceVariant,
+    pub variant: Option<RawSourceVariant>,
     pub supported_platforms: Option<Vec<String>>,
     pub version_overrides: Option<Vec<RawVersionOverride>>,
     pub bin: Option<String>, // for js-debug-adapter (edge case)
 }
 
 #[derive(Deserialize, Debug)]
-pub struct RawSourceVariant {
-    // one and only one of these will be present at once
-    // TODO: enforce this rule
-    pub extra_packages: Option<Vec<String>>, // any package manager. kind must be package manager for this to be Some(). kind may be a package manager and this be None, though.
-    #[serde(rename = "asset")]
-    pub assets: Option<OneOrMany<RawAsset>>, // github
-    pub download: Option<RawDownloads>,      // generic / openvsx
-    pub build: Option<OneOrMany<RawBuild>>,  // build
+#[serde(untagged)]
+pub enum RawSourceVariant {
+    Asset { asset: OneOrMany<RawAsset> },
+    Download { download: RawDownloads },
+    Build { build: OneOrMany<RawBuild> },
+    ExtraPackages { extra_packages: Vec<String> },
 }
 
 #[derive(Deserialize, Debug)]
@@ -83,7 +80,7 @@ pub struct RawAsset {
     pub file: OneOrMany<String>,
     pub bin: Option<OneOrMap>,
     #[serde(flatten)]
-    pub extra: HashMap<String, AssetExtra>,
+    pub variables: HashMap<String, AssetVars>,
 }
 
 // ---
