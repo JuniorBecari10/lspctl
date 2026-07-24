@@ -10,14 +10,14 @@ pub struct Deprecation {
     message: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum OneOrMap {
     One(String),
     Map(HashMap<String, String>),
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum AssetVars {
     Path(String),

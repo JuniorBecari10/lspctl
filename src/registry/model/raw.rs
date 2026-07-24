@@ -33,10 +33,10 @@ pub struct RawSource {
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
 pub enum RawSourceVariant {
+    ExtraPackages { extra_packages: Vec<String> },
     Asset { asset: OneOrMany<RawAsset> },
     Download { download: RawDownloads },
     Build { build: OneOrMany<RawBuild> },
-    ExtraPackages { extra_packages: Vec<String> },
 }
 
 #[derive(Deserialize, Debug)]

@@ -5,11 +5,7 @@ use std::str::FromStr;
 
 use packageurl::PackageUrl;
 
-use crate::registry::model::{
-    Asset, Build, Download, Downloads, Entry, InstallKind, Purl, RawAsset, RawBuild, RawDownload,
-    RawDownloads, RawEntry, RawRegistry, RawSource, RawSourceVariant, RawVersionOverride, Registry,
-    Source, SourceVariant, VersionOverride,
-};
+use crate::registry::model::*;
 
 pub fn parse_registry(raw: RawRegistry) -> anyhow::Result<Registry> {
     Ok(template::resolve_templates(Registry(
@@ -59,6 +55,11 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
 
 fn parse_variant(raw: RawSourceVariant, kind: InstallKind) -> anyhow::Result<SourceVariant> {
     match raw {
+        RawSourceVariant::ExtraPackages { extra_packages } => Ok(SourceVariant::PackageManager {
+            manager: kind.try_into()?,
+            extra_packages,
+        }),
+
         RawSourceVariant::Asset { asset } => Ok(SourceVariant::Asset(
             Into::<Vec<_>>::into(asset)
                 .into_iter()
@@ -76,11 +77,6 @@ fn parse_variant(raw: RawSourceVariant, kind: InstallKind) -> anyhow::Result<Sou
                 .map(parse_build)
                 .collect::<anyhow::Result<_>>()?,
         )),
-
-        RawSourceVariant::ExtraPackages { extra_packages } => Ok(SourceVariant::PackageManager {
-            manager: kind.try_into()?,
-            extra_packages,
-        }),
     }
 }
 

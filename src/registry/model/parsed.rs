@@ -29,7 +29,7 @@ pub struct Entry {
     pub deprecation: Option<Deprecation>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Source {
     pub purl: Purl,
     pub variant: Option<SourceVariant>,
@@ -39,7 +39,7 @@ pub struct Source {
 }
 
 // implements TryFrom<PackageUrl>
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Purl {
     pub kind: InstallKind,
     pub namespace: Option<String>,
@@ -49,7 +49,7 @@ pub struct Purl {
     pub subpath: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SourceVariant {
     PackageManager {
         manager: PackageManager,
@@ -60,7 +60,7 @@ pub enum SourceVariant {
     Build(Vec<Build>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VersionOverride {
     pub constraint: String,
     pub id: String,
@@ -128,7 +128,7 @@ pub struct Platform {
     pub libc: Option<Libc>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Asset {
     pub targets: Vec<Platform>,
     pub files: Vec<String>,
@@ -136,20 +136,20 @@ pub struct Asset {
     pub variables: HashMap<String, AssetVars>, // ad-hoc fields like "lsp" / "dap" / "man"
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Downloads {
     Simple { file: String },
     Detailed(Vec<Download>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Download {
     pub targets: Vec<Platform>,
     pub files: HashMap<String, String>,
     pub bin: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Build {
     pub command: String,
     pub targets: Vec<Platform>,
