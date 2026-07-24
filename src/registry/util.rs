@@ -12,6 +12,7 @@ use crate::{consts, io, paths};
 consts::consts!(
     REGISTRY_FILE = "registry.json",
     REGISTRY_ZIP = concatcp!(REGISTRY_FILE, ".zip"),
+    REGCACHE_FILE = "regcache.json",
 );
 
 pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {

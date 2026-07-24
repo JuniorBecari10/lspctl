@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::registry::model::{Arch, Libc, Os, Platform};
 
 pub fn get_platform(s: &str) -> anyhow::Result<Vec<Platform>> {
@@ -70,18 +68,4 @@ pub fn convert_platforms(platforms: Option<Vec<String>>) -> anyhow::Result<Vec<P
         .map(|s| get_platform(s))
         .collect::<anyhow::Result<Vec<Vec<Platform>>>>()
         .map(|nested| nested.into_iter().flatten().collect())
-}
-
-pub fn parse_template_hashmap(h: HashMap<String, String>) -> HashMap<String, String> {
-    h.into_iter()
-        .map(|(k, v)| (parse_template(k), parse_template(v)))
-        .collect()
-}
-
-// TODO: accept version and source as arguments.
-// try to make a way for those to be accepted here
-pub fn parse_template(s: String) -> String {
-    // TODO
-    // s.replace("{{version}}", version)
-    s
 }

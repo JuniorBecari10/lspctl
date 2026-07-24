@@ -1,4 +1,5 @@
-mod util;
+mod platform;
+mod template;
 
 use std::str::FromStr;
 
@@ -11,12 +12,12 @@ use crate::registry::model::{
 };
 
 pub fn parse_registry(raw: RawRegistry) -> anyhow::Result<Registry> {
-    Ok(Registry(
+    Ok(template::resolve_templates(Registry(
         raw.0
             .into_iter()
             .map(parse_entry)
             .collect::<anyhow::Result<_>>()?,
-    ))
+    ))?)
 }
 
 fn parse_entry(raw: RawEntry) -> anyhow::Result<Entry> {
@@ -28,7 +29,7 @@ fn parse_entry(raw: RawEntry) -> anyhow::Result<Entry> {
         languages: raw.languages,
         categories: raw.categories,
         source: parse_source(raw.source)?,
-        bin: raw.bin.map(util::parse_template_hashmap),
+        bin: raw.bin,
         deprecation: raw.deprecation,
     })
 }
@@ -41,7 +42,7 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
             .variant
             .map(|v| parse_variant(v, purl.kind))
             .transpose()?,
-        supported_platforms: util::convert_platforms(raw.supported_platforms)?,
+        supported_platforms: platform::convert_platforms(raw.supported_platforms)?,
         version_overrides: raw
             .version_overrides
             .map(|raw_vo| {
@@ -52,7 +53,7 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
             })
             .transpose()?,
         purl, // used after because of the borrow checker
-        bin: raw.bin.map(util::parse_template),
+        bin: raw.bin,
     })
 }
 
@@ -91,22 +92,22 @@ fn parse_version_override(
         constraint: raw.constraint,
         id: raw.id,
         variant: parse_variant(raw.variant, kind)?,
-        supported_platforms: util::convert_platforms(raw.supported_platforms)?,
+        supported_platforms: platform::convert_platforms(raw.supported_platforms)?,
     })
 }
 
 fn parse_asset(raw: RawAsset) -> anyhow::Result<Asset> {
     Ok(Asset {
-        targets: util::convert_platforms(raw.target.map(Into::into))?,
+        targets: platform::convert_platforms(raw.target.map(Into::into))?,
         files: Into::<Vec<_>>::into(raw.file)
             .into_iter()
-            .map(util::parse_template)
+            .map(template::parse_template)
             .collect(),
-        bin: raw.bin.map(|m| m.map(util::parse_template)),
+        bin: raw.bin.map(|m| m.map(template::parse_template)),
         variables: raw
             .variables
             .into_iter()
-            .map(|(k, v)| (util::parse_template(k), v.map(util::parse_template)))
+            .map(|(k, v)| (template::parse_template(k), v.map(template::parse_template)))
             .collect(),
     })
 }
@@ -114,7 +115,7 @@ fn parse_asset(raw: RawAsset) -> anyhow::Result<Asset> {
 fn parse_downloads(raw: RawDownloads) -> anyhow::Result<Downloads> {
     match raw {
         RawDownloads::Simple { file } => Ok(Downloads::Simple {
-            file: util::parse_template(file),
+            file: template::parse_template(file),
         }),
 
         RawDownloads::Detailed(downs) => Ok(Downloads::Detailed(
@@ -128,19 +129,19 @@ fn parse_downloads(raw: RawDownloads) -> anyhow::Result<Downloads> {
 
 fn parse_download(raw: RawDownload) -> anyhow::Result<Download> {
     Ok(Download {
-        targets: util::convert_platforms(raw.target.map(Into::into))?,
-        files: util::parse_template_hashmap(raw.files),
-        bin: raw.bin.map(util::parse_template),
+        targets: platform::convert_platforms(raw.target.map(Into::into))?,
+        files: template::parse_template_hashmap(raw.files),
+        bin: raw.bin.map(template::parse_template),
     })
 }
 
 fn parse_build(raw: RawBuild) -> anyhow::Result<Build> {
     Ok(Build {
         command: raw.run,
-        targets: util::convert_platforms(raw.target.map(Into::into))?,
-        bin: raw.bin.map(|bin| bin.map(util::parse_template)),
-        env: raw.env.map(util::parse_template_hashmap),
+        targets: platform::convert_platforms(raw.target.map(Into::into))?,
+        bin: raw.bin.map(|bin| bin.map(template::parse_template)),
+        env: raw.env.map(template::parse_template_hashmap),
         staged: raw.staged,
-        extra: util::parse_template_hashmap(raw.extra),
+        extra: template::parse_template_hashmap(raw.extra),
     })
 }

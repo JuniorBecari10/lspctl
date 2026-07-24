@@ -41,3 +41,7 @@ pub fn state_file() -> PathBuf {
 pub fn registry_file() -> PathBuf {
     registry_dir().join(registry::REGISTRY_FILE)
 }
+
+pub fn cache_file() -> PathBuf {
+    registry_dir().join(registry::REGCACHE_FILE)
+}
