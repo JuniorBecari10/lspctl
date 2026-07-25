@@ -28,25 +28,27 @@ fn resolve_entry(e: Entry) -> anyhow::Result<Entry> {
     })
 }
 
-// it's your fault, js-debug-adapter!
 fn resolve_source(s: Source) -> anyhow::Result<Source> {
-    let cloned = s.clone(); // this bin should use the older version of s
+    let snapshot = s.clone();
 
     Ok(Source {
-        variant: s.variant.map(|v| resolve_variant(v, &cloned)).transpose()?,
+        variant: s
+            .variant
+            .map(|v| resolve_variant(v, &snapshot))
+            .transpose()?,
 
         version_overrides: s
             .version_overrides
             .map(|vos| {
                 vos.into_iter()
-                    .map(|vo| resolve_version_override(vo, &cloned))
+                    .map(|vo| resolve_version_override(vo, &snapshot))
                     .collect::<anyhow::Result<_>>()
             })
             .transpose()?,
 
         bin: s
             .bin
-            .map(|b| parser::parse_template(b, &cloned))
+            .map(|b| parser::parse_template(b, &snapshot))
             .transpose()?,
 
         ..s
@@ -103,7 +105,7 @@ fn resolve_asset(a: Asset, source: &Source) -> anyhow::Result<Asset> {
 
         bin: a
             .bin
-            .map(|b| b.try_map(|st| parser::parse_template(st, source)))
+            .map(|bin| bin.try_map(|b| parser::parse_template(b, source)))
             .transpose()?,
 
         variables: a
