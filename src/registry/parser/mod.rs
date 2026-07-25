@@ -95,27 +95,18 @@ fn parse_version_override(
 fn parse_asset(raw: RawAsset) -> anyhow::Result<Asset> {
     Ok(Asset {
         targets: platform::convert_platforms(raw.target.map(Into::into))?,
-        files: Into::<Vec<_>>::into(raw.file)
-            .into_iter()
-            .map(template::parse_template)
-            .collect(),
-        bin: raw.bin.map(|m| m.map(template::parse_template)),
-        variables: raw
-            .variables
-            .into_iter()
-            .map(|(k, v)| (template::parse_template(k), v.map(template::parse_template)))
-            .collect(),
+        files: raw.file.into(),
+        bin: raw.bin,
+        variables: raw.variables,
     })
 }
 
 fn parse_downloads(raw: RawDownloads) -> anyhow::Result<Downloads> {
     match raw {
-        RawDownloads::Simple { file } => Ok(Downloads::Simple {
-            file: template::parse_template(file),
-        }),
+        RawDownloads::Simple { file } => Ok(Downloads::Simple { file }),
 
-        RawDownloads::Detailed(downs) => Ok(Downloads::Detailed(
-            Into::<Vec<_>>::into(downs)
+        RawDownloads::Detailed(downloads) => Ok(Downloads::Detailed(
+            Into::<Vec<_>>::into(downloads)
                 .into_iter()
                 .map(parse_download)
                 .collect::<anyhow::Result<_>>()?,
@@ -126,8 +117,8 @@ fn parse_downloads(raw: RawDownloads) -> anyhow::Result<Downloads> {
 fn parse_download(raw: RawDownload) -> anyhow::Result<Download> {
     Ok(Download {
         targets: platform::convert_platforms(raw.target.map(Into::into))?,
-        files: template::parse_template_hashmap(raw.files),
-        bin: raw.bin.map(template::parse_template),
+        files: raw.files,
+        bin: raw.bin,
     })
 }
 
@@ -135,9 +126,9 @@ fn parse_build(raw: RawBuild) -> anyhow::Result<Build> {
     Ok(Build {
         command: raw.run,
         targets: platform::convert_platforms(raw.target.map(Into::into))?,
-        bin: raw.bin.map(|bin| bin.map(template::parse_template)),
-        env: raw.env.map(template::parse_template_hashmap),
+        bin: raw.bin,
+        env: raw.env,
         staged: raw.staged,
-        extra: template::parse_template_hashmap(raw.extra),
+        extra: raw.extra,
     })
 }

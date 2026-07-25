@@ -4,7 +4,7 @@ mod token;
 pub use parser::*;
 
 use crate::registry::model::{
-    Asset, Downloads, Entry, Registry, Source, SourceVariant, VersionOverride,
+    Asset, Build, Download, Downloads, Entry, Registry, Source, SourceVariant, VersionOverride,
 };
 
 pub fn resolve_templates(reg: Registry) -> anyhow::Result<Registry> {
@@ -29,8 +29,9 @@ fn resolve_entry(e: Entry) -> anyhow::Result<Entry> {
     })
 }
 
+// it's your fault, js-debug-adapter!
 fn resolve_source(s: Source) -> anyhow::Result<Source> {
-    let cloned = s.clone();
+    let cloned = s.clone(); // this bin should use the older version of s
 
     Ok(Source {
         variant: s.variant.map(|v| resolve_variant(v, &cloned)).transpose()?,
@@ -95,10 +96,61 @@ fn resolve_asset(a: Asset, s: &Source) -> anyhow::Result<Asset> {
             .map(|f| parser::parse_template(f, s))
             .collect::<anyhow::Result<_>>()?,
 
-        bin: a.bin.map(|m| m.map(|st| parser::parse_template(st, s))),
+        bin: a
+            .bin
+            .map(|m| m.try_map(|st| parser::parse_template(st, s)))
+            .transpose()?,
+
+        variables: a
+            .variables
+            .into_iter()
+            .map(|(k, v)| {
+                Ok((
+                    parser::parse_template(k, s)?,
+                    v.try_map(|vars| parser::parse_template(vars, s))?,
+                ))
+            })
+            .collect::<anyhow::Result<_>>()?,
+        ..a
     })
 }
 
-fn resolve_downloads(d: Downloads, s: &Source) -> anyhow::Result<Downloads> {}
+fn resolve_downloads(d: Downloads, s: &Source) -> anyhow::Result<Downloads> {
+    match d {
+        Downloads::Simple { file } => Ok(Downloads::Simple {
+            file: parser::parse_template(file, s)?,
+        }),
 
-fn resolve_build(b: Build, s: &Source) -> anyhow::Result<Build> {}
+        Downloads::Detailed(downloads) => Ok(Downloads::Detailed(
+            downloads
+                .into_iter()
+                .map(|d| resolve_download(d, s))
+                .collect::<anyhow::Result<_>>()?,
+        )),
+    }
+}
+
+fn resolve_download(d: Download, s: &Source) -> anyhow::Result<Download> {
+    Ok(Download {
+        files: parser::parse_template_hashmap(d.files, s)?,
+        bin: d.bin.map(|b| parser::parse_template(b, s)).transpose()?,
+        ..d
+    })
+}
+
+fn resolve_build(b: Build, s: &Source) -> anyhow::Result<Build> {
+    Ok(Build {
+        bin: b
+            .bin
+            .map(|bb| bb.try_map(|st| parser::parse_template(st, s)))
+            .transpose()?,
+
+        env: b
+            .env
+            .map(|e| parser::parse_template_hashmap(e, s))
+            .transpose()?,
+
+        extra: parser::parse_template_hashmap(b.extra, s)?,
+        ..b
+    })
+}

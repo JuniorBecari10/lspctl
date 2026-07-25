@@ -11,7 +11,6 @@ pub fn parse_template_hashmap(
         .collect()
 }
 
-// TODO: accept version and source as arguments.
 // source.bin is only used in js-debug-adapter
 // s is an owned string to simplify the parser implementation,
 // since the object template string is meant to be moved into the function

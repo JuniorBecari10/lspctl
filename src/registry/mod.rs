@@ -9,6 +9,7 @@ mod parser;
 mod util;
 
 // Export for other packages to use as well
+pub use util::REGCACHE_FILE;
 pub use util::REGISTRY_FILE;
 
 const MASON_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases/latest";

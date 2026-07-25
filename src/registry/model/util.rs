@@ -57,22 +57,28 @@ impl TryFrom<InstallKind> for PackageManager {
 }
 
 impl OneOrMap {
-    pub fn map(self, f: impl Fn(String) -> String) -> Self {
-        match self {
-            OneOrMap::One(s) => OneOrMap::One(f(s)),
-            OneOrMap::Map(m) => OneOrMap::Map(m.into_iter().map(|(k, v)| (f(k), f(v))).collect()),
-        }
+    pub fn try_map(self, f: impl Fn(String) -> anyhow::Result<String>) -> anyhow::Result<Self> {
+        Ok(match self {
+            OneOrMap::One(s) => OneOrMap::One(f(s)?),
+            OneOrMap::Map(m) => OneOrMap::Map(
+                m.into_iter()
+                    .map(|(k, v)| Ok((k, f(v)?)))
+                    .collect::<anyhow::Result<_>>()?,
+            ),
+        })
     }
 }
 
 impl AssetVars {
-    pub fn map(self, f: impl Fn(String) -> String) -> Self {
-        match self {
-            AssetVars::Path(p) => AssetVars::Path(f(p)),
-            AssetVars::Nested(n) => {
-                AssetVars::Nested(n.into_iter().map(|(k, v)| (f(k), f(v))).collect())
-            }
-        }
+    pub fn try_map(self, f: impl Fn(String) -> anyhow::Result<String>) -> anyhow::Result<Self> {
+        Ok(match self {
+            AssetVars::Path(s) => AssetVars::Path(f(s)?),
+            AssetVars::Nested(m) => AssetVars::Nested(
+                m.into_iter()
+                    .map(|(k, v)| Ok((k, f(v)?)))
+                    .collect::<anyhow::Result<_>>()?,
+            ),
+        })
     }
 }
 
