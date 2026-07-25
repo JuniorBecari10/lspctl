@@ -16,13 +16,7 @@ pub fn parse_template_hashmap(
 // since the object template string is meant to be moved into the function
 // version is 'source.purl.version'
 pub fn parse_template(template: String, source: &Source) -> anyhow::Result<String> {
-    if template.contains("{{") {
-        parse(template, source)
-    } else {
-        Ok(template)
+    if !template.contains("{{") {
+        return Ok(template);
     }
-}
-
-fn parse(template: String, source: &Source) -> anyhow::Result<String> {
-    todo!()
 }

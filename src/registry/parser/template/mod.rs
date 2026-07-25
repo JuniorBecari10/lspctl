@@ -1,4 +1,5 @@
 pub mod parser;
+mod segment;
 mod token;
 
 use crate::registry::model::{
