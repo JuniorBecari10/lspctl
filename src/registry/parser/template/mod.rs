@@ -1,8 +1,6 @@
 pub mod parser;
 mod token;
 
-pub use parser::*;
-
 use crate::registry::model::{
     Asset, Build, Download, Downloads, Entry, Registry, Source, SourceVariant, VersionOverride,
 };
@@ -24,6 +22,7 @@ fn resolve_entry(e: Entry) -> anyhow::Result<Entry> {
             .bin
             .map(|b| parser::parse_template_hashmap(b, &source))
             .transpose()?,
+
         source,
         ..e
     })
@@ -35,23 +34,26 @@ fn resolve_source(s: Source) -> anyhow::Result<Source> {
 
     Ok(Source {
         variant: s.variant.map(|v| resolve_variant(v, &cloned)).transpose()?,
+
         version_overrides: s
             .version_overrides
-            .map(|vo| {
-                vo.into_iter()
+            .map(|vos| {
+                vos.into_iter()
                     .map(|vo| resolve_version_override(vo, &cloned))
                     .collect::<anyhow::Result<_>>()
             })
             .transpose()?,
+
         bin: s
             .bin
             .map(|b| parser::parse_template(b, &cloned))
             .transpose()?,
+
         ..s
     })
 }
 
-fn resolve_variant(v: SourceVariant, s: &Source) -> anyhow::Result<SourceVariant> {
+fn resolve_variant(v: SourceVariant, source: &Source) -> anyhow::Result<SourceVariant> {
     match v {
         SourceVariant::PackageManager {
             manager,
@@ -64,41 +66,44 @@ fn resolve_variant(v: SourceVariant, s: &Source) -> anyhow::Result<SourceVariant
         SourceVariant::Asset(assets) => Ok(SourceVariant::Asset(
             assets
                 .into_iter()
-                .map(|a| resolve_asset(a, s))
+                .map(|a| resolve_asset(a, source))
                 .collect::<anyhow::Result<_>>()?,
         )),
 
-        SourceVariant::Download(downloads) => {
-            Ok(SourceVariant::Download(resolve_downloads(downloads, s)?))
-        }
+        SourceVariant::Download(downloads) => Ok(SourceVariant::Download(resolve_downloads(
+            downloads, source,
+        )?)),
 
         SourceVariant::Build(builds) => Ok(SourceVariant::Build(
             builds
                 .into_iter()
-                .map(|b| resolve_build(b, s))
+                .map(|b| resolve_build(b, source))
                 .collect::<anyhow::Result<_>>()?,
         )),
     }
 }
 
-fn resolve_version_override(vo: VersionOverride, s: &Source) -> anyhow::Result<VersionOverride> {
+fn resolve_version_override(
+    vo: VersionOverride,
+    source: &Source,
+) -> anyhow::Result<VersionOverride> {
     Ok(VersionOverride {
-        variant: resolve_variant(vo.variant, s)?,
+        variant: resolve_variant(vo.variant, source)?,
         ..vo
     })
 }
 
-fn resolve_asset(a: Asset, s: &Source) -> anyhow::Result<Asset> {
+fn resolve_asset(a: Asset, source: &Source) -> anyhow::Result<Asset> {
     Ok(Asset {
         files: a
             .files
             .into_iter()
-            .map(|f| parser::parse_template(f, s))
+            .map(|f| parser::parse_template(f, source))
             .collect::<anyhow::Result<_>>()?,
 
         bin: a
             .bin
-            .map(|m| m.try_map(|st| parser::parse_template(st, s)))
+            .map(|b| b.try_map(|st| parser::parse_template(st, source)))
             .transpose()?,
 
         variables: a
@@ -106,51 +111,56 @@ fn resolve_asset(a: Asset, s: &Source) -> anyhow::Result<Asset> {
             .into_iter()
             .map(|(k, v)| {
                 Ok((
-                    parser::parse_template(k, s)?,
-                    v.try_map(|vars| parser::parse_template(vars, s))?,
+                    parser::parse_template(k, source)?,
+                    v.try_map(|vars| parser::parse_template(vars, source))?,
                 ))
             })
             .collect::<anyhow::Result<_>>()?,
+
         ..a
     })
 }
 
-fn resolve_downloads(d: Downloads, s: &Source) -> anyhow::Result<Downloads> {
+fn resolve_downloads(d: Downloads, source: &Source) -> anyhow::Result<Downloads> {
     match d {
         Downloads::Simple { file } => Ok(Downloads::Simple {
-            file: parser::parse_template(file, s)?,
+            file: parser::parse_template(file, source)?,
         }),
 
         Downloads::Detailed(downloads) => Ok(Downloads::Detailed(
             downloads
                 .into_iter()
-                .map(|d| resolve_download(d, s))
+                .map(|d| resolve_download(d, source))
                 .collect::<anyhow::Result<_>>()?,
         )),
     }
 }
 
-fn resolve_download(d: Download, s: &Source) -> anyhow::Result<Download> {
+fn resolve_download(d: Download, source: &Source) -> anyhow::Result<Download> {
     Ok(Download {
-        files: parser::parse_template_hashmap(d.files, s)?,
-        bin: d.bin.map(|b| parser::parse_template(b, s)).transpose()?,
+        files: parser::parse_template_hashmap(d.files, source)?,
+        bin: d
+            .bin
+            .map(|b| parser::parse_template(b, source))
+            .transpose()?,
+
         ..d
     })
 }
 
-fn resolve_build(b: Build, s: &Source) -> anyhow::Result<Build> {
+fn resolve_build(b: Build, source: &Source) -> anyhow::Result<Build> {
     Ok(Build {
         bin: b
             .bin
-            .map(|bb| bb.try_map(|st| parser::parse_template(st, s)))
+            .map(|bin| bin.try_map(|b| parser::parse_template(b, source)))
             .transpose()?,
 
         env: b
             .env
-            .map(|e| parser::parse_template_hashmap(e, s))
+            .map(|e| parser::parse_template_hashmap(e, source))
             .transpose()?,
 
-        extra: parser::parse_template_hashmap(b.extra, s)?,
+        extra: parser::parse_template_hashmap(b.extra, source)?,
         ..b
     })
 }

@@ -38,16 +38,18 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
             .variant
             .map(|v| parse_variant(v, purl.kind))
             .transpose()?,
-        supported_platforms: platform::convert_platforms(raw.supported_platforms)?,
+
         version_overrides: raw
             .version_overrides
-            .map(|raw_vo| {
-                raw_vo
-                    .into_iter()
+            .map(|vos| {
+                vos.into_iter()
                     .map(|vo| parse_version_override(vo, purl.kind))
                     .collect::<anyhow::Result<_>>()
             })
             .transpose()?,
+
+        supported_platforms: platform::convert_platforms(raw.supported_platforms)?,
+
         purl, // used after because of the borrow checker
         bin: raw.bin,
     })
