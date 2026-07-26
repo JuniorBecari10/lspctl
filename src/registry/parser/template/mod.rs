@@ -1,4 +1,7 @@
-pub mod parser;
+mod ast;
+mod eval;
+mod parser;
+pub mod public;
 mod segment;
 mod token;
 
@@ -21,7 +24,7 @@ fn resolve_entry(e: Entry) -> anyhow::Result<Entry> {
     Ok(Entry {
         bin: e
             .bin
-            .map(|b| parser::parse_template_hashmap(b, &source))
+            .map(|b| public::parse_template_hashmap(b, &source))
             .transpose()?,
 
         source,
@@ -49,7 +52,7 @@ fn resolve_source(s: Source) -> anyhow::Result<Source> {
 
         bin: s
             .bin
-            .map(|b| parser::parse_template(b, &snapshot))
+            .map(|b| public::parse_template(b, &snapshot))
             .transpose()?,
 
         ..s
@@ -101,12 +104,12 @@ fn resolve_asset(a: Asset, source: &Source) -> anyhow::Result<Asset> {
         files: a
             .files
             .into_iter()
-            .map(|f| parser::parse_template(f, source))
+            .map(|f| public::parse_template(f, source))
             .collect::<anyhow::Result<_>>()?,
 
         bin: a
             .bin
-            .map(|bin| bin.try_map(|b| parser::parse_template(b, source)))
+            .map(|bin| bin.try_map(|b| public::parse_template(b, source)))
             .transpose()?,
 
         variables: a
@@ -114,8 +117,8 @@ fn resolve_asset(a: Asset, source: &Source) -> anyhow::Result<Asset> {
             .into_iter()
             .map(|(k, v)| {
                 Ok((
-                    parser::parse_template(k, source)?,
-                    v.try_map(|vars| parser::parse_template(vars, source))?,
+                    public::parse_template(k, source)?,
+                    v.try_map(|vars| public::parse_template(vars, source))?,
                 ))
             })
             .collect::<anyhow::Result<_>>()?,
@@ -127,7 +130,7 @@ fn resolve_asset(a: Asset, source: &Source) -> anyhow::Result<Asset> {
 fn resolve_downloads(d: Downloads, source: &Source) -> anyhow::Result<Downloads> {
     match d {
         Downloads::Simple { file } => Ok(Downloads::Simple {
-            file: parser::parse_template(file, source)?,
+            file: public::parse_template(file, source)?,
         }),
 
         Downloads::Detailed(downloads) => Ok(Downloads::Detailed(
@@ -141,10 +144,10 @@ fn resolve_downloads(d: Downloads, source: &Source) -> anyhow::Result<Downloads>
 
 fn resolve_download(d: Download, source: &Source) -> anyhow::Result<Download> {
     Ok(Download {
-        files: parser::parse_template_hashmap(d.files, source)?,
+        files: public::parse_template_hashmap(d.files, source)?,
         bin: d
             .bin
-            .map(|b| parser::parse_template(b, source))
+            .map(|b| public::parse_template(b, source))
             .transpose()?,
 
         ..d
@@ -155,15 +158,15 @@ fn resolve_build(b: Build, source: &Source) -> anyhow::Result<Build> {
     Ok(Build {
         bin: b
             .bin
-            .map(|bin| bin.try_map(|b| parser::parse_template(b, source)))
+            .map(|bin| bin.try_map(|b| public::parse_template(b, source)))
             .transpose()?,
 
         env: b
             .env
-            .map(|e| parser::parse_template_hashmap(e, source))
+            .map(|e| public::parse_template_hashmap(e, source))
             .transpose()?,
 
-        extra: parser::parse_template_hashmap(b.extra, source)?,
+        extra: public::parse_template_hashmap(b.extra, source)?,
         ..b
     })
 }

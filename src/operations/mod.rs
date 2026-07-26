@@ -1,5 +1,6 @@
 use crate::{registry, root};
 
+mod logic;
 pub mod model;
 
 // TODO: when we add file locks, return it here as well in a tuple
@@ -11,8 +12,15 @@ fn prelude() -> registry::model::Registry {
 
 pub fn install(args: model::InstallArgs) {
     let registry = prelude();
-    dbg!(args);
-    dbg!(registry);
+
+    for pkg in args.pkgs {
+        log::info!("Installing package '{pkg}'..");
+
+        match logic::install_pkg(&pkg, &registry) {
+            Ok(()) => log::info!("Package installed successfully."),
+            Err(e) => log::error!("Failed to install '{pkg}': {e}."),
+        }
+    }
 }
 
 pub fn remove(args: model::RemoveArgs) {

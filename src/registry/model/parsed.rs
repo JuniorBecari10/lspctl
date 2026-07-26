@@ -1,4 +1,4 @@
-#![allow(unused)]
+use serde::Serialize;
 
 use crate::registry::model::{AssetVars, Deprecation, OneOrMap};
 use std::collections::HashMap;
@@ -13,10 +13,10 @@ use std::collections::HashMap;
 // if the cache file is missing, parse again.
 // TODO: resolve strings like {{ version | strip_prefix "v" }}
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Registry(pub Vec<Entry>);
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Entry {
     pub name: String,
     pub description: String,
@@ -29,7 +29,7 @@ pub struct Entry {
     pub deprecation: Option<Deprecation>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Source {
     pub purl: Purl,
     pub variant: Option<SourceVariant>,
@@ -39,7 +39,7 @@ pub struct Source {
 }
 
 // implements TryFrom<PackageUrl>
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Purl {
     pub kind: InstallKind,
     pub namespace: Option<String>,
@@ -49,7 +49,7 @@ pub struct Purl {
     pub subpath: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum SourceVariant {
     PackageManager {
         manager: PackageManager,
@@ -60,7 +60,7 @@ pub enum SourceVariant {
     Build(Vec<Build>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct VersionOverride {
     pub constraint: String,
     pub id: String,
@@ -68,7 +68,7 @@ pub struct VersionOverride {
     pub supported_platforms: Vec<Platform>,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
 pub enum InstallKind {
     Npm,
     PyPI,
@@ -84,7 +84,7 @@ pub enum InstallKind {
     OpenVsx,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
 pub enum PackageManager {
     Npm,
     PyPI,
@@ -97,14 +97,14 @@ pub enum PackageManager {
     NuGet,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 pub enum Os {
     Linux,
     Darwin,
     Windows,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 pub enum Arch {
     X64,
     X86,
@@ -114,21 +114,21 @@ pub enum Arch {
     Armv7l,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 pub enum Libc {
     Gnu,
     Musl,
     OpenBsd,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 pub struct Platform {
     pub os: Os,
     pub arch: Option<Arch>,
     pub libc: Option<Libc>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Asset {
     pub targets: Vec<Platform>,
     pub files: Vec<String>,
@@ -136,20 +136,20 @@ pub struct Asset {
     pub variables: HashMap<String, AssetVars>, // ad-hoc fields like "lsp" / "dap" / "man"
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Downloads {
     Simple { file: String },
     Detailed(Vec<Download>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Download {
     pub targets: Vec<Platform>,
     pub files: HashMap<String, String>,
     pub bin: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Build {
     pub command: String,
     pub targets: Vec<Platform>,

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::registry::model::{AssetVars, OneOrMap, common::Deprecation};
 
@@ -20,7 +20,7 @@ pub struct RawEntry {
     pub deprecation: Option<Deprecation>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct RawSource {
     pub id: String, // (purl)
     #[serde(flatten)]
@@ -30,7 +30,7 @@ pub struct RawSource {
     pub bin: Option<String>, // for js-debug-adapter (edge case)
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(untagged)]
 pub enum RawSourceVariant {
     ExtraPackages { extra_packages: Vec<String> },
@@ -39,7 +39,7 @@ pub enum RawSourceVariant {
     Build { build: OneOrMany<RawBuild> },
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct RawVersionOverride {
     pub constraint: String,
     pub id: String,
@@ -49,21 +49,21 @@ pub struct RawVersionOverride {
     pub supported_platforms: Option<Vec<String>>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(untagged)]
 pub enum RawDownloads {
     Simple { file: String },
     Detailed(OneOrMany<RawDownload>),
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct RawDownload {
     pub target: Option<OneOrMany<String>>,
     pub files: HashMap<String, String>,
     pub bin: Option<String>, // this may change with a Mason update
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct RawBuild {
     pub run: String,
     pub target: Option<OneOrMany<String>>,
@@ -74,7 +74,7 @@ pub struct RawBuild {
     pub extra: HashMap<String, String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct RawAsset {
     pub target: Option<OneOrMany<String>>,
     pub file: OneOrMany<String>,
@@ -85,7 +85,7 @@ pub struct RawAsset {
 
 // ---
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(untagged)]
 pub enum OneOrMany<T> {
     One(T),

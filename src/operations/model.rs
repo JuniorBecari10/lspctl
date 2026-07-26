@@ -3,6 +3,7 @@ use clap::Args;
 #[derive(Args, Debug)]
 pub struct InstallArgs {
     /// List of packages to install
+    #[arg(required = true, num_args = 1..)]
     pub pkgs: Vec<String>,
 
     /// Install the packages even if already installed
@@ -17,6 +18,7 @@ pub struct InstallArgs {
 #[derive(Args, Debug)]
 pub struct RemoveArgs {
     /// List of packages to remove
+    #[arg(required = true, num_args = 1..)]
     pub pkgs: Vec<String>,
 
     /// Remove without confirmation prompts
