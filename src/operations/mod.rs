@@ -35,7 +35,7 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
 
     for pkg in entries {
         let name = pkg.name.clone();
-        log::info!("Installing package '{}'..", name);
+        log::info!("Installing package '{name}'..");
 
         match logic::install_pkg(pkg, &platform) {
             Ok(()) => log::info!("Package installed successfully."),

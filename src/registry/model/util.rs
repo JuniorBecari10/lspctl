@@ -100,16 +100,16 @@ impl Platform {
             return false;
         }
 
-        if let Some(arch) = self.arch {
-            if Some(arch) != host.arch {
-                return false;
-            }
+        if let Some(arch) = self.arch
+            && Some(arch) != host.arch
+        {
+            return false;
         }
 
-        if let Some(libc) = self.libc {
-            if Some(libc) != host.libc {
-                return false;
-            }
+        if let Some(libc) = self.libc
+            && Some(libc) != host.libc
+        {
+            return false;
         }
 
         true

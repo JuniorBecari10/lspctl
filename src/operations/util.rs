@@ -24,7 +24,7 @@ pub fn resolve_entry(e: Entry, platform: &Platform) -> anyhow::Result<Entry> {
     template::resolve_entry(e, ctx)
 }
 
-pub fn filter_registry<'a>(registry: Registry, pkgs: &'a [String]) -> (Vec<Entry>, Vec<&'a str>) {
+pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str>) {
     let wanted: HashSet<&str> = pkgs.iter().map(String::as_str).collect();
 
     let found: Vec<Entry> = registry
