@@ -23,7 +23,7 @@ fn prelude() -> (Registry, Platform) {
 
 pub fn install(args: model::InstallArgs) -> OperationResult {
     let (registry, platform) = prelude();
-    let (entries, missing) = util::filter_registry(&registry, &args.pkgs);
+    let (entries, missing) = util::filter_registry(registry, &args.pkgs);
 
     if !missing.is_empty() {
         for m in missing {
@@ -34,11 +34,12 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
     }
 
     for pkg in entries {
-        log::info!("Installing package '{}'..", pkg.name);
+        let name = pkg.name.clone();
+        log::info!("Installing package '{}'..", name);
 
         match logic::install_pkg(pkg, &platform) {
             Ok(()) => log::info!("Package installed successfully."),
-            Err(e) => log::error!("Failed to install '{}': {e}.", pkg.name),
+            Err(e) => log::error!("Failed to install '{}': {e}.", name),
         }
     }
 

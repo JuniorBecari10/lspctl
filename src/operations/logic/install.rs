@@ -1,10 +1,9 @@
-use crate::registry::{
-    model::{Entry, Platform},
-    parser::template::{context, resolve_entry},
+use crate::{
+    operations::util,
+    registry::model::{Entry, Platform},
 };
 
-pub fn install_pkg(entry: &Entry, platform: &Platform) -> anyhow::Result<()> {
-    let ctx = context::build_context(&entry.source, platform)?;
-    let resolved = resolve_entry()
+pub fn install_pkg(e: Entry, platform: &Platform) -> anyhow::Result<()> {
+    let entry = util::resolve_entry(e, platform)?;
     Ok(())
 }

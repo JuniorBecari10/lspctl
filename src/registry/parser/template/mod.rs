@@ -12,8 +12,8 @@ use crate::registry::{
     parser::template::context::ResolvedContext,
 };
 
-pub fn resolve_entry(e: Entry) -> anyhow::Result<Entry> {
-    let (source, ctx) = resolve_source(e.source)?;
+pub fn resolve_entry(e: Entry, ctx: ResolvedContext) -> anyhow::Result<Entry> {
+    let source = resolve_source(e.source, &ctx)?;
 
     Ok(Entry {
         bin: e
@@ -26,26 +26,23 @@ pub fn resolve_entry(e: Entry) -> anyhow::Result<Entry> {
     })
 }
 
-fn resolve_source(s: Source) -> anyhow::Result<(Source, ResolvedContext)> {
-    Ok((
-        Source {
-            variant: s.variant.map(|v| resolve_variant(v, &ctx)).transpose()?,
+fn resolve_source(s: Source, ctx: &ResolvedContext) -> anyhow::Result<Source> {
+    Ok(Source {
+        variant: s.variant.map(|v| resolve_variant(v, ctx)).transpose()?,
 
-            version_overrides: s
-                .version_overrides
-                .map(|vos| {
-                    vos.into_iter()
-                        .map(|vo| resolve_version_override(vo, &ctx))
-                        .collect::<anyhow::Result<_>>()
-                })
-                .transpose()?,
+        version_overrides: s
+            .version_overrides
+            .map(|vos| {
+                vos.into_iter()
+                    .map(|vo| resolve_version_override(vo, ctx))
+                    .collect::<anyhow::Result<_>>()
+            })
+            .transpose()?,
 
-            bin: s.bin.map(|b| public::parse_template(b, &ctx)).transpose()?,
+        bin: s.bin.map(|b| public::parse_template(b, ctx)).transpose()?,
 
-            ..s
-        },
-        ctx,
-    ))
+        ..s
+    })
 }
 
 fn resolve_variant(v: SourceVariant, ctx: &ResolvedContext) -> anyhow::Result<SourceVariant> {

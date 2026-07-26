@@ -1,6 +1,9 @@
 use std::{collections::HashSet, process::ExitCode};
 
-use crate::registry::model::{Entry, Registry};
+use crate::registry::{
+    model::{Entry, Platform, Registry},
+    parser::template::{self, context},
+};
 
 pub enum OperationResult {
     Success,
@@ -16,15 +19,17 @@ impl From<OperationResult> for ExitCode {
     }
 }
 
-pub fn filter_registry<'a>(
-    registry: &'a Registry,
-    pkgs: &'a [String],
-) -> (Vec<&'a Entry>, Vec<&'a str>) {
+pub fn resolve_entry(e: Entry, platform: &Platform) -> anyhow::Result<Entry> {
+    let ctx = context::build_context(&e.source, platform)?;
+    template::resolve_entry(e, ctx)
+}
+
+pub fn filter_registry<'a>(registry: Registry, pkgs: &'a [String]) -> (Vec<Entry>, Vec<&'a str>) {
     let wanted: HashSet<&str> = pkgs.iter().map(String::as_str).collect();
 
-    let found: Vec<&Entry> = registry
+    let found: Vec<Entry> = registry
         .0
-        .iter()
+        .into_iter()
         .filter(|e| wanted.contains(e.name.as_str()))
         .collect();
 
