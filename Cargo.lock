@@ -723,6 +723,7 @@ dependencies = [
  "anyhow",
  "clap",
  "colog",
+ "colored",
  "const_format",
  "dirs",
  "log",

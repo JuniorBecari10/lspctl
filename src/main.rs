@@ -4,12 +4,13 @@ mod cli;
 mod consts;
 mod global;
 mod io;
+mod logging;
 mod operations;
 mod paths;
 mod registry;
 mod root;
 
 fn main() -> ExitCode {
-    colog::init();
+    logging::init();
     cli::cli().into()
 }
