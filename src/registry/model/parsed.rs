@@ -9,10 +9,6 @@ use std::collections::HashMap;
 // - every hashmap
 // - env
 
-// TODO: cache this once parsed (JSON serialized structs) and invalidate it when updating.
-// if the cache file is missing, parse again.
-// TODO: resolve strings like {{ version | strip_prefix "v" }}
-
 #[derive(Debug, Serialize)]
 pub struct Registry(pub Vec<Entry>);
 
@@ -44,7 +40,7 @@ pub struct Purl {
     pub kind: InstallKind,
     pub namespace: Option<String>,
     pub name: String,
-    pub version: Option<String>,
+    pub version: String,
     pub qualifiers: HashMap<String, String>,
     pub subpath: Option<String>,
 }

@@ -5,11 +5,10 @@ use anyhow::anyhow;
 use crate::{paths, registry::model::RawRegistry};
 
 pub mod model;
-mod parser;
+pub mod parser;
 mod util;
 
 // Export for other packages to use as well
-pub use util::REGCACHE_FILE;
 pub use util::REGISTRY_FILE;
 
 const MASON_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases/latest";
@@ -48,7 +47,6 @@ pub fn download_registry() -> anyhow::Result<()> {
     Ok(())
 }
 
-// TODO: read from cache if it's there
 pub fn read_registry() -> anyhow::Result<model::Registry> {
     let mut contents = Vec::new();
     File::open(paths::registry_file())?.read_to_end(&mut contents)?;

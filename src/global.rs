@@ -1,13 +1,11 @@
-#[cfg(target_env = "gnu")]
-use crate::registry::model::Libc;
-use crate::registry::model::{Arch, Os, Platform};
+use crate::registry::model::{Arch, Libc, Os, Platform};
 
-pub fn current_platform() -> Platform {
+pub fn current_platform() -> anyhow::Result<Platform> {
     let os = match std::env::consts::OS {
         "linux" => Os::Linux,
         "macos" => Os::Darwin,
         "windows" => Os::Windows,
-        other => panic!("unsupported OS: {other}"),
+        other => anyhow::bail!("unsupported OS: {other}"),
     };
 
     let arch = match std::env::consts::ARCH {
@@ -15,14 +13,14 @@ pub fn current_platform() -> Platform {
         "x86" => Some(Arch::X86),
         "aarch64" => Some(Arch::Arm64),
         "arm" => Some(Arch::Arm),
-        _ => None,
+        other => anyhow::bail!("unsupported architecture: {other}"),
     };
 
-    Platform {
+    Ok(Platform {
         os,
         arch,
         libc: platform_libc(os),
-    }
+    })
 }
 
 #[cfg(target_env = "musl")]

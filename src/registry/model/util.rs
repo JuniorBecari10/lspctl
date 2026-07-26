@@ -1,7 +1,9 @@
 use anyhow::anyhow;
 use packageurl::PackageUrl;
 
-use crate::registry::model::{AssetVars, InstallKind, OneOrMany, OneOrMap, PackageManager, Purl};
+use crate::registry::model::{
+    AssetVars, InstallKind, OneOrMany, OneOrMap, PackageManager, Platform, Purl,
+};
 
 impl<T> From<OneOrMany<T>> for Vec<T> {
     fn from(value: OneOrMany<T>) -> Self {
@@ -13,22 +15,30 @@ impl<T> From<OneOrMany<T>> for Vec<T> {
 }
 
 // just convert all Cow fields into owned ones,
-// and 'ty' into an enum
+// 'ty' into an enum
+// and 'version' into a non-option
 impl<'a> TryFrom<PackageUrl<'a>> for Purl {
     type Error = anyhow::Error;
 
     fn try_from(purl: PackageUrl<'a>) -> Result<Self, Self::Error> {
         Ok(Self {
             kind: get_install_kind(purl.ty())
-                .ok_or(anyhow!("Invalid install kind: '{}'", purl.ty()))?,
+                .ok_or_else(|| anyhow!("Invalid install kind: '{}'", purl.ty()))?,
+
             namespace: purl.namespace().map(Into::into),
             name: purl.name().into(),
-            version: purl.version().map(Into::into),
+
+            version: purl
+                .version()
+                .map(Into::<String>::into)
+                .ok_or_else(|| anyhow::anyhow!("Expected version number"))?,
+
             qualifiers: purl
                 .qualifiers()
                 .iter()
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect(),
+
             subpath: purl.subpath().map(Into::into),
         })
     }
@@ -82,6 +92,35 @@ impl AssetVars {
     }
 }
 
+impl Platform {
+    // may be partially specified: 'arch'/'libc' of 'None' mean "matches any";
+    // 'host' is the concrete platform being installed for.
+    pub fn matches(&self, host: &Platform) -> bool {
+        if self.os != host.os {
+            return false;
+        }
+
+        if let Some(arch) = self.arch {
+            if Some(arch) != host.arch {
+                return false;
+            }
+        }
+
+        if let Some(libc) = self.libc {
+            if Some(libc) != host.libc {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    /// How many fields this constraint pins down. used to prefer the
+    /// more specific match if an asset array has overlapping targets.
+    pub fn specificity(&self) -> u8 {
+        1 + self.arch.is_some() as u8 + self.libc.is_some() as u8
+    }
+}
 fn get_install_kind(s: &str) -> Option<InstallKind> {
     use InstallKind::*;
 

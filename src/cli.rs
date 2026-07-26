@@ -1,4 +1,7 @@
-use crate::{consts, operations};
+use crate::{
+    consts,
+    operations::{self, util::OperationResult},
+};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -27,7 +30,7 @@ enum Command {
     List(operations::model::ListArgs),
 }
 
-pub fn cli() {
+pub fn cli() -> OperationResult {
     match Cli::parse().command {
         Command::Install(args) => operations::install(args),
         Command::Remove(args) => operations::remove(args),

@@ -1,5 +1,5 @@
 mod platform;
-mod template;
+pub mod template;
 
 use std::str::FromStr;
 
@@ -8,12 +8,12 @@ use packageurl::PackageUrl;
 use crate::registry::model::*;
 
 pub fn parse_registry(raw: RawRegistry) -> anyhow::Result<Registry> {
-    Ok(template::resolve_templates(Registry(
+    Ok(Registry(
         raw.0
             .into_iter()
             .map(parse_entry)
             .collect::<anyhow::Result<_>>()?,
-    ))?)
+    ))
 }
 
 fn parse_entry(raw: RawEntry) -> anyhow::Result<Entry> {

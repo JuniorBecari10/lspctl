@@ -1,3 +1,5 @@
+use std::process::ExitCode;
+
 mod cli;
 mod consts;
 mod global;
@@ -7,7 +9,7 @@ mod paths;
 mod registry;
 mod root;
 
-fn main() {
+fn main() -> ExitCode {
     colog::init();
-    cli::cli();
+    cli::cli().into()
 }
