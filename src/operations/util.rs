@@ -50,19 +50,15 @@ pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<
     (found, missing)
 }
 
-pub fn prompt_user(pkgs: &[Entry], yes: bool) -> bool {
+pub fn accepted_installation(pkgs: &[Entry], yes: bool) -> bool {
     list_installing_packages(pkgs);
-    println!(); // TODO: change to stderr
+    eprintln!();
 
-    if yes {
-        true
-    } else {
-        Confirm::new()
-            .with_prompt(format!(" {} Proceed with installation?", "-".green()))
-            .default(true)
-            .interact()
-            .unwrap_or(false)
-    }
+    yes || Confirm::new()
+        .with_prompt(format!(" {} Proceed with installation?", "-".green()))
+        .default(true)
+        .interact()
+        .unwrap_or(false)
 }
 
 fn list_installing_packages(pkgs: &[Entry]) {

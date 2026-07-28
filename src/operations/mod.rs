@@ -1,6 +1,6 @@
 use crate::{
     error, global, note,
-    operations::util::{OperationResult, prompt_user},
+    operations::util::{OperationResult, accepted_installation},
     registry::{
         self,
         model::{Platform, Registry},
@@ -33,7 +33,7 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
         return OperationResult::Failure;
     }
 
-    if !prompt_user(&entries, args.yes) {
+    if !accepted_installation(&entries, args.yes) {
         return OperationResult::Success;
     }
 

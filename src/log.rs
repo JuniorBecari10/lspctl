@@ -2,7 +2,7 @@
 #[macro_export]
 macro_rules! step {
     ($($arg:tt)*) => {
-        println!(
+        eprintln!(
             "\n {} {}",
             colored::Colorize::bold(colored::Colorize::green("-->")),
             format!($($arg)*)
@@ -14,7 +14,7 @@ macro_rules! step {
 #[macro_export]
 macro_rules! note {
     ($($arg:tt)*) => {
-        println!("     {}", format!($($arg)*))
+        eprintln!("     {}", format!($($arg)*))
     };
 }
 
@@ -34,7 +34,7 @@ macro_rules! error {
 #[macro_export]
 macro_rules! header {
     ($($arg:tt)*) => {
-        println!(
+        eprintln!(
             "\n {} {}",
             colored::Colorize::bold(colored::Colorize::blue("*")),
             format!($($arg)*)
