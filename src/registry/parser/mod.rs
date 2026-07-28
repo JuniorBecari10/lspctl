@@ -56,6 +56,14 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
 }
 
 fn parse_variant(raw: RawSourceVariant, kind: InstallKind) -> anyhow::Result<SourceVariant> {
+    if let Ok(manager) = TryInto::<PackageManager>::try_into(kind) {
+        // edge case where 'extra_packages' is not present but 'kind' is a package manager
+        return Ok(SourceVariant::PackageManager {
+            manager,
+            extra_packages: vec![],
+        });
+    }
+
     match raw {
         RawSourceVariant::ExtraPackages { extra_packages } => Ok(SourceVariant::PackageManager {
             manager: kind.try_into()?,

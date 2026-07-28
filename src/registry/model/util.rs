@@ -127,41 +127,29 @@ impl Platform {
 
 impl Display for Entry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {} ", self.name, self.source.purl.version)?;
-        match self.source.variant {
-            Some(ref v) => write!(f, "({v})"),
-            None => Ok(()),
-        }
+        write!(
+            f,
+            "{} {} ({})",
+            self.name, self.source.purl.version, self.source.purl.kind
+        )
     }
 }
 
-impl Display for SourceVariant {
+impl Display for InstallKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SourceVariant::PackageManager {
-                manager,
-                extra_packages: _,
-            } => write!(f, "{manager}"),
-
-            SourceVariant::Asset(_) => write!(f, "asset"),
-            SourceVariant::Download(_) => write!(f, "download"),
-            SourceVariant::Build(_) => write!(f, "build"),
-        }
-    }
-}
-
-impl Display for PackageManager {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            PackageManager::Npm => write!(f, "Npm"),
-            PackageManager::PyPI => write!(f, "PyPI"),
-            PackageManager::Golang => write!(f, "Golang"),
-            PackageManager::Cargo => write!(f, "Cargo"),
-            PackageManager::Gem => write!(f, "Gem"),
-            PackageManager::Composer => write!(f, "Composer"),
-            PackageManager::LuaRocks => write!(f, "LuaRocks"),
-            PackageManager::Opam => write!(f, "Opam"),
-            PackageManager::NuGet => write!(f, "NuGet"),
+            InstallKind::Npm => write!(f, "Npm"),
+            InstallKind::PyPI => write!(f, "PyPI"),
+            InstallKind::Golang => write!(f, "Golang"),
+            InstallKind::Cargo => write!(f, "Cargo"),
+            InstallKind::Gem => write!(f, "Gem"),
+            InstallKind::Composer => write!(f, "Composer"),
+            InstallKind::LuaRocks => write!(f, "LuaRocks"),
+            InstallKind::Opam => write!(f, "Opam"),
+            InstallKind::NuGet => write!(f, "NuGet"),
+            InstallKind::GitHub => write!(f, "GitHub"),
+            InstallKind::Generic => write!(f, "Generic"),
+            InstallKind::OpenVsx => write!(f, "OpenVSX"),
         }
     }
 }

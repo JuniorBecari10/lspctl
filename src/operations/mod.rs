@@ -51,14 +51,18 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
 }
 
 pub fn remove(args: model::RemoveArgs) -> OperationResult {
-    let registry = prelude();
+    let (registry, platform) = prelude();
     dbg!(args);
     dbg!(registry);
+    dbg!(platform);
 
     OperationResult::Success
 }
 
 pub fn list(args: model::ListArgs) -> OperationResult {
+    let (registry, _) = prelude();
+    dbg!(registry);
     dbg!(args);
+
     OperationResult::Success
 }
