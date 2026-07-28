@@ -29,8 +29,9 @@ pub fn extract_to_memory(zip: &File) -> anyhow::Result<Vec<u8>> {
     entry.read_to_end(&mut contents)?;
     Ok(contents)
 }
+
 pub fn write_registry_to_disk(data: &[u8]) -> anyhow::Result<()> {
-    io::new_file_atomic_write(&get_registry_path(), data)
+    io::write_file_atomic_contents(&get_registry_path(), data, true)
 }
 
 // TODO: check if this is https

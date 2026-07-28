@@ -9,6 +9,7 @@ mod operations;
 mod paths;
 mod registry;
 mod root;
+mod state;
 
 fn main() -> ExitCode {
     cli::cli().into()

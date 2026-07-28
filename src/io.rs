@@ -15,23 +15,27 @@ fn new_temp() -> anyhow::Result<NamedTempFile> {
 }
 
 // this function must be atomic
-// TODO: make persist_replace since some features will eventually need it, such as update.
-// just replace this with persist, since it overrides the file it's there
-fn persist(temp: NamedTempFile, p: &Path) -> anyhow::Result<()> {
-    match temp.persist_noclobber(p) {
+fn persist(temp: NamedTempFile, p: &Path, replace: bool) -> anyhow::Result<()> {
+    let res = if replace {
+        temp.persist(p)
+    } else {
+        temp.persist_noclobber(p)
+    };
+
+    match res {
         Ok(_) => Ok(()),
         Err(e) if e.error.kind() == ErrorKind::AlreadyExists => Ok(()),
         Err(e) => Err(e.error.into()),
     }
 }
 
-pub fn new_file_atomic(p: &Path) -> anyhow::Result<()> {
+pub fn write_file_atomic(p: &Path, replace: bool) -> anyhow::Result<()> {
     let temp = new_temp()?;
-    persist(temp, p)
+    persist(temp, p, replace)
 }
 
-pub fn new_file_atomic_write(p: &Path, contents: &[u8]) -> anyhow::Result<()> {
+pub fn write_file_atomic_contents(p: &Path, contents: &[u8], replace: bool) -> anyhow::Result<()> {
     let mut temp = new_temp()?;
     temp.write_all(contents)?;
-    persist(temp, p)
+    persist(temp, p, replace)
 }

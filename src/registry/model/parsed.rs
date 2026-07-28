@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::registry::model::{AssetVars, Deprecation, OneOrMap};
 use std::collections::HashMap;
@@ -45,7 +45,7 @@ pub struct Purl {
     pub subpath: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SourceVariant {
     PackageManager {
         manager: PackageManager,
@@ -80,7 +80,7 @@ pub enum InstallKind {
     OpenVsx,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PackageManager {
     Npm,
     PyPI,
@@ -93,14 +93,14 @@ pub enum PackageManager {
     NuGet,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Os {
     Linux,
     Darwin,
     Windows,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Arch {
     X64,
     X86,
@@ -110,21 +110,21 @@ pub enum Arch {
     Armv7l,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Libc {
     Gnu,
     Musl,
     OpenBsd,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Platform {
     pub os: Os,
     pub arch: Option<Arch>,
     pub libc: Option<Libc>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Asset {
     pub targets: Vec<Platform>,
     pub files: Vec<String>,
@@ -132,20 +132,20 @@ pub struct Asset {
     pub variables: HashMap<String, AssetVars>, // ad-hoc fields like "lsp" / "dap" / "man"
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Downloads {
     Simple { file: String },
     Detailed(Vec<Download>),
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Download {
     pub targets: Vec<Platform>,
     pub files: HashMap<String, String>,
     pub bin: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Build {
     pub command: String,
     pub targets: Vec<Platform>,
