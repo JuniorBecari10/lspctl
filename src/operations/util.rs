@@ -1,5 +1,8 @@
 use std::{collections::HashSet, process::ExitCode};
 
+use colored::Colorize;
+use dialoguer::Confirm;
+
 use crate::{
     header, list,
     registry::{
@@ -47,9 +50,19 @@ pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<
     (found, missing)
 }
 
-pub fn prompt_user(pkgs: &[Entry]) -> bool {
+pub fn prompt_user(pkgs: &[Entry], yes: bool) -> bool {
     list_installing_packages(pkgs);
-    true
+    println!(); // TODO: change to stderr
+
+    if yes {
+        true
+    } else {
+        Confirm::new()
+            .with_prompt(format!(" {} Proceed with installation?", "-".green()))
+            .default(true)
+            .interact()
+            .unwrap_or(false)
+    }
 }
 
 fn list_installing_packages(pkgs: &[Entry]) {

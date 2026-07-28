@@ -127,17 +127,42 @@ impl Platform {
 
 impl Display for Entry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} {} {}",
-            self.name, self.source.purl.version, "(abelha)"
-        )
+        write!(f, "{} {} ", self.name, self.source.purl.version)?;
+        match self.source.variant {
+            Some(ref v) => write!(f, "({v})"),
+            None => Ok(()),
+        }
     }
 }
 
 impl Display for SourceVariant {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        match self {
+            SourceVariant::PackageManager {
+                manager,
+                extra_packages: _,
+            } => write!(f, "{manager}"),
+
+            SourceVariant::Asset(_) => write!(f, "asset"),
+            SourceVariant::Download(_) => write!(f, "download"),
+            SourceVariant::Build(_) => write!(f, "build"),
+        }
+    }
+}
+
+impl Display for PackageManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PackageManager::Npm => write!(f, "Npm"),
+            PackageManager::PyPI => write!(f, "PyPI"),
+            PackageManager::Golang => write!(f, "Golang"),
+            PackageManager::Cargo => write!(f, "Cargo"),
+            PackageManager::Gem => write!(f, "Gem"),
+            PackageManager::Composer => write!(f, "Composer"),
+            PackageManager::LuaRocks => write!(f, "LuaRocks"),
+            PackageManager::Opam => write!(f, "Opam"),
+            PackageManager::NuGet => write!(f, "NuGet"),
+        }
     }
 }
 

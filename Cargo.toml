@@ -8,6 +8,7 @@ anyhow = "1.0.103"
 clap = { version = "4.6.1", features = ["derive"] }
 colored = "3.1.1"
 const_format = "0.2.36"
+dialoguer = "0.12.0"
 dirs = "6.0.0"
 logos = "0.16.1"
 packageurl = "0.6.0"

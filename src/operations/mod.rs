@@ -33,7 +33,7 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
         return OperationResult::Failure;
     }
 
-    if !args.yes && !prompt_user(&entries) {
+    if !prompt_user(&entries, args.yes) {
         return OperationResult::Success;
     }
 
