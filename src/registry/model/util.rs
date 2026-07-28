@@ -5,7 +5,6 @@ use packageurl::PackageUrl;
 
 use crate::registry::model::{
     AssetVars, Entry, InstallKind, OneOrMany, OneOrMap, PackageManager, Platform, Purl,
-    SourceVariant,
 };
 
 impl<T> From<OneOrMany<T>> for Vec<T> {

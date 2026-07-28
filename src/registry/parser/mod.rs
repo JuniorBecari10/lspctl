@@ -34,10 +34,7 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
     let purl: Purl = PackageUrl::from_str(&raw.id)?.try_into()?;
 
     Ok(Source {
-        variant: raw
-            .variant
-            .map(|v| parse_variant(v, purl.kind))
-            .transpose()?,
+        variant: parse_variant(raw.variant, purl.kind)?,
 
         version_overrides: raw
             .version_overrides
@@ -55,38 +52,45 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
     })
 }
 
-fn parse_variant(raw: RawSourceVariant, kind: InstallKind) -> anyhow::Result<SourceVariant> {
-    if let Ok(manager) = TryInto::<PackageManager>::try_into(kind) {
-        // edge case where 'extra_packages' is not present but 'kind' is a package manager
-        return Ok(SourceVariant::PackageManager {
-            manager,
-            extra_packages: vec![],
-        });
-    }
+fn parse_variant(
+    raw: Option<RawSourceVariant>,
+    kind: InstallKind,
+) -> anyhow::Result<SourceVariant> {
+    let manager: Result<PackageManager, _> = kind.try_into();
 
     match raw {
-        RawSourceVariant::ExtraPackages { extra_packages } => Ok(SourceVariant::PackageManager {
-            manager: kind.try_into()?,
-            extra_packages,
-        }),
+        Some(RawSourceVariant::ExtraPackages { extra_packages }) => {
+            Ok(SourceVariant::PackageManager {
+                manager: manager?,
+                extra_packages,
+            })
+        }
 
-        RawSourceVariant::Asset { asset } => Ok(SourceVariant::Asset(
+        Some(RawSourceVariant::Asset { asset }) => Ok(SourceVariant::Asset(
             Into::<Vec<_>>::into(asset)
                 .into_iter()
                 .map(parse_asset)
                 .collect::<anyhow::Result<_>>()?,
         )),
 
-        RawSourceVariant::Download { download } => {
+        Some(RawSourceVariant::Download { download }) => {
             Ok(SourceVariant::Download(parse_downloads(download)?))
         }
 
-        RawSourceVariant::Build { build } => Ok(SourceVariant::Build(
+        Some(RawSourceVariant::Build { build }) => Ok(SourceVariant::Build(
             Into::<Vec<_>>::into(build)
                 .into_iter()
                 .map(parse_build)
                 .collect::<anyhow::Result<_>>()?,
         )),
+
+        // edge case where 'extra_packages' is not present but 'kind' is a package manager
+        None => TryInto::<PackageManager>::try_into(kind)
+            .map(|manager| SourceVariant::PackageManager { manager, extra_packages: vec![] })
+            .map_err(|_| anyhow::anyhow!(
+                "Package has no source variant and purl kind '{kind}' has no known package manager"
+            )
+        ),
     }
 }
 
@@ -97,7 +101,7 @@ fn parse_version_override(
     Ok(VersionOverride {
         constraint: raw.constraint,
         id: raw.id,
-        variant: parse_variant(raw.variant, kind)?,
+        variant: parse_variant(Some(raw.variant), kind)?,
         supported_platforms: platform::convert_platforms(raw.supported_platforms)?,
     })
 }

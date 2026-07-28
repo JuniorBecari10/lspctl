@@ -14,7 +14,7 @@ pub struct ResolvedContext {
 
 pub fn build_context(source: &Source, host: &Platform) -> anyhow::Result<ResolvedContext> {
     let asset = match &source.variant {
-        Some(SourceVariant::Asset(_)) => {
+        SourceVariant::Asset(_) => {
             Some(serde_json::to_value(select_asset(&source.variant, host)?)?)
         }
 

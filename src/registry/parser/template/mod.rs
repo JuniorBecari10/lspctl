@@ -28,7 +28,7 @@ pub fn resolve_entry(e: Entry, ctx: ResolvedContext) -> anyhow::Result<Entry> {
 
 fn resolve_source(s: Source, ctx: &ResolvedContext) -> anyhow::Result<Source> {
     Ok(Source {
-        variant: s.variant.map(|v| resolve_variant(v, ctx)).transpose()?,
+        variant: resolve_variant(s.variant, ctx)?,
 
         version_overrides: s
             .version_overrides

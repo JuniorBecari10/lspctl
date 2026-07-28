@@ -28,7 +28,7 @@ pub struct Entry {
 #[derive(Debug, Clone, Serialize)]
 pub struct Source {
     pub purl: Purl,
-    pub variant: Option<SourceVariant>,
+    pub variant: SourceVariant,
     pub supported_platforms: Vec<Platform>,
     pub version_overrides: Option<Vec<VersionOverride>>,
     pub bin: Option<String>, // for js-debug-adapter (edge case)

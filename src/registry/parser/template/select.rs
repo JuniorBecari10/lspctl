@@ -1,11 +1,8 @@
 use crate::registry::model::{Asset, Platform, SourceVariant};
 
-pub fn select_asset<'a>(
-    variant: &'a Option<SourceVariant>,
-    host: &Platform,
-) -> anyhow::Result<&'a Asset> {
-    let Some(SourceVariant::Asset(assets)) = variant else {
-        anyhow::bail!("source has no asset variant (got {variant:?})");
+pub fn select_asset<'a>(variant: &'a SourceVariant, host: &Platform) -> anyhow::Result<&'a Asset> {
+    let SourceVariant::Asset(assets) = variant else {
+        anyhow::bail!("Source has no asset variant (got {variant:?})");
     };
 
     assets
