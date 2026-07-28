@@ -19,7 +19,7 @@ pub fn parse_registry(raw: RawRegistry) -> anyhow::Result<Registry> {
 fn parse_entry(raw: RawEntry) -> anyhow::Result<Entry> {
     Ok(Entry {
         name: raw.name,
-        description: raw.description,
+        description: raw.description.trim().into(),
         homepage: raw.homepage,
         licenses: raw.licenses,
         languages: raw.languages,
@@ -85,8 +85,8 @@ fn parse_variant(
         )),
 
         // edge case where 'extra_packages' is not present but 'kind' is a package manager
-        None => TryInto::<PackageManager>::try_into(kind)
-            .map(|manager| SourceVariant::PackageManager { manager, extra_packages: vec![] })
+        None => manager
+            .map(|m| SourceVariant::PackageManager { manager: m, extra_packages: vec![] })
             .map_err(|_| anyhow::anyhow!(
                 "Package has no source variant and purl kind '{kind}' has no known package manager"
             )
