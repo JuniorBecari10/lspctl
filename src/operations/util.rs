@@ -1,8 +1,11 @@
 use std::{collections::HashSet, process::ExitCode};
 
-use crate::registry::{
-    model::{Entry, Platform, Registry},
-    parser::template::{self, context},
+use crate::{
+    header, list,
+    registry::{
+        model::{Entry, Platform, Registry},
+        parser::template::{self, context},
+    },
 };
 
 pub enum OperationResult {
@@ -42,4 +45,17 @@ pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<
         .collect();
 
     (found, missing)
+}
+
+pub fn prompt_user(pkgs: &[Entry]) -> bool {
+    list_installing_packages(pkgs);
+    true
+}
+
+fn list_installing_packages(pkgs: &[Entry]) {
+    header!("Packages to be installed ({}):", pkgs.len());
+
+    for pkg in pkgs {
+        list!("{}", pkg);
+    }
 }

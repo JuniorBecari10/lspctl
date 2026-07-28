@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use anyhow::anyhow;
 
-use crate::{paths, registry::model::RawRegistry};
+use crate::{note, paths, registry::model::RawRegistry, step};
 
 pub mod model;
 pub mod parser;
@@ -40,9 +40,9 @@ fn parse_release(raw_json: &[u8]) -> anyhow::Result<model::Release> {
 }
 
 pub fn download_registry() -> anyhow::Result<()> {
-    log::info!("Fetching registry...");
+    step!("Fetching registry...");
     get_latest_release()?;
-    log::info!("Fetching complete.");
+    note!("Fetching complete.");
 
     Ok(())
 }

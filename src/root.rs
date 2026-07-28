@@ -1,13 +1,13 @@
 use std::fs;
 
-use crate::{paths, io, registry};
+use crate::{io, paths, registry, step};
 
 pub fn setup_root() -> anyhow::Result<()> {
     ensure_root_items()?;
 
     match paths::registry_file().try_exists() {
         Ok(true) => {
-            log::info!("Registry already exists.");
+            step!("Registry is already downloaded.");
             Ok(())
         }
 

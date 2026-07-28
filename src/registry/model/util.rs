@@ -1,8 +1,11 @@
+use std::fmt::Display;
+
 use anyhow::anyhow;
 use packageurl::PackageUrl;
 
 use crate::registry::model::{
-    AssetVars, InstallKind, OneOrMany, OneOrMap, PackageManager, Platform, Purl,
+    AssetVars, Entry, InstallKind, OneOrMany, OneOrMap, PackageManager, Platform, Purl,
+    SourceVariant,
 };
 
 impl<T> From<OneOrMany<T>> for Vec<T> {
@@ -121,6 +124,23 @@ impl Platform {
         1 + self.arch.is_some() as u8 + self.libc.is_some() as u8
     }
 }
+
+impl Display for Entry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} {} {}",
+            self.name, self.source.purl.version, "(abelha)"
+        )
+    }
+}
+
+impl Display for SourceVariant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
 fn get_install_kind(s: &str) -> Option<InstallKind> {
     use InstallKind::*;
 

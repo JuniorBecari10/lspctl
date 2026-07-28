@@ -6,11 +6,9 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.103"
 clap = { version = "4.6.1", features = ["derive"] }
-colog = "1.4.0"
 colored = "3.1.1"
 const_format = "0.2.36"
 dirs = "6.0.0"
-log = "0.4.33"
 logos = "0.16.1"
 packageurl = "0.6.0"
 serde = { version = "1.0.228", features = ["derive"] }

@@ -1,11 +1,11 @@
 use crate::{
-    global,
-    operations::util::OperationResult,
+    error, global, note,
+    operations::util::{OperationResult, prompt_user},
     registry::{
         self,
         model::{Platform, Registry},
     },
-    root,
+    root, step,
 };
 
 mod logic;
@@ -27,19 +27,23 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
 
     if !missing.is_empty() {
         for m in missing {
-            log::error!("Package '{m}' doesn't exist.");
+            error!("Package '{m}' doesn't exist.");
         }
 
         return OperationResult::Failure;
     }
 
+    if !args.yes && !prompt_user(&entries) {
+        return OperationResult::Success;
+    }
+
     for pkg in entries {
         let name = pkg.name.clone();
-        log::info!("Installing package '{name}'..");
+        step!("Installing package '{name}'..");
 
         match logic::install_pkg(pkg, &platform) {
-            Ok(()) => log::info!("Package installed successfully."),
-            Err(e) => log::error!("Failed to install '{}': {e}.", name),
+            Ok(()) => note!("Package installed successfully."),
+            Err(e) => error!("Failed to install '{}': {e}.", name),
         }
     }
 
