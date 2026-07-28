@@ -52,13 +52,15 @@ pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<
 
 pub fn accepted_installation(pkgs: &[Entry], yes: bool) -> bool {
     list_installing_packages(pkgs);
-    eprintln!();
 
-    yes || Confirm::new()
-        .with_prompt(format!(" {} Proceed with installation?", "-".green()))
-        .default(true)
-        .interact()
-        .unwrap_or(false)
+    yes || {
+        eprintln!();
+        Confirm::new()
+            .with_prompt(format!(" {} Proceed with installation?", "-".green()))
+            .default(true)
+            .interact()
+            .unwrap_or(false)
+    }
 }
 
 fn list_installing_packages(pkgs: &[Entry]) {

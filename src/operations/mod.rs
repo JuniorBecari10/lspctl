@@ -1,5 +1,7 @@
 use crate::{
-    error, global, note,
+    error, global,
+    log::Fatal,
+    note,
     operations::util::{OperationResult, accepted_installation},
     registry::{
         self,
@@ -13,11 +15,11 @@ pub mod model;
 pub mod util;
 
 fn prelude() -> (Registry, Platform) {
-    root::setup_root().expect("Cannot create root folder structure");
+    root::setup_root().fatal("Cannot create root folder structure");
 
     (
-        registry::read_registry().expect("Cannot read registry"),
-        global::current_platform().expect("Cannot get current platform"),
+        registry::read_registry().fatal("Cannot read registry"),
+        global::current_platform().fatal("Cannot get current platform"),
     )
 }
 

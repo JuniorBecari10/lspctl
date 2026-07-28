@@ -30,6 +30,14 @@ macro_rules! error {
     };
 }
 
+#[macro_export]
+macro_rules! fatal {
+    ($($arg:tt)*) => {{
+        error!($($arg)*);
+        std::process::exit(1)
+    }};
+}
+
 /// ` * message`: header, usually at the start of a list. writes a '\n' before it.
 #[macro_export]
 macro_rules! header {
@@ -52,4 +60,17 @@ macro_rules! list {
             format!($($arg)*)
         )
     };
+}
+
+pub trait Fatal<T> {
+    fn fatal(self, message: &str) -> T;
+}
+
+impl<T> Fatal<T> for anyhow::Result<T> {
+    fn fatal(self, message: &str) -> T {
+        match self {
+            Ok(t) => t,
+            Err(e) => fatal!("{message}: {e}."),
+        }
+    }
 }

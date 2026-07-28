@@ -40,7 +40,7 @@ fn parse_release(raw_json: &[u8]) -> anyhow::Result<model::Release> {
 }
 
 pub fn download_registry() -> anyhow::Result<()> {
-    step!("Fetching registry...");
+    step!("Fetching registry..");
     get_latest_release()?;
     note!("Fetching complete.");
 
