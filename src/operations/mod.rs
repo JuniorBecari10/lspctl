@@ -1,30 +1,16 @@
 use crate::{
-    error, global,
-    log::Fatal,
-    note,
+    error, note,
     operations::util::{OperationResult, accepted_installation},
-    registry::{
-        self,
-        model::{Platform, Registry},
-    },
-    root, step,
+    step,
 };
 
 mod logic;
 pub mod model;
+mod prelude;
 pub mod util;
 
-fn prelude() -> (Registry, Platform) {
-    root::setup_root().fatal("Cannot create root folder structure");
-
-    (
-        registry::read_registry().fatal("Cannot read registry"),
-        global::current_platform().fatal("Cannot get current platform"),
-    )
-}
-
 pub fn install(args: model::InstallArgs) -> OperationResult {
-    let (registry, platform) = prelude();
+    let (registry, platform, mut state) = prelude::prelude();
     let (entries, missing) = util::filter_registry(registry, &args.pkgs);
 
     if !missing.is_empty() {
@@ -43,7 +29,7 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
         let name = pkg.name.clone();
         step!("Installing package '{name}'..");
 
-        match logic::install_pkg(pkg, &platform) {
+        match logic::install_pkg(pkg, &platform, &mut state) {
             Ok(()) => note!("Package installed successfully."),
             Err(e) => error!("Failed to install '{}': {e}.", name),
         }
@@ -53,7 +39,7 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
 }
 
 pub fn remove(args: model::RemoveArgs) -> OperationResult {
-    let (registry, platform) = prelude();
+    let (registry, platform, state) = prelude::prelude();
 
     dbg!(args);
     dbg!(registry);
@@ -63,10 +49,11 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
 }
 
 pub fn list(args: model::ListArgs) -> OperationResult {
-    let (registry, _) = prelude();
+    let (registry, _, state) = prelude::prelude();
 
     dbg!(registry);
     dbg!(args);
+    dbg!(state);
 
     OperationResult::Success
 }
