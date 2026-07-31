@@ -9,16 +9,16 @@ mod token;
 
 use crate::registry::{
     model::{Asset, Build, Download, Downloads, Entry, Source, SourceVariant, VersionOverride},
-    parser::template::context::ResolvedContext,
+    parser::template::context::ResolveContext,
 };
 
-pub fn resolve_entry(e: Entry, ctx: ResolvedContext) -> anyhow::Result<Entry> {
+pub fn resolve_entry(e: Entry, ctx: &ResolveContext) -> anyhow::Result<Entry> {
     let source = resolve_source(e.source, &ctx)?;
 
     Ok(Entry {
         bin: e
             .bin
-            .map(|b| public::parse_template_hashmap(b, &ctx))
+            .map(|b| public::parse_template_hashmap(b, ctx))
             .transpose()?,
 
         source,
@@ -26,7 +26,7 @@ pub fn resolve_entry(e: Entry, ctx: ResolvedContext) -> anyhow::Result<Entry> {
     })
 }
 
-fn resolve_source(s: Source, ctx: &ResolvedContext) -> anyhow::Result<Source> {
+fn resolve_source(s: Source, ctx: &ResolveContext) -> anyhow::Result<Source> {
     Ok(Source {
         variant: resolve_variant(s.variant, ctx)?,
 
@@ -45,7 +45,7 @@ fn resolve_source(s: Source, ctx: &ResolvedContext) -> anyhow::Result<Source> {
     })
 }
 
-fn resolve_variant(v: SourceVariant, ctx: &ResolvedContext) -> anyhow::Result<SourceVariant> {
+fn resolve_variant(v: SourceVariant, ctx: &ResolveContext) -> anyhow::Result<SourceVariant> {
     match v {
         SourceVariant::PackageManager {
             manager,
@@ -77,7 +77,7 @@ fn resolve_variant(v: SourceVariant, ctx: &ResolvedContext) -> anyhow::Result<So
 
 fn resolve_version_override(
     vo: VersionOverride,
-    ctx: &ResolvedContext,
+    ctx: &ResolveContext,
 ) -> anyhow::Result<VersionOverride> {
     Ok(VersionOverride {
         variant: resolve_variant(vo.variant, ctx)?,
@@ -85,7 +85,7 @@ fn resolve_version_override(
     })
 }
 
-fn resolve_asset(a: Asset, ctx: &ResolvedContext) -> anyhow::Result<Asset> {
+fn resolve_asset(a: Asset, ctx: &ResolveContext) -> anyhow::Result<Asset> {
     Ok(Asset {
         files: a
             .files
@@ -113,7 +113,7 @@ fn resolve_asset(a: Asset, ctx: &ResolvedContext) -> anyhow::Result<Asset> {
     })
 }
 
-fn resolve_downloads(d: Downloads, ctx: &ResolvedContext) -> anyhow::Result<Downloads> {
+fn resolve_downloads(d: Downloads, ctx: &ResolveContext) -> anyhow::Result<Downloads> {
     match d {
         Downloads::Simple { file } => Ok(Downloads::Simple {
             file: public::parse_template(file, ctx)?,
@@ -128,7 +128,7 @@ fn resolve_downloads(d: Downloads, ctx: &ResolvedContext) -> anyhow::Result<Down
     }
 }
 
-fn resolve_download(d: Download, ctx: &ResolvedContext) -> anyhow::Result<Download> {
+fn resolve_download(d: Download, ctx: &ResolveContext) -> anyhow::Result<Download> {
     Ok(Download {
         files: public::parse_template_hashmap(d.files, ctx)?,
         bin: d.bin.map(|b| public::parse_template(b, ctx)).transpose()?,
@@ -137,7 +137,7 @@ fn resolve_download(d: Download, ctx: &ResolvedContext) -> anyhow::Result<Downlo
     })
 }
 
-fn resolve_build(b: Build, ctx: &ResolvedContext) -> anyhow::Result<Build> {
+fn resolve_build(b: Build, ctx: &ResolveContext) -> anyhow::Result<Build> {
     Ok(Build {
         bin: b
             .bin

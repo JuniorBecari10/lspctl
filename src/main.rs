@@ -6,6 +6,7 @@ mod global;
 mod io;
 mod log;
 mod operations;
+mod packages;
 mod paths;
 mod registry;
 mod root;

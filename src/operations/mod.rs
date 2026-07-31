@@ -44,6 +44,7 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
     dbg!(args);
     dbg!(registry);
     dbg!(platform);
+    dbg!(state);
 
     OperationResult::Success
 }

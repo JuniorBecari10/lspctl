@@ -6,8 +6,11 @@ use dialoguer::Confirm;
 use crate::{
     header, list,
     registry::{
-        model::{Entry, Platform, Registry},
-        parser::template::{self, context},
+        model::{Asset, Entry, Platform, Registry, ResolvedEntry},
+        parser::template::{
+            self,
+            context::{self},
+        },
     },
 };
 
@@ -25,9 +28,16 @@ impl From<OperationResult> for ExitCode {
     }
 }
 
-pub fn resolve_entry(e: Entry, platform: &Platform) -> anyhow::Result<Entry> {
+pub fn resolve_entry(
+    e: Entry,
+    platform: &Platform,
+) -> anyhow::Result<(ResolvedEntry, Option<Asset>)> {
     let ctx = context::build_context(&e.source, platform)?;
-    template::resolve_entry(e, ctx)
+
+    let entry = template::resolve_entry(e, &ctx)?;
+    let asset = ctx.asset.map(|a| serde_json::from_value(a)).transpose()?; // shouldn't fail
+
+    Ok((entry, asset))
 }
 
 pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str>) {

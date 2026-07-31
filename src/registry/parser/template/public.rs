@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::Context;
 
 use crate::registry::parser::template::{
-    context::ResolvedContext,
+    context::ResolveContext,
     eval::eval,
     parser::Parser,
     segment::{Segment, split_segments},
@@ -11,7 +11,7 @@ use crate::registry::parser::template::{
 
 pub fn parse_template_hashmap(
     map: HashMap<String, String>,
-    ctx: &ResolvedContext,
+    ctx: &ResolveContext,
 ) -> anyhow::Result<HashMap<String, String>> {
     map.into_iter()
         .map(|(k, v)| Ok((parse_template(k, ctx)?, parse_template(v, ctx)?)))
@@ -21,7 +21,7 @@ pub fn parse_template_hashmap(
 // source.bin is only used in js-debug-adapter.
 // s is an owned string to simplify the parser implementation,
 // since the object template string is meant to be moved into the function.
-pub fn parse_template(template: String, ctx: &ResolvedContext) -> anyhow::Result<String> {
+pub fn parse_template(template: String, ctx: &ResolveContext) -> anyhow::Result<String> {
     if !template.contains("{{") {
         // no-op if no templates are present
         return Ok(template);

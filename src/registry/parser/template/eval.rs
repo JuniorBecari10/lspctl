@@ -29,9 +29,11 @@ pub fn eval(expr: &Expr, ctx_json: &serde_json::Value) -> anyhow::Result<Value> 
 
         Expr::Pipeline { base, filters } => {
             let mut v = eval(base, ctx_json)?;
+
             for f in filters {
                 v = apply_filter(f, v, ctx_json)?;
             }
+
             Ok(v)
         }
     }
@@ -48,12 +50,12 @@ fn resolve_path(segs: &[String], ctx_json: &serde_json::Value) -> anyhow::Result
     for seg in rest {
         cur = cur
             .get(seg)
-            .ok_or_else(|| anyhow::anyhow!("path '{}' not found", segs.join(".")))?;
+            .ok_or_else(|| anyhow::anyhow!("Path '{}' not found", segs.join(".")))?;
     }
 
     match cur {
         serde_json::Value::String(s) => Ok(s.clone()),
-        other => anyhow::bail!("path '{}' is not a string: {other}", segs.join(".")),
+        other => anyhow::bail!("Path '{}' is not a string: {other}", segs.join(".")),
     }
 }
 

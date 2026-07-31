@@ -6,13 +6,13 @@ use crate::registry::{
 };
 
 #[derive(Serialize)]
-pub struct ResolvedContext {
+pub struct ResolveContext {
     pub version: String,
     pub asset: Option<serde_json::Value>, // *one* selected Asset, not the tagged array
     pub bin: Option<String>,              // Source.bin: the js-debug-adapter edge case
 }
 
-pub fn build_context(source: &Source, host: &Platform) -> anyhow::Result<ResolvedContext> {
+pub fn build_context(source: &Source, host: &Platform) -> anyhow::Result<ResolveContext> {
     let asset = match &source.variant {
         SourceVariant::Asset(_) => {
             Some(serde_json::to_value(select_asset(&source.variant, host)?)?)
@@ -21,7 +21,7 @@ pub fn build_context(source: &Source, host: &Platform) -> anyhow::Result<Resolve
         _ => None, // package uses Build/Download/ExtraPackages, no asset templates apply
     };
 
-    Ok(ResolvedContext {
+    Ok(ResolveContext {
         version: source.purl.version.clone(),
         asset,
         bin: source.bin.clone(),

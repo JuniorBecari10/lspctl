@@ -9,6 +9,9 @@ use std::collections::HashMap;
 // - every hashmap
 // - env
 
+/// Represents entries that have their templates resolved.
+pub type ResolvedEntry = Entry;
+
 #[derive(Debug, Serialize)]
 pub struct Registry(pub Vec<Entry>);
 
