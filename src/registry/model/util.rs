@@ -153,6 +153,22 @@ impl Display for InstallKind {
     }
 }
 
+impl PackageManager {
+    fn get_command(&self) -> String {
+        match self {
+            PackageManager::Npm => "npm".into(),
+            PackageManager::PyPI => "python".into(),
+            PackageManager::Golang => "go".into(),
+            PackageManager::Cargo => "cargo".into(),
+            PackageManager::Gem => "gem".into(),
+            PackageManager::Composer => "composer".into(),
+            PackageManager::LuaRocks => "luarocks".into(),
+            PackageManager::Opam => "opam".into(),
+            PackageManager::NuGet => "dotnet".into(),
+        }
+    }
+}
+
 fn get_install_kind(s: &str) -> Option<InstallKind> {
     use InstallKind::*;
 

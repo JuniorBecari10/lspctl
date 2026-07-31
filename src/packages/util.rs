@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     path::Path,
     process::{Command, Stdio},
 };
@@ -7,19 +8,29 @@ use anyhow::Context;
 
 use crate::{note, registry::model::PackageManager};
 
-pub fn get_install_command(manager: PackageManager, name: &str, version: &str) -> String {}
+pub struct InstallCommand {
+    binary: String,
+    args: Vec<String>,
+}
+
+impl Display for InstallCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {}", self.binary, self.args.join(" "))
+    }
+}
+
+pub fn get_install_command(manager: PackageManager, name: &str, version: &str) -> InstallCommand {}
 
 pub fn run_command(
-    binary: &str,
-    args: &[&str],
+    command: InstallCommand,
     folder: &Path,
     env: &[(&str, &str)],
 ) -> anyhow::Result<()> {
-    let command = format!("{binary} {}", args.join(" "));
-    note!("Running: {command}");
+    let command_str = command.to_string();
+    note!("Running: {command_str}");
 
-    let mut cmd = Command::new(binary);
-    cmd.args(args)
+    let mut cmd = Command::new(command.binary.clone());
+    cmd.args(command.args)
         .current_dir(folder)
         .envs(env.iter().copied())
         .stdout(Stdio::inherit())
@@ -27,11 +38,11 @@ pub fn run_command(
 
     let status = cmd
         .status()
-        .with_context(|| format!("Failed to launch '{binary}'. Is it on PATH?"))?;
+        .with_context(|| format!("Failed to launch '{}'. Is it on PATH?", command.binary))?;
 
     if !status.success() {
         anyhow::bail!(
-            "'{command}' exited with exit code {}",
+            "'{command_str}' exited with exit code {}",
             status
                 .code()
                 .map(|c| c.to_string())
@@ -39,5 +50,6 @@ pub fn run_command(
         );
     }
 
+    note!("Command executed successfully.");
     Ok(())
 }
