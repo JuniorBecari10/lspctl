@@ -58,7 +58,7 @@ pub fn run_command(command: InstallCommand, folder: &Path) -> anyhow::Result<()>
             status
                 .code()
                 .map(|c| c.to_string())
-                .unwrap_or_else(|| "Unknown status".into())
+                .unwrap_or_else(|| "<unknown>".into())
         );
     }
 
@@ -88,7 +88,7 @@ fn get_install_args(
         PackageManager::PyPI => todo!(),
         PackageManager::Cargo => todo!(),
         PackageManager::Gem => todo!(),
-        PackageManager::Golang => vec!["install".into(), format!("{name}@{version}")],
+        PackageManager::Go => vec!["install".into(), format!("{name}@{version}")],
         PackageManager::Composer => todo!(),
         PackageManager::LuaRocks => todo!(),
         PackageManager::Opam => todo!(),
@@ -101,7 +101,7 @@ fn get_install_env(manager: PackageManager, pkg_dir: &Path) -> HashMap<String, S
         PackageManager::Npm => hashmap! {},
         PackageManager::PyPI => todo!(),
 
-        PackageManager::Golang => hashmap! {
+        PackageManager::Go => hashmap! {
             "GOBIN".to_string() => pkg_dir.join("bin").to_string_lossy().into_owned(),
             "GOMODCACHE".to_string() => pkg_dir.join("gomodcache").to_string_lossy().into_owned(),
         },

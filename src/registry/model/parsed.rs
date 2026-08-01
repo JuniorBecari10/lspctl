@@ -87,7 +87,7 @@ pub enum InstallKind {
 pub enum PackageManager {
     Npm,
     PyPI,
-    Golang,
+    Go,
     Cargo,
     Gem,
     Composer,

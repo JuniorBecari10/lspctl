@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use anyhow::anyhow;
 
-use crate::{note, paths, registry::model::RawRegistry, step};
+use crate::{io, note, paths, registry::model::RawRegistry, step};
 
 pub mod model;
 pub mod parser;
@@ -17,11 +17,13 @@ fn get_latest_release() -> anyhow::Result<()> {
     let data = parse_release(&util::perform_request(MASON_URL)?)?;
     let asset = find_registry_asset(&data)?;
 
-    let mut temp_zip = tempfile::tempfile()?;
-    util::download_file(&asset.url, &mut temp_zip)?;
+    let mut tmp = io::new_temp()?;
+    let temp_zip = tmp.as_file_mut();
+
+    util::download_file(&asset.url, temp_zip)?;
 
     // maybe use this to pass the json around to not read it again
-    let extracted = util::extract_to_memory(&temp_zip)?;
+    let extracted = util::extract_to_memory(temp_zip)?;
     util::write_registry_to_disk(&extracted)?;
 
     Ok(())

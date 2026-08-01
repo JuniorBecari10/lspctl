@@ -55,7 +55,7 @@ impl TryFrom<InstallKind> for PackageManager {
         match kind {
             InstallKind::Npm => Ok(PackageManager::Npm),
             InstallKind::PyPI => Ok(PackageManager::PyPI),
-            InstallKind::Go => Ok(PackageManager::Golang),
+            InstallKind::Go => Ok(PackageManager::Go),
             InstallKind::Cargo => Ok(PackageManager::Cargo),
             InstallKind::Gem => Ok(PackageManager::Gem),
             InstallKind::Composer => Ok(PackageManager::Composer),
@@ -159,7 +159,7 @@ impl PackageManager {
         match self {
             PackageManager::Npm => "npm".into(),
             PackageManager::PyPI => "python".into(),
-            PackageManager::Golang => "go".into(),
+            PackageManager::Go => "go".into(),
             PackageManager::Cargo => "cargo".into(),
             PackageManager::Gem => "gem".into(),
             PackageManager::Composer => "composer".into(),

@@ -34,8 +34,11 @@ pub fn write_registry_to_disk(data: &[u8]) -> anyhow::Result<()> {
     io::write_file_atomic_contents(&get_registry_path(), data, true)
 }
 
-// TODO: check if this is https
 pub fn perform_request(url: &str) -> anyhow::Result<Vec<u8>> {
+    if !url.starts_with("https://") {
+        anyhow::bail!("This only performs https requests. URL: '{url}'.");
+    }
+
     Ok(ureq::get(url)
         .header("User-Agent", consts::APP_NAME)
         .call()?

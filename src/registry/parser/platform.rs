@@ -22,7 +22,7 @@ pub fn get_platform(s: &str) -> anyhow::Result<Vec<Platform>> {
         "darwin" => Os::Darwin,
         "linux" => Os::Linux,
         "win" => Os::Windows,
-        other => anyhow::bail!("unknown os '{other}' in target '{s}'"), // TODO: change bail to an actual pretty-printed error message by colog
+        other => anyhow::bail!("Unknown OS '{other}' in target '{s}'"),
     };
 
     if parts.len() == 1 {
