@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::{io, paths, registry, step};
+use crate::{paths, registry, step};
 
 pub fn setup_root() -> anyhow::Result<()> {
     ensure_root_items()?;

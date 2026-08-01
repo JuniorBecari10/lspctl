@@ -9,7 +9,7 @@ use maplit::hashmap;
 
 use anyhow::Context;
 
-use crate::{note, paths, registry::model::PackageManager};
+use crate::{note, registry::model::PackageManager};
 
 pub struct InstallCommand {
     binary: String,
@@ -28,17 +28,18 @@ pub fn get_install_command(
     name: &str,
     version: &str,
     extra_packages: &[String],
+    tmp_path: &Path,
 ) -> InstallCommand {
     let binary = manager.get_command();
     let args = get_install_args(manager, name, version, extra_packages);
-    let env = get_install_env(manager, name, version);
+    let env = get_install_env(manager, tmp_path);
 
     InstallCommand { binary, args, env }
 }
 
 pub fn run_command(command: InstallCommand, folder: &Path) -> anyhow::Result<()> {
     let command_str = command.to_string();
-    note!("Running: {command_str}");
+    note!("Running: '{command_str}'");
 
     let mut cmd = Command::new(command.binary.clone());
     cmd.args(command.args)
@@ -74,15 +75,10 @@ fn get_install_args(
     extra_packages: &[String],
 ) -> Vec<String> {
     match manager {
-        PackageManager::Npm => vec![
-            "install".into(),
-            "--prefix".into(),
-            ".".into(),
-            format!("{name}@{version}"),
-        ]
-        .into_iter()
-        .chain(extra_packages.iter().cloned())
-        .collect(),
+        PackageManager::Npm => vec!["install".into(), format!("{name}@{version}")]
+            .into_iter()
+            .chain(extra_packages.iter().cloned())
+            .collect(),
 
         PackageManager::PyPI => todo!(),
         PackageManager::Cargo => todo!(),
@@ -95,9 +91,7 @@ fn get_install_args(
     }
 }
 
-fn get_install_env(manager: PackageManager, name: &str, version: &str) -> HashMap<String, String> {
-    let pkg_dir = paths::tmp_dir().join(name).join(version);
-
+fn get_install_env(manager: PackageManager, pkg_dir: &Path) -> HashMap<String, String> {
     match manager {
         PackageManager::Npm => hashmap! {},
         PackageManager::PyPI => todo!(),
