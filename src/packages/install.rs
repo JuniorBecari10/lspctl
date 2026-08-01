@@ -31,7 +31,8 @@ pub fn install(
         SourceVariant::Build(builds) => install_build(&entry, builds),
     }?;
 
-    // resolve bins, shims and move to definitive location
+    // resolve bins and shims
+    util::move_package(&entry.name)?;
     state.add_entry(&entry, HashMap::new());
     Ok(())
 }
@@ -43,6 +44,7 @@ pub fn install(
 // the rest (make shims, move to definitive folder and update state) is handled by the function above.
 
 // TODO: return the bins here, since they are in different places depending on the install method?
+// when installing, make all files be owned by the user
 
 fn install_manager(
     entry: &Entry,

@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     fmt::Display,
+    fs,
     path::Path,
     process::{Command, Stdio},
 };
@@ -9,7 +10,7 @@ use maplit::hashmap;
 
 use anyhow::Context;
 
-use crate::{note, registry::model::PackageManager};
+use crate::{note, paths, registry::model::PackageManager};
 
 pub struct InstallCommand {
     binary: String,
@@ -113,4 +114,13 @@ fn get_install_env(manager: PackageManager, pkg_dir: &Path) -> HashMap<String, S
         PackageManager::Opam => todo!(),
         PackageManager::NuGet => todo!(),
     }
+}
+
+// This MUST be atomic.
+pub fn move_package(name: &str) -> anyhow::Result<()> {
+    let from = paths::tmp_dir().join(name);
+    let to = paths::packages_dir().join(name);
+
+    fs::rename(from, to)?;
+    Ok(())
 }
