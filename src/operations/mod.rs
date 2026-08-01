@@ -1,5 +1,5 @@
 use crate::{
-    error, note,
+    error, header, note,
     operations::util::{OperationResult, accepted_installation},
     step,
 };
@@ -25,17 +25,33 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
         return OperationResult::Success;
     }
 
+    let (mut ok_count, mut err_count) = (0, 0);
+
     for pkg in entries {
         let name = pkg.name.clone();
         step!("Installing package '{name}'..");
 
         match logic::install_pkg(pkg, &platform, &mut state) {
-            Ok(()) => note!("Package installed successfully."),
-            Err(e) => error!("Failed to install '{}': {e}.", name),
+            Ok(()) => {
+                note!("Package installed successfully.");
+                ok_count += 1;
+            }
+
+            Err(e) => {
+                error!("Failed to install '{}': {e}.", name);
+                err_count += 1;
+            }
         }
     }
 
-    OperationResult::Success
+    let plural = if ok_count == 1 { "package" } else { "packages" };
+    header!("Successfully installed {ok_count} {plural}. {err_count} had errors.");
+
+    if err_count == 0 {
+        OperationResult::Success
+    } else {
+        OperationResult::Failure
+    }
 }
 
 pub fn remove(args: model::RemoveArgs) -> OperationResult {
