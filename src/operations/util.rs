@@ -35,7 +35,7 @@ pub fn resolve_entry(
     let ctx = context::build_context(&e.source, platform)?;
 
     let entry = template::resolve_entry(e, &ctx)?;
-    let asset = ctx.asset.map(|a| serde_json::from_value(a)).transpose()?; // shouldn't fail
+    let asset = ctx.asset.map(serde_json::from_value).transpose()?; // shouldn't fail
 
     Ok((entry, asset))
 }

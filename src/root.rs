@@ -21,7 +21,6 @@ fn ensure_root_items() -> anyhow::Result<()> {
     fs::create_dir_all(paths::tmp_dir())?;
     fs::create_dir_all(paths::registry_dir())?;
     fs::create_dir_all(paths::packages_dir())?;
-    io::write_file_atomic(&paths::state_file(), false)?;
 
     Ok(())
 }

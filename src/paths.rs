@@ -41,3 +41,10 @@ pub fn state_file() -> PathBuf {
 pub fn registry_file() -> PathBuf {
     registry_dir().join(registry::REGISTRY_FILE)
 }
+
+// ---
+
+// assumes name and version are valid (not blank etc.)
+pub fn package_dir(name: &str, version: &str) -> PathBuf {
+    packages_dir().join(name).join(version)
+}

@@ -1,3 +1,5 @@
+use time::{OffsetDateTime, format_description::well_known::Rfc3339};
+
 use crate::registry::model::{Arch, Libc, Os, Platform};
 
 pub fn current_platform() -> anyhow::Result<Platform> {
@@ -5,7 +7,7 @@ pub fn current_platform() -> anyhow::Result<Platform> {
         "linux" => Os::Linux,
         "macos" => Os::Darwin,
         "windows" => Os::Windows,
-        other => anyhow::bail!("unsupported OS: {other}"),
+        other => anyhow::bail!("Unsupported OS: {other}"),
     };
 
     let arch = match std::env::consts::ARCH {
@@ -13,7 +15,7 @@ pub fn current_platform() -> anyhow::Result<Platform> {
         "x86" => Some(Arch::X86),
         "aarch64" => Some(Arch::Arm64),
         "arm" => Some(Arch::Arm),
-        other => anyhow::bail!("unsupported architecture: {other}"),
+        other => anyhow::bail!("Unsupported architecture: {other}"),
     };
 
     Ok(Platform {
@@ -36,4 +38,10 @@ fn platform_libc(os: Os) -> Option<Libc> {
 #[cfg(not(any(target_env = "musl", target_env = "gnu")))]
 fn platform_libc(_os: Os) -> Option<Libc> {
     None // e.g. darwin/windows have no relevant libc value in this registry's scheme
+}
+
+pub fn time_now() -> String {
+    OffsetDateTime::now_utc()
+        .format(&Rfc3339)
+        .unwrap_or_default()
 }

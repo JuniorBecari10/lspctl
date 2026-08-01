@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
 use crate::{
     packages::util,
+    paths,
     registry::model::{
         Asset, Build, Downloads, Entry, PackageManager, ResolvedEntry, SourceVariant,
     },
@@ -18,12 +21,11 @@ pub fn install(
         } => install_manager(&entry, *manager, extra_packages),
 
         SourceVariant::Asset(_) => install_asset(&entry, asset),
-        SourceVariant::Download(downloads) => install_download(&entry, &downloads),
-        SourceVariant::Build(builds) => install_build(&entry, &builds),
+        SourceVariant::Download(downloads) => install_download(&entry, downloads),
+        SourceVariant::Build(builds) => install_build(&entry, builds),
     };
 
-    // TODO: write to state BEFORE returning, and AFTER performing the work.
-    // in other words, here.
+    state.add_entry(&entry, HashMap::new());
     res
 }
 
@@ -32,9 +34,15 @@ fn install_manager(
     manager: PackageManager,
     extra_packages: &[String],
 ) -> anyhow::Result<()> {
-    let command = util::get_install_command(manager, &entry.name, &entry.source.purl.version);
-    // TODO: run command
-    todo!()
+    let command = util::get_install_command(
+        manager,
+        &entry.name,
+        &entry.source.purl.version,
+        extra_packages,
+    );
+
+    util::run_command(command, &paths::tmp_dir())?;
+    // resolve shims and move to definitive location
 }
 
 fn install_asset(entry: &Entry, asset: Option<Asset>) -> anyhow::Result<()> {

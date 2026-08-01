@@ -67,7 +67,7 @@ pub struct VersionOverride {
     pub supported_platforms: Vec<Platform>,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum InstallKind {
     Npm,
     PyPI,

@@ -17,8 +17,7 @@ impl<T> From<OneOrMany<T>> for Vec<T> {
 }
 
 // just convert all Cow fields into owned ones,
-// 'ty' into an enum
-// and 'version' into a non-option
+// and perform some changes.
 impl<'a> TryFrom<PackageUrl<'a>> for Purl {
     type Error = anyhow::Error;
 
@@ -28,12 +27,14 @@ impl<'a> TryFrom<PackageUrl<'a>> for Purl {
                 .ok_or_else(|| anyhow!("Invalid install kind: '{}'", purl.ty()))?,
 
             namespace: purl.namespace().map(Into::into),
-            name: purl.name().into(),
+            name: sanitize_path_component(purl.name()),
 
-            version: purl
-                .version()
-                .map(Into::<String>::into)
-                .ok_or_else(|| anyhow::anyhow!("Expected version number"))?,
+            version: sanitize_path_component(
+                &purl
+                    .version()
+                    .map(Into::<String>::into)
+                    .ok_or_else(|| anyhow::anyhow!("Expected version number"))?,
+            ),
 
             qualifiers: purl
                 .qualifiers()
@@ -154,7 +155,7 @@ impl Display for InstallKind {
 }
 
 impl PackageManager {
-    fn get_command(&self) -> String {
+    pub fn get_command(&self) -> String {
         match self {
             PackageManager::Npm => "npm".into(),
             PackageManager::PyPI => "python".into(),
@@ -187,4 +188,50 @@ fn get_install_kind(s: &str) -> Option<InstallKind> {
         "nuget" => Some(NuGet),
         _ => None,
     }
+}
+
+fn sanitize_path_component(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+
+    for c in raw.trim().chars() {
+        match c {
+            // path separators would otherwise split into multiple
+            // components (or, worse, enable `..` traversal) — collapse
+            // to a safe substitute that preserves some structure info
+            '/' | '\\' => out.push('_'),
+            // invalid on Windows, and a bad idea to allow anywhere
+            '<' | '>' | ':' | '"' | '|' | '?' | '*' => out.push('_'),
+            // control characters — drop entirely, no useful substitute
+            c if (c as u32) < 0x20 => {}
+            c => out.push(c),
+        }
+    }
+
+    // Windows silently strips trailing dots/spaces, which can make a name
+    // resolve to a DIFFERENT path than the one that was actually created
+    while out.ends_with('.') || out.ends_with(' ') {
+        out.pop();
+    }
+
+    if out.is_empty() || out == "." || out == ".." {
+        out = "unknown".to_string();
+    }
+
+    // Windows reserved device names are invalid regardless of extension
+    const RESERVED: &[&str] = &[
+        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+        "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+    ];
+    let stem = out.split('.').next().unwrap_or(&out);
+    if RESERVED.iter().any(|r| stem.eq_ignore_ascii_case(r)) {
+        out = format!("_{out}");
+    }
+
+    // defensive cap — 255 is the common filesystem limit; leave headroom
+    // since this component gets joined with others under it
+    if out.len() > 200 {
+        out.truncate(200);
+    }
+
+    out
 }
