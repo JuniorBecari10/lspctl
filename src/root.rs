@@ -16,6 +16,8 @@ pub fn setup_root() -> anyhow::Result<()> {
     }
 }
 
+// TODO: delete everything in tmp here and add lockfile
+// to ensure no more than one instance of lspctl runs at once.
 fn ensure_root_items() -> anyhow::Result<()> {
     fs::create_dir_all(paths::bin_dir())?;
     fs::create_dir_all(paths::tmp_dir())?;

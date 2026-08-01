@@ -25,9 +25,16 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
         return OperationResult::Success;
     }
 
-    let (mut ok_count, mut err_count) = (0, 0);
+    let (mut ok_count, mut err_count, mut installed_count) = (0, 0, 0);
 
     for pkg in entries {
+        if state.package_exists(&pkg.name) {
+            step!("Package '{}' is already installed. Skipping..", pkg.name);
+            installed_count += 1;
+
+            continue;
+        }
+
         let name = pkg.name.clone();
         step!("Installing package '{name}'..");
 
@@ -44,8 +51,12 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
         }
     }
 
-    let plural = if ok_count == 1 { "package" } else { "packages" };
-    header!("Successfully installed {ok_count} {plural}. {err_count} had errors.");
+    let ok_plural = util::plural(ok_count, "package", "packages");
+    let installed_plural = util::plural(installed_count, "was", "were");
+
+    header!(
+        "Successfully installed {ok_count} {ok_plural}. {err_count} had errors. {installed_count} {installed_plural} already installed."
+    );
 
     if err_count == 0 {
         OperationResult::Success

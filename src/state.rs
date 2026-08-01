@@ -7,6 +7,7 @@ use crate::{
     registry::model::{Entry, InstallKind},
 };
 
+// only change this after launch and after introducing a breaking change to the registry state.
 const SCHEMA_VERSION: u32 = 1;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -39,7 +40,12 @@ impl State {
         File::open(paths::state_file())?.read_to_end(&mut contents)?;
 
         let state: Self = serde_json::from_slice(&contents)?;
-        Ok(state)
+        match state.schema_version {
+            SCHEMA_VERSION => Ok(state),
+            older => anyhow::bail!(
+                "State file has an schema version 'v{older}', which is older than the current 'v{SCHEMA_VERSION}' version."
+            ),
+        }
     }
 
     pub fn save(&self) -> anyhow::Result<()> {
@@ -57,5 +63,9 @@ impl State {
                 install_time: global::time_now(),
             },
         );
+    }
+
+    pub fn package_exists(&self, name: &str) -> bool {
+        self.installed.contains_key(name)
     }
 }

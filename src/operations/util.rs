@@ -80,3 +80,7 @@ fn list_installing_packages(pkgs: &[Entry]) {
         list!("{}", pkg);
     }
 }
+
+pub fn plural<'a>(var: i32, singular: &'a str, plural: &'a str) -> &'a str {
+    if var == 1 { singular } else { plural }
+}

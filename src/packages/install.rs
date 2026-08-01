@@ -20,9 +20,6 @@ pub fn install(
 
     fs::create_dir_all(&tmp_pkg_path)?;
 
-    // TODO: check if the package is already installed via checking the registry.
-    // add a method there as well
-
     match &entry.source.variant {
         SourceVariant::PackageManager {
             manager,
