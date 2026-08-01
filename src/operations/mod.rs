@@ -1,5 +1,5 @@
 use crate::{
-    error, header, note,
+    end, error, header,
     operations::util::{OperationResult, accepted_installation},
     step,
 };
@@ -40,7 +40,7 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
 
         match logic::install_pkg(pkg, &platform, &mut state) {
             Ok(()) => {
-                note!("Package installed successfully.");
+                end!("Package installed successfully.");
                 ok_count += 1;
             }
 

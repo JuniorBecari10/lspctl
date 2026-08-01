@@ -47,7 +47,7 @@ pub fn get_platform(s: &str) -> anyhow::Result<Vec<Platform>> {
         None => None,
         Some(&"gnu") => Some(Libc::Gnu),
         Some(&"musl") => Some(Libc::Musl),
-        Some(&"openbsd") => Some(Libc::OpenBsd),
+        Some(&"openbsd") => Some(Libc::OpenBSD),
         Some(other) => anyhow::bail!("unknown libc/variant '{other}' in target '{s}'"),
     };
 

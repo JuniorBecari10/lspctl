@@ -52,7 +52,7 @@ fn install_manager(
 ) -> anyhow::Result<()> {
     let command = util::get_install_command(
         manager,
-        &entry.name,
+        &entry.source.purl.qualified_package_name(),
         &entry.source.purl.version,
         extra_packages,
         tmp_pkg_path,

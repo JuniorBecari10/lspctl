@@ -71,7 +71,7 @@ pub struct VersionOverride {
 pub enum InstallKind {
     Npm,
     PyPI,
-    Golang,
+    Go,
     Cargo,
     Gem,
     Composer,
@@ -80,7 +80,7 @@ pub enum InstallKind {
     NuGet,
     GitHub,
     Generic,
-    OpenVsx,
+    OpenVSX,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -117,7 +117,7 @@ pub enum Arch {
 pub enum Libc {
     Gnu,
     Musl,
-    OpenBsd,
+    OpenBSD,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

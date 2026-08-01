@@ -55,14 +55,14 @@ impl TryFrom<InstallKind> for PackageManager {
         match kind {
             InstallKind::Npm => Ok(PackageManager::Npm),
             InstallKind::PyPI => Ok(PackageManager::PyPI),
-            InstallKind::Golang => Ok(PackageManager::Golang),
+            InstallKind::Go => Ok(PackageManager::Golang),
             InstallKind::Cargo => Ok(PackageManager::Cargo),
             InstallKind::Gem => Ok(PackageManager::Gem),
             InstallKind::Composer => Ok(PackageManager::Composer),
             InstallKind::LuaRocks => Ok(PackageManager::LuaRocks),
             InstallKind::Opam => Ok(PackageManager::Opam),
             InstallKind::NuGet => Ok(PackageManager::NuGet),
-            InstallKind::GitHub | InstallKind::Generic | InstallKind::OpenVsx => Err(
+            InstallKind::GitHub | InstallKind::Generic | InstallKind::OpenVSX => Err(
                 anyhow::anyhow!("{kind:?} is not a package-manager install kind"),
             ),
         }
@@ -138,9 +138,9 @@ impl Display for Entry {
 impl Display for InstallKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            InstallKind::Npm => write!(f, "Npm"),
+            InstallKind::Npm => write!(f, "npm"),
             InstallKind::PyPI => write!(f, "PyPI"),
-            InstallKind::Golang => write!(f, "Golang"),
+            InstallKind::Go => write!(f, "Go"),
             InstallKind::Cargo => write!(f, "Cargo"),
             InstallKind::Gem => write!(f, "Gem"),
             InstallKind::Composer => write!(f, "Composer"),
@@ -149,7 +149,7 @@ impl Display for InstallKind {
             InstallKind::NuGet => write!(f, "NuGet"),
             InstallKind::GitHub => write!(f, "GitHub"),
             InstallKind::Generic => write!(f, "Generic"),
-            InstallKind::OpenVsx => write!(f, "OpenVSX"),
+            InstallKind::OpenVSX => write!(f, "OpenVSX"),
         }
     }
 }
@@ -170,6 +170,15 @@ impl PackageManager {
     }
 }
 
+impl Purl {
+    pub fn qualified_package_name(&self) -> String {
+        match &self.namespace {
+            Some(ns) => format!("{ns}/{}", self.name),
+            None => self.name.clone(),
+        }
+    }
+}
+
 fn get_install_kind(s: &str) -> Option<InstallKind> {
     use InstallKind::*;
 
@@ -177,11 +186,11 @@ fn get_install_kind(s: &str) -> Option<InstallKind> {
         "github" => Some(GitHub),
         "npm" => Some(Npm),
         "pypi" => Some(PyPI),
-        "golang" => Some(Golang),
+        "golang" => Some(Go),
         "cargo" => Some(Cargo),
         "gem" => Some(Gem),
         "generic" => Some(Generic),
-        "openvsx" => Some(OpenVsx),
+        "openvsx" => Some(OpenVSX),
         "composer" => Some(Composer),
         "luarocks" => Some(LuaRocks),
         "opam" => Some(Opam),
