@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::registry::{
-    model::{Platform, Source, SourceVariant},
+    model::{Platform, Source, Variant},
     parser::template::select::select_asset,
 };
 
@@ -14,7 +14,7 @@ pub struct ResolveContext {
 
 pub fn build_context(source: &Source, host: &Platform) -> anyhow::Result<ResolveContext> {
     let asset = match &source.variant {
-        SourceVariant::Asset(_) => {
+        Variant::Asset(_) => {
             Some(serde_json::to_value(select_asset(&source.variant, host)?)?)
         }
 

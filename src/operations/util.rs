@@ -5,13 +5,7 @@ use dialoguer::Confirm;
 
 use crate::{
     header, list,
-    registry::{
-        model::{Asset, Entry, Platform, Registry, ResolvedEntry},
-        parser::template::{
-            self,
-            context::{self},
-        },
-    },
+    registry::model::{Entry, Registry},
 };
 
 pub enum OperationResult {
@@ -26,18 +20,6 @@ impl From<OperationResult> for ExitCode {
             OperationResult::Failure => Self::FAILURE,
         }
     }
-}
-
-pub fn resolve_entry(
-    e: Entry,
-    platform: &Platform,
-) -> anyhow::Result<(ResolvedEntry, Option<Asset>)> {
-    let ctx = context::build_context(&e.source, platform)?;
-
-    let entry = template::resolve_entry(e, &ctx)?;
-    let asset = ctx.asset.map(serde_json::from_value).transpose()?; // shouldn't fail
-
-    Ok((entry, asset))
 }
 
 pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str>) {

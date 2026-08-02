@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     global, io, paths,
-    registry::model::{Entry, InstallKind},
+    registry::model::{InstallKind, ResolvedEntry},
 };
 
 // only change this after launch and after introducing a breaking change to the registry state.
@@ -53,7 +53,7 @@ impl State {
         io::write_file_atomic_contents(&paths::state_file(), &contents, true)
     }
 
-    pub fn add_entry(&mut self, e: &Entry, bin: HashMap<String, PathBuf>) {
+    pub fn add_entry(&mut self, e: &ResolvedEntry, bin: HashMap<String, PathBuf>) {
         self.installed.insert(
             e.name.clone(),
             InstalledPackage {

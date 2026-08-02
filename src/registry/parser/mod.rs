@@ -55,18 +55,18 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
 fn parse_variant(
     raw: Option<RawSourceVariant>,
     kind: InstallKind,
-) -> anyhow::Result<SourceVariant> {
+) -> anyhow::Result<Variant> {
     let manager: Result<PackageManager, _> = kind.try_into();
 
     match raw {
         Some(RawSourceVariant::ExtraPackages { extra_packages }) => {
-            Ok(SourceVariant::PackageManager {
+            Ok(Variant::PackageManager {
                 manager: manager?,
                 extra_packages,
             })
         }
 
-        Some(RawSourceVariant::Asset { asset }) => Ok(SourceVariant::Asset(
+        Some(RawSourceVariant::Asset { asset }) => Ok(Variant::Asset(
             Into::<Vec<_>>::into(asset)
                 .into_iter()
                 .map(parse_asset)
@@ -74,10 +74,10 @@ fn parse_variant(
         )),
 
         Some(RawSourceVariant::Download { download }) => {
-            Ok(SourceVariant::Download(parse_downloads(download)?))
+            Ok(Variant::Download(parse_downloads(download)?))
         }
 
-        Some(RawSourceVariant::Build { build }) => Ok(SourceVariant::Build(
+        Some(RawSourceVariant::Build { build }) => Ok(Variant::Build(
             Into::<Vec<_>>::into(build)
                 .into_iter()
                 .map(parse_build)
@@ -86,7 +86,7 @@ fn parse_variant(
 
         // edge case where 'extra_packages' is not present but 'kind' is a package manager
         None => manager
-            .map(|m| SourceVariant::PackageManager { manager: m, extra_packages: vec![] })
+            .map(|m| Variant::PackageManager { manager: m, extra_packages: vec![] })
             .map_err(|_| anyhow::anyhow!(
                 "Package has no source variant and purl kind '{kind}' has no known package manager"
             )

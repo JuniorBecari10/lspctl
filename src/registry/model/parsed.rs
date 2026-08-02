@@ -9,9 +9,6 @@ use std::collections::HashMap;
 // - every hashmap
 // - env
 
-/// Represents entries that have their templates resolved.
-pub type ResolvedEntry = Entry;
-
 #[derive(Debug, Serialize)]
 pub struct Registry(pub Vec<Entry>);
 
@@ -31,7 +28,7 @@ pub struct Entry {
 #[derive(Debug, Clone, Serialize)]
 pub struct Source {
     pub purl: Purl,
-    pub variant: SourceVariant,
+    pub variant: Variant,
     pub supported_platforms: Vec<Platform>,
     pub version_overrides: Option<Vec<VersionOverride>>,
     pub bin: Option<String>, // for js-debug-adapter (edge case)
@@ -49,7 +46,7 @@ pub struct Purl {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SourceVariant {
+pub enum Variant {
     PackageManager {
         manager: PackageManager,
         extra_packages: Vec<String>,
@@ -63,7 +60,7 @@ pub enum SourceVariant {
 pub struct VersionOverride {
     pub constraint: String,
     pub id: String,
-    pub variant: SourceVariant,
+    pub variant: Variant,
     pub supported_platforms: Vec<Platform>,
 }
 

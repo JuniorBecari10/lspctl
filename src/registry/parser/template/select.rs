@@ -1,7 +1,7 @@
-use crate::registry::model::{Asset, Platform, SourceVariant};
+use crate::registry::model::{Asset, Platform, Variant};
 
-pub fn select_asset<'a>(variant: &'a SourceVariant, host: &Platform) -> anyhow::Result<&'a Asset> {
-    let SourceVariant::Asset(assets) = variant else {
+pub fn select_asset<'a>(variant: &'a Variant, host: &Platform) -> anyhow::Result<&'a Asset> {
+    let Variant::Asset(assets) = variant else {
         anyhow::bail!("Source has no asset variant (got {variant:?})");
     };
 

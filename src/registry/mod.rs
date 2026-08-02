@@ -6,6 +6,7 @@ use crate::{io, note, paths, registry::model::RawRegistry, step};
 
 pub mod model;
 pub mod parser;
+pub mod resolver;
 mod util;
 
 // Export for other packages to use as well

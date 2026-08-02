@@ -8,7 +8,7 @@ mod select;
 mod token;
 
 use crate::registry::{
-    model::{Asset, Build, Download, Downloads, Entry, Source, SourceVariant, VersionOverride},
+    model::{Asset, Build, Download, Downloads, Entry, Source, Variant, VersionOverride},
     parser::template::context::ResolveContext,
 };
 
@@ -45,28 +45,28 @@ fn resolve_source(s: Source, ctx: &ResolveContext) -> anyhow::Result<Source> {
     })
 }
 
-fn resolve_variant(v: SourceVariant, ctx: &ResolveContext) -> anyhow::Result<SourceVariant> {
+fn resolve_variant(v: Variant, ctx: &ResolveContext) -> anyhow::Result<Variant> {
     match v {
-        SourceVariant::PackageManager {
+        Variant::PackageManager {
             manager,
             extra_packages,
-        } => Ok(SourceVariant::PackageManager {
+        } => Ok(Variant::PackageManager {
             manager,
             extra_packages,
         }),
 
-        SourceVariant::Asset(assets) => Ok(SourceVariant::Asset(
+        Variant::Asset(assets) => Ok(Variant::Asset(
             assets
                 .into_iter()
                 .map(|a| resolve_asset(a, ctx))
                 .collect::<anyhow::Result<_>>()?,
         )),
 
-        SourceVariant::Download(downloads) => {
-            Ok(SourceVariant::Download(resolve_downloads(downloads, ctx)?))
+        Variant::Download(downloads) => {
+            Ok(Variant::Download(resolve_downloads(downloads, ctx)?))
         }
 
-        SourceVariant::Build(builds) => Ok(SourceVariant::Build(
+        Variant::Build(builds) => Ok(Variant::Build(
             builds
                 .into_iter()
                 .map(|b| resolve_build(b, ctx))
