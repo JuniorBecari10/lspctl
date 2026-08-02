@@ -8,8 +8,8 @@ use crate::{
 };
 
 // this mutates and writes state down
-pub fn install_pkg(e: Entry, platform: &Platform, state: &mut State) -> anyhow::Result<()> {
-    let entry = resolver::resolve_entry(e, platform)?;
+pub fn install_pkg(e: Entry, host: &Platform, state: &mut State) -> anyhow::Result<()> {
+    let entry = resolver::resolve_entry(e, host)?;
 
     packages::install(entry, state)?;
     state.save()
