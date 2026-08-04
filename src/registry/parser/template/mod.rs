@@ -8,7 +8,7 @@ pub mod select;
 mod token;
 
 use crate::registry::{
-    model::{Asset, Build, Download, Downloads, Entry, Source, Variant, VersionOverride},
+    model::{Asset, Build, Download, Downloads, Entry, Source, Variant},
     parser::template::context::ResolveContext,
 };
 
@@ -29,16 +29,6 @@ pub fn resolve_entry(e: Entry, ctx: &ResolveContext) -> anyhow::Result<Entry> {
 fn resolve_source(s: Source, ctx: &ResolveContext) -> anyhow::Result<Source> {
     Ok(Source {
         variant: resolve_variant(s.variant, ctx)?,
-
-        version_overrides: s
-            .version_overrides
-            .map(|vos| {
-                vos.into_iter()
-                    .map(|vo| resolve_version_override(vo, ctx))
-                    .collect::<anyhow::Result<_>>()
-            })
-            .transpose()?,
-
         bin: s.bin.map(|b| public::parse_template(b, ctx)).transpose()?,
 
         ..s
@@ -71,16 +61,6 @@ fn resolve_variant(v: Variant, ctx: &ResolveContext) -> anyhow::Result<Variant> 
                 .collect::<anyhow::Result<_>>()?,
         )),
     }
-}
-
-fn resolve_version_override(
-    vo: VersionOverride,
-    ctx: &ResolveContext,
-) -> anyhow::Result<VersionOverride> {
-    Ok(VersionOverride {
-        variant: resolve_variant(vo.variant, ctx)?,
-        ..vo
-    })
 }
 
 fn resolve_asset(a: Asset, ctx: &ResolveContext) -> anyhow::Result<Asset> {

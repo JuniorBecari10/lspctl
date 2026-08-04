@@ -39,7 +39,6 @@ pub fn merge_context(entry: Entry, host: &Platform) -> ResolvedEntry {
         purl: entry.source.purl,
         variant,
         supported_platforms: entry.source.supported_platforms,
-        version_overrides: None,
         bin: entry.source.bin, // already resolved
     };
 

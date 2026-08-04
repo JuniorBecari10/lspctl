@@ -26,7 +26,6 @@ pub struct RawSource {
     #[serde(flatten)]
     pub variant: Option<RawSourceVariant>,
     pub supported_platforms: Option<Vec<String>>,
-    pub version_overrides: Option<Vec<RawVersionOverride>>,
     pub bin: Option<String>, // for js-debug-adapter (edge case)
 }
 
@@ -37,16 +36,6 @@ pub enum RawSourceVariant {
     Asset { asset: OneOrMany<RawAsset> },
     Download { download: RawDownloads },
     Build { build: OneOrMany<RawBuild> },
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct RawVersionOverride {
-    pub constraint: String,
-    pub id: String,
-
-    #[serde(flatten)]
-    pub variant: RawSourceVariant,
-    pub supported_platforms: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

@@ -35,16 +35,6 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
 
     Ok(Source {
         variant: parse_variant(raw.variant, purl.kind)?,
-
-        version_overrides: raw
-            .version_overrides
-            .map(|vos| {
-                vos.into_iter()
-                    .map(|vo| parse_version_override(vo, purl.kind))
-                    .collect::<anyhow::Result<_>>()
-            })
-            .transpose()?,
-
         supported_platforms: platform::convert_platforms(raw.supported_platforms)?,
 
         purl, // used after because of the borrow checker
@@ -52,10 +42,7 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
     })
 }
 
-fn parse_variant(
-    raw: Option<RawSourceVariant>,
-    kind: InstallKind,
-) -> anyhow::Result<Variant> {
+fn parse_variant(raw: Option<RawSourceVariant>, kind: InstallKind) -> anyhow::Result<Variant> {
     let manager: Result<PackageManager, _> = kind.try_into();
 
     match raw {
@@ -92,18 +79,6 @@ fn parse_variant(
             )
         ),
     }
-}
-
-fn parse_version_override(
-    raw: RawVersionOverride,
-    kind: InstallKind,
-) -> anyhow::Result<VersionOverride> {
-    Ok(VersionOverride {
-        constraint: raw.constraint,
-        id: raw.id,
-        variant: parse_variant(Some(raw.variant), kind)?,
-        supported_platforms: platform::convert_platforms(raw.supported_platforms)?,
-    })
 }
 
 fn parse_asset(raw: RawAsset) -> anyhow::Result<Asset> {

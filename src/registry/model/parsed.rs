@@ -30,7 +30,6 @@ pub struct Source {
     pub purl: Purl,
     pub variant: Variant,
     pub supported_platforms: Vec<Platform>,
-    pub version_overrides: Option<Vec<VersionOverride>>,
     pub bin: Option<String>, // for js-debug-adapter (edge case)
 }
 
@@ -54,14 +53,6 @@ pub enum Variant {
     Asset(Vec<Asset>),
     Download(Downloads),
     Build(Vec<Build>),
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct VersionOverride {
-    pub constraint: String,
-    pub id: String,
-    pub variant: Variant,
-    pub supported_platforms: Vec<Platform>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]

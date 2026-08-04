@@ -22,7 +22,6 @@ pub struct ResolvedSource {
     pub purl: Purl,
     pub variant: ResolvedVariant,
     pub supported_platforms: Vec<Platform>,
-    pub version_overrides: Option<Vec<ResolvedVersionOverride>>,
     pub bin: Option<String>, // for js-debug-adapter (edge case)
 }
 
@@ -35,14 +34,6 @@ pub enum ResolvedVariant {
     Asset(Asset),
     Download(ResolvedDownloads),
     Build(Build),
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ResolvedVersionOverride {
-    pub constraint: String,
-    pub id: String,
-    pub variant: ResolvedVariant,
-    pub supported_platforms: Vec<Platform>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
