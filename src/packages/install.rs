@@ -36,11 +36,11 @@ fn install_by_variant(entry: &ResolvedEntry, tmp_pkg_path: &Path) -> anyhow::Res
         ResolvedVariant::PackageManager {
             manager,
             extra_packages,
-        } => install_manager(&entry, *manager, extra_packages, tmp_pkg_path),
+        } => install_manager(entry, *manager, extra_packages, tmp_pkg_path),
 
-        ResolvedVariant::Asset(asset) => install_asset(&entry, asset, tmp_pkg_path),
-        ResolvedVariant::Download(downloads) => install_download(&entry, downloads, tmp_pkg_path),
-        ResolvedVariant::Build(build) => install_build(&entry, build, tmp_pkg_path),
+        ResolvedVariant::Asset(asset) => install_asset(entry, asset, tmp_pkg_path),
+        ResolvedVariant::Download(downloads) => install_download(entry, downloads, tmp_pkg_path),
+        ResolvedVariant::Build(build) => install_build(entry, build, tmp_pkg_path),
     }
 }
 
@@ -52,15 +52,11 @@ fn make_shims(
         ResolvedVariant::PackageManager {
             manager,
             extra_packages: _,
-        } => shim::shim_manager(&entry, *manager, &tmp_pkg_path),
+        } => shim::shim_manager(entry, *manager, tmp_pkg_path),
 
-        ResolvedVariant::Asset(asset) => shim::shim_asset(&entry, asset, tmp_pkg_path),
-
-        ResolvedVariant::Download(downloads) => {
-            shim::shim_download(&entry, downloads, tmp_pkg_path)
-        }
-
-        ResolvedVariant::Build(build) => shim::shim_build(&entry, build, tmp_pkg_path),
+        ResolvedVariant::Asset(asset) => shim::shim_asset(entry, asset, tmp_pkg_path),
+        ResolvedVariant::Download(downloads) => shim::shim_download(entry, downloads, tmp_pkg_path),
+        ResolvedVariant::Build(build) => shim::shim_build(entry, build, tmp_pkg_path),
     }
 }
 
