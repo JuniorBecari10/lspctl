@@ -3,9 +3,12 @@ use crate::registry::{
     parser::template::{self, context},
 };
 
+mod merge;
+
 pub fn resolve_entry(e: Entry, host: &Platform) -> anyhow::Result<ResolvedEntry> {
     let ctx = context::build_context(&e.source, host)?;
     let entry = template::resolve_entry(e, &ctx)?;
+    let resolved = merge::merge_context(entry, host);
 
-    Ok(entry)
+    Ok(resolved)
 }

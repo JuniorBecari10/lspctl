@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-use anyhow::Context;
-
 use crate::registry::parser::template::{
     context::ResolveContext,
     eval::eval,
@@ -27,8 +25,7 @@ pub fn parse_template(template: String, ctx: &ResolveContext) -> anyhow::Result<
         return Ok(template);
     }
 
-    let ctx_json = serde_json::to_value(ctx)
-        .context("Failed to serialize source context for template resolution")?;
+    let ctx_json = ctx.to_template_json();
 
     let mut out = String::with_capacity(template.len());
     for seg in split_segments(&template)? {

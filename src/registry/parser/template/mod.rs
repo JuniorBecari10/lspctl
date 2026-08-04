@@ -4,7 +4,7 @@ mod eval;
 mod parser;
 pub mod public;
 mod segment;
-mod select;
+pub mod select;
 mod token;
 
 use crate::registry::{
@@ -62,9 +62,7 @@ fn resolve_variant(v: Variant, ctx: &ResolveContext) -> anyhow::Result<Variant> 
                 .collect::<anyhow::Result<_>>()?,
         )),
 
-        Variant::Download(downloads) => {
-            Ok(Variant::Download(resolve_downloads(downloads, ctx)?))
-        }
+        Variant::Download(downloads) => Ok(Variant::Download(resolve_downloads(downloads, ctx)?)),
 
         Variant::Build(builds) => Ok(Variant::Build(
             builds
