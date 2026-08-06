@@ -1,22 +1,22 @@
 use crate::registry::model::{Asset, Build, Download, Downloads, Platform, Variant};
 
-pub trait HasTargets {
+pub trait Targets {
     fn targets(&self) -> &[Platform];
 }
 
-impl HasTargets for Asset {
+impl Targets for Asset {
     fn targets(&self) -> &[Platform] {
         &self.targets
     }
 }
 
-impl HasTargets for Download {
+impl Targets for Download {
     fn targets(&self) -> &[Platform] {
         &self.targets
     }
 }
 
-impl HasTargets for Build {
+impl Targets for Build {
     fn targets(&self) -> &[Platform] {
         &self.targets
     }
@@ -24,7 +24,7 @@ impl HasTargets for Build {
 
 // ---
 
-fn select_matching<'a, T: HasTargets>(
+fn select_matching<'a, T: Targets>(
     items: &'a [T],
     host: &Platform,
     label: &str,
@@ -39,12 +39,12 @@ fn select_matching<'a, T: HasTargets>(
                 .max()
                 .unwrap_or(0)
         })
-        .ok_or_else(|| anyhow::anyhow!("No {label} entry matches platform {host:?}"))
+        .ok_or_else(|| anyhow::anyhow!("No {label} entry matches platform {host}"))
 }
 
 pub fn select_asset<'a>(variant: &'a Variant, host: &Platform) -> anyhow::Result<&'a Asset> {
     let Variant::Asset(assets) = variant else {
-        anyhow::bail!("Source has no asset variant (got {variant:?})");
+        anyhow::bail!("Source has no asset variant (got '{variant}')");
     };
 
     select_matching(assets, host, "asset")
@@ -52,7 +52,7 @@ pub fn select_asset<'a>(variant: &'a Variant, host: &Platform) -> anyhow::Result
 
 pub fn select_download(variant: &Variant, host: &Platform) -> anyhow::Result<serde_json::Value> {
     let Variant::Download(downloads) = variant else {
-        anyhow::bail!("Source has no download variant (got {variant:?})");
+        anyhow::bail!("Source has no download variant (got '{variant}')");
     };
 
     match downloads {
@@ -67,7 +67,7 @@ pub fn select_download(variant: &Variant, host: &Platform) -> anyhow::Result<ser
 
 pub fn select_build<'a>(variant: &'a Variant, host: &Platform) -> anyhow::Result<&'a Build> {
     let Variant::Build(builds) = variant else {
-        anyhow::bail!("Source has no build variant (got {variant:?})");
+        anyhow::bail!("Source has no build variant (got '{variant}')");
     };
 
     select_matching(builds, host, "build")

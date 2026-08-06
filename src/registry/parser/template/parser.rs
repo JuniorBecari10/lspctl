@@ -1,8 +1,11 @@
 use logos::Logos;
 
-use crate::registry::parser::template::{
-    ast::{Expr, Filter},
-    token::Token,
+use crate::{
+    log::LogPretty,
+    registry::parser::template::{
+        ast::{Expr, Filter},
+        token::Token,
+    },
 };
 
 pub struct Parser<'a> {
@@ -14,7 +17,7 @@ impl<'a> Parser<'a> {
     pub fn new(inner: &'a str) -> anyhow::Result<Self> {
         let tokens = Token::lexer(inner)
             .collect::<Result<_, _>>()
-            .map_err(|_| anyhow::anyhow!("Failed to lex expression: {inner:?}"))?;
+            .map_err(|_| anyhow::anyhow!("Failed to lex expression: '{inner}'"))?;
 
         Ok(Self { tokens, pos: 0 })
     }
@@ -81,7 +84,7 @@ impl<'a> Parser<'a> {
 
         match self.bump() {
             Some(Token::RParen) => Ok(args),
-            other => anyhow::bail!("Expected `)`, got {other:?}"),
+            other => anyhow::bail!("Expected `)`, got '{}'", other.log(|| "<unknown>".into())),
         }
     }
 
@@ -106,14 +109,17 @@ impl<'a> Parser<'a> {
                 Ok(Expr::Path(segs))
             }
 
-            other => anyhow::bail!("Unexpected token: {other:?}"),
+            other => anyhow::bail!("Unexpected token: '{}'", other.log(|| "<unknown>".into())),
         }
     }
 
     fn expect_ident(&mut self) -> anyhow::Result<String> {
         match self.bump() {
             Some(Token::Ident(s)) => Ok(s.to_string()),
-            other => anyhow::bail!("Expected identifier, got {other:?}"),
+            other => anyhow::bail!(
+                "Expected identifier, got {}",
+                other.log(|| "<unknown>".into())
+            ),
         }
     }
 }

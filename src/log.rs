@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 /// `--> message`: major step marker. writes a '\n' before it.
 #[macro_export]
 macro_rules! step {
@@ -84,5 +86,20 @@ impl<T> Fatal<T> for anyhow::Result<T> {
             Ok(t) => t,
             Err(e) => fatal!("{message}: {e}."),
         }
+    }
+}
+
+pub trait LogPretty<T> {
+    fn log(self, f: impl Fn() -> String) -> String
+    where
+        T: Display;
+}
+
+impl<T> LogPretty<T> for Option<T> {
+    fn log(self, f: impl Fn() -> String) -> String
+    where
+        T: Display,
+    {
+        self.map_or_else(f, |t| t.to_string())
     }
 }

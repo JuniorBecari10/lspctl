@@ -23,7 +23,7 @@ pub fn split_segments(input: &str) -> anyhow::Result<Vec<Segment<'_>>> {
 
         let close = after
             .find("}}")
-            .ok_or_else(|| anyhow::anyhow!("Unterminated {{{{ in template: '{input:?}'"))?;
+            .ok_or_else(|| anyhow::anyhow!("Unterminated {{{{ in template: '{input}'"))?;
 
         segments.push(Segment::Expr(after[..close].trim()));
         rest = &after[close + 2..];

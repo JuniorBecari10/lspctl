@@ -16,7 +16,7 @@ impl Value {
 
     fn as_bool(&self) -> anyhow::Result<bool> {
         match self {
-            Value::Str(s) => anyhow::bail!("Expected bool, got string {s:?}"),
+            Value::Str(s) => anyhow::bail!("Expected bool, got string '{s}'"),
             Value::Bool(b) => Ok(*b),
         }
     }
