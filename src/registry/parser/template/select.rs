@@ -31,7 +31,10 @@ fn select_matching<'a, T: Targets>(
 ) -> anyhow::Result<&'a T> {
     items
         .iter()
-        .filter(|item| item.targets().iter().any(|p| p.matches(host)))
+        .filter(|item| {
+            let targets = item.targets();
+            targets.is_empty() || targets.iter().any(|p| p.matches(host))
+        })
         .max_by_key(|item| {
             item.targets()
                 .iter()
