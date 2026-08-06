@@ -1,9 +1,12 @@
-use crate::registry::{
-    model::{
-        Downloads, Entry, Platform, ResolvedDownloads, ResolvedEntry, ResolvedSource,
-        ResolvedVariant, Variant,
+use crate::{
+    error, fatal,
+    registry::{
+        model::{
+            Downloads, Entry, Platform, ResolvedDownloads, ResolvedEntry, ResolvedSource,
+            ResolvedVariant, Variant,
+        },
+        parser::template::select::Targets,
     },
-    parser::template::select::Targets,
 };
 
 pub fn merge_context(entry: Entry, host: &Platform) -> ResolvedEntry {
@@ -62,7 +65,7 @@ fn select_owned<T: Targets>(items: Vec<T>, host: &Platform, label: &str) -> T {
         .filter(|(_, item)| item.targets().iter().any(|p| p.matches(host)))
         .max_by_key(|(_, item)| item.targets().iter().map(Platform::specificity).max().unwrap_or(0))
         .map(|(i, _)| i)
-        .unwrap_or_else(|| panic!("No {label} entry matches platform '{host}'. 'build_context' should have already caught this"));
+        .unwrap_or_else(|| fatal!("No {label} entry matches platform '{host}'. 'build_context' should have already caught this"));
 
     let mut items = items;
     items.swap_remove(index)

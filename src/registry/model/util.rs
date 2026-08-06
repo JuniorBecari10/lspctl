@@ -64,7 +64,7 @@ impl TryFrom<InstallKind> for PackageManager {
             InstallKind::Opam => Ok(PackageManager::Opam),
             InstallKind::NuGet => Ok(PackageManager::NuGet),
             InstallKind::GitHub | InstallKind::Generic | InstallKind::OpenVSX => Err(
-                anyhow::anyhow!("{kind} is not a package-manager install kind"),
+                anyhow::anyhow!("'{kind}' is not a package-manager install kind"),
             ),
         }
     }
@@ -119,7 +119,7 @@ impl Platform {
         true
     }
 
-    /// How many fields this constraint pins down. used to prefer the
+    /// How many fields this constraint pins down. Used to prefer the
     /// more specific match if an asset array has overlapping targets.
     pub fn specificity(&self) -> u8 {
         1 + self.arch.is_some() as u8 + self.libc.is_some() as u8
@@ -268,20 +268,14 @@ fn sanitize_path_component(raw: &str) -> String {
 
     for c in raw.trim().chars() {
         match c {
-            // path separators would otherwise split into multiple
-            // components (or, worse, enable `..` traversal) — collapse
-            // to a safe substitute that preserves some structure info
             '/' | '\\' => out.push('_'),
-            // invalid on Windows, and a bad idea to allow anywhere
             '<' | '>' | ':' | '"' | '|' | '?' | '*' => out.push('_'),
-            // control characters — drop entirely, no useful substitute
+
             c if (c as u32) < 0x20 => {}
             c => out.push(c),
         }
     }
 
-    // Windows silently strips trailing dots/spaces, which can make a name
-    // resolve to a DIFFERENT path than the one that was actually created
     while out.ends_with('.') || out.ends_with(' ') {
         out.pop();
     }
@@ -300,8 +294,6 @@ fn sanitize_path_component(raw: &str) -> String {
         out = format!("_{out}");
     }
 
-    // defensive cap — 255 is the common filesystem limit; leave headroom
-    // since this component gets joined with others under it
     if out.len() > 200 {
         out.truncate(200);
     }

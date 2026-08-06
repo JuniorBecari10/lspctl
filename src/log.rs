@@ -89,6 +89,15 @@ impl<T> Fatal<T> for anyhow::Result<T> {
     }
 }
 
+impl<T> Fatal<T> for Option<T> {
+    fn fatal(self, message: &str) -> T {
+        match self {
+            Some(t) => t,
+            None => fatal!("{message}."),
+        }
+    }
+}
+
 pub trait LogPretty<T> {
     fn log(self, f: impl Fn() -> String) -> String
     where

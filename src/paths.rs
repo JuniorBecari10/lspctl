@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::{consts, registry};
+use crate::{consts, log::Fatal, registry};
 
 consts::consts!(
     BIN_DIR = "bin",
@@ -12,7 +12,7 @@ consts::consts!(
 
 fn root_dir() -> PathBuf {
     dirs::data_local_dir()
-        .expect("Could not determine home directory.")
+        .fatal("Could not determine home directory.")
         .join(consts::APP_NAME)
 }
 
@@ -40,11 +40,4 @@ pub fn state_file() -> PathBuf {
 
 pub fn registry_file() -> PathBuf {
     registry_dir().join(registry::REGISTRY_FILE)
-}
-
-// ---
-
-// assumes name and version are valid (not blank etc.)
-pub fn package_dir(name: &str, version: &str) -> PathBuf {
-    packages_dir().join(name).join(version)
 }
