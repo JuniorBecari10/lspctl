@@ -120,6 +120,7 @@ pub struct Asset {
     pub targets: Vec<Platform>,
     pub files: Vec<String>,
     pub bin: Option<OneOrMap>,
+    #[serde(flatten)]
     pub variables: HashMap<String, AssetVars>, // ad-hoc fields like "lsp" / "dap" / "man"
 }
 
@@ -143,5 +144,6 @@ pub struct Build {
     pub bin: Option<OneOrMap>,
     pub env: Option<HashMap<String, String>>,
     pub staged: Option<bool>,
+    #[serde(flatten)]
     pub extra: HashMap<String, String>, // erlang_ls / els_dap
 }
