@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    packages::{shim, util},
+    packages::{install::link, util},
     paths,
     registry::model::{
         Asset, Build, PackageManager, ResolvedDownloads, ResolvedEntry, ResolvedVariant,
@@ -16,18 +16,15 @@ use crate::{
 };
 
 pub fn install(entry: ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
-    let tmp_pkg_path = paths::tmp_dir()
-        .join(&entry.name)
-        .join(&entry.source.purl.version);
-
+    let tmp_pkg_path = paths::tmp_package_folder(&entry.name, &entry.source.purl.version);
     fs::create_dir_all(&tmp_pkg_path)?;
 
     // install in tmp and move it to the definitive folder
     install_by_variant(&entry, &tmp_pkg_path)?;
     util::move_package(&entry.name)?;
 
-    // make shims/symlinks in bin and add the entry to state
-    let bins = make_shims(&entry, &tmp_pkg_path)?;
+    // make links in bin and add the entry to state
+    let bins = make_links(&entry, &tmp_pkg_path)?;
     state.add_entry(&entry, bins);
 
     Ok(())
@@ -46,7 +43,7 @@ fn install_by_variant(entry: &ResolvedEntry, tmp_pkg_path: &Path) -> anyhow::Res
     }
 }
 
-fn make_shims(
+fn make_links(
     entry: &ResolvedEntry,
     tmp_pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
@@ -54,11 +51,11 @@ fn make_shims(
         ResolvedVariant::PackageManager {
             manager,
             extra_packages: _,
-        } => shim::shim_manager(entry, *manager, tmp_pkg_path),
+        } => link::link_manager(entry, *manager, tmp_pkg_path),
 
-        ResolvedVariant::Asset(asset) => shim::shim_asset(entry, asset, tmp_pkg_path),
-        ResolvedVariant::Download(downloads) => shim::shim_download(entry, downloads, tmp_pkg_path),
-        ResolvedVariant::Build(build) => shim::shim_build(entry, build, tmp_pkg_path),
+        ResolvedVariant::Asset(asset) => link::link_asset(entry, asset, tmp_pkg_path),
+        ResolvedVariant::Download(downloads) => link::link_download(entry, downloads, tmp_pkg_path),
+        ResolvedVariant::Build(build) => link::link_build(entry, build, tmp_pkg_path),
     }
 }
 
@@ -66,7 +63,7 @@ fn make_shims(
 
 // the job of these functions is to perform the work to
 // make the package sit in the tmp folder in the correct folder hierarchy: name / version / data.
-// the rest (make shims, move to definitive folder and update state) is handled by the functions above.
+// the rest (make links, move to definitive folder and update state) is handled by the functions above.
 
 fn install_manager(
     entry: &ResolvedEntry,

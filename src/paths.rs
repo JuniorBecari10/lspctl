@@ -41,3 +41,9 @@ pub fn state_file() -> PathBuf {
 pub fn registry_file() -> PathBuf {
     registry_dir().join(registry::REGISTRY_FILE)
 }
+
+// ---
+
+pub fn tmp_package_folder(name: &str, version: &str) -> PathBuf {
+    tmp_dir().join(name).join(version)
+}
