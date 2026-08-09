@@ -7,9 +7,9 @@ use std::{
 use const_format::concatcp;
 use zip::ZipArchive;
 
-use crate::{consts, io, paths};
+use crate::{consts, def_consts, io, paths};
 
-consts::consts!(
+def_consts!(
     REGISTRY_FILE = "registry.json",
     REGISTRY_ZIP = concatcp!(REGISTRY_FILE, ".zip"),
 );

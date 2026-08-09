@@ -13,13 +13,13 @@ use crate::{
 pub fn link_manager(
     entry: &ResolvedEntry,
     manager: PackageManager,
-    tmp_pkg_path: &Path,
+    pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
+    let hash_map = entry.bin.clone().unwrap_or_default();
+    let bins = hash_map.keys().map(String::as_str).collect();
+
     match manager {
-        PackageManager::Npm => manager::link_npm(
-            entry.bin.clone().unwrap_or_default().keys().collect(),
-            tmp_pkg_path,
-        ),
+        PackageManager::Npm => manager::link_npm(bins, pkg_path),
         PackageManager::PyPI => todo!(),
         PackageManager::Go => todo!(),
         PackageManager::Cargo => todo!(),
@@ -34,7 +34,7 @@ pub fn link_manager(
 pub fn link_asset(
     entry: &ResolvedEntry,
     asset: &Asset,
-    tmp_pkg_path: &Path,
+    pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
     todo!()
 }
@@ -42,7 +42,7 @@ pub fn link_asset(
 pub fn link_download(
     entry: &ResolvedEntry,
     downloads: &ResolvedDownloads,
-    tmp_pkg_path: &Path,
+    pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
     todo!()
 }
@@ -50,7 +50,7 @@ pub fn link_download(
 pub fn link_build(
     entry: &ResolvedEntry,
     build: &Build,
-    tmp_pkg_path: &Path,
+    pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
     todo!()
 }

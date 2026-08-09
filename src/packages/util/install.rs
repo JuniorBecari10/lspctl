@@ -10,7 +10,7 @@ use maplit::hashmap;
 
 use anyhow::Context;
 
-use crate::{end, note, paths, registry::model::PackageManager};
+use crate::{note, paths, registry::model::PackageManager};
 
 pub struct InstallCommand {
     binary: String,
@@ -63,7 +63,7 @@ pub fn run_command(command: InstallCommand, folder: &Path) -> anyhow::Result<()>
         );
     }
 
-    end!("Command executed successfully.");
+    note!("Command executed successfully.");
     Ok(())
 }
 

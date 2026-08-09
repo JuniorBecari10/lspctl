@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use crate::{consts, log::Fatal, registry};
+use crate::{consts, def_consts, log::Fatal, registry};
 
-consts::consts!(
+def_consts!(
     BIN_DIR = "bin",
     TMP_DIR = "tmp",
     REGISTRY_DIR = "registry",
@@ -45,5 +45,13 @@ pub fn registry_file() -> PathBuf {
 // ---
 
 pub fn tmp_package_folder(name: &str, version: &str) -> PathBuf {
-    tmp_dir().join(name).join(version)
+    get_pkg_dir(tmp_dir(), name, version)
+}
+
+pub fn package_folder(name: &str, version: &str) -> PathBuf {
+    get_pkg_dir(packages_dir(), name, version)
+}
+
+fn get_pkg_dir(dir: PathBuf, name: &str, version: &str) -> PathBuf {
+    dir.join(name).join(version)
 }
