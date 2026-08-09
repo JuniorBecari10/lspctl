@@ -18,17 +18,19 @@ pub fn link_manager(
     let hash_map = entry.bin.clone().unwrap_or_default();
     let bins = hash_map.keys().map(String::as_str).collect();
 
-    match manager {
-        PackageManager::Npm => manager::link_npm(bins, pkg_path),
+    let link_fn = match manager {
+        PackageManager::Npm => manager::link_npm,
         PackageManager::PyPI => todo!(),
-        PackageManager::Go => todo!(),
+        PackageManager::Go => manager::link_go,
         PackageManager::Cargo => todo!(),
         PackageManager::Gem => todo!(),
         PackageManager::Composer => todo!(),
         PackageManager::LuaRocks => todo!(),
         PackageManager::Opam => todo!(),
         PackageManager::NuGet => todo!(),
-    }
+    };
+
+    link_fn(bins, pkg_path)
 }
 
 pub fn link_asset(

@@ -24,3 +24,7 @@ pub fn link_npm(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<Stri
 
     Ok(map)
 }
+
+pub fn link_go(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
+    todo!()
+}
