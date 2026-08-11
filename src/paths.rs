@@ -44,11 +44,11 @@ pub fn registry_file() -> PathBuf {
 
 // ---
 
-pub fn tmp_package_folder(name: &str, version: &str) -> PathBuf {
+pub fn tmp_package_dir(name: &str, version: &str) -> PathBuf {
     get_pkg_dir(tmp_dir(), name, version)
 }
 
-pub fn package_folder(name: &str, version: &str) -> PathBuf {
+pub fn package_dir(name: &str, version: &str) -> PathBuf {
     get_pkg_dir(packages_dir(), name, version)
 }
 

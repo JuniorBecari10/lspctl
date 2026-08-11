@@ -38,13 +38,13 @@ pub fn get_install_command(
     InstallCommand { binary, args, env }
 }
 
-pub fn run_command(command: InstallCommand, folder: &Path) -> anyhow::Result<()> {
+pub fn run_command(command: InstallCommand, dir: &Path) -> anyhow::Result<()> {
     let command_str = command.to_string();
     note!("Running: '{command_str}'..");
 
     let mut cmd = Command::new(command.binary.clone());
     cmd.args(command.args)
-        .current_dir(folder)
+        .current_dir(dir)
         .envs(command.env)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());

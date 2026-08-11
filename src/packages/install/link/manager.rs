@@ -7,7 +7,7 @@ use crate::{io, paths};
 
 pub fn link_npm(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
     let files = io::list_files(&pkg_path.join("node_modules").join(".bin"))?;
-    let map = HashMap::new();
+    let mut map = HashMap::new();
 
     for file in files {
         let name = file
@@ -19,7 +19,9 @@ pub fn link_npm(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<Stri
             continue;
         }
 
-        io::link_files(&file, &paths::bin_dir().join(name))?;
+        let bin = paths::bin_dir().join(&name);
+        io::link_files(&file, &bin)?;
+        map.insert(name, bin);
     }
 
     Ok(map)

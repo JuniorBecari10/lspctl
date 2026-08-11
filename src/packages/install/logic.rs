@@ -16,7 +16,7 @@ use crate::{
 };
 
 pub fn install(entry: ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
-    let tmp_pkg_path = paths::tmp_package_folder(&entry.name, &entry.source.purl.version);
+    let tmp_pkg_path = paths::tmp_package_dir(&entry.name, &entry.source.purl.version);
     fs::create_dir_all(&tmp_pkg_path)?;
 
     // install in tmp and move it to the definitive folder
@@ -26,7 +26,7 @@ pub fn install(entry: ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
     // make links in bin and add the entry to state
     let bins = make_links(
         &entry,
-        &paths::package_folder(&entry.name, &entry.source.purl.version),
+        &paths::package_dir(&entry.name, &entry.source.purl.version),
     )?;
     state.add_entry(&entry, bins);
 
