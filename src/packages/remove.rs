@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use crate::{paths, registry::model::ResolvedEntry, state::State};
+use crate::{io, paths, registry::model::ResolvedEntry, state::State};
 
 pub fn remove(entry: ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
     let state_entry = state
@@ -19,6 +19,7 @@ pub fn remove(entry: ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
 
 fn remove_package(name: &str, version: &str) -> anyhow::Result<()> {
     let path = paths::package_dir(name, version);
+    io::make_writable_recursive(&path)?;
     fs::remove_dir_all(&path)?;
 
     let parent = path
@@ -26,6 +27,7 @@ fn remove_package(name: &str, version: &str) -> anyhow::Result<()> {
         .ok_or_else(|| anyhow::anyhow!("Package folder should have a parent"))?;
 
     if is_dir_empty(parent)? {
+        io::make_writable_recursive(parent)?;
         fs::remove_dir_all(parent)?;
     }
 

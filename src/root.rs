@@ -22,7 +22,7 @@ pub fn setup_root() -> anyhow::Result<()> {
 // this assumes no other instance is running, so we need to add checks!
 fn ensure_root_items() -> anyhow::Result<()> {
     // clean tmp dir. it's created below
-    fs::remove_dir_all(paths::tmp_dir())?;
+    // fs::remove_dir_all(paths::tmp_dir())?;
 
     fs::create_dir_all(paths::bin_dir())?;
     fs::create_dir_all(paths::tmp_dir())?;

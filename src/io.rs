@@ -91,3 +91,46 @@ pub fn list_files(dir: &Path) -> anyhow::Result<Vec<PathBuf>> {
 
     Ok(files)
 }
+
+fn make_writable(path: &Path) -> anyhow::Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+
+        let mut perms = fs::metadata(path)?.permissions();
+        let mode = perms.mode();
+
+        if mode & 0o200 == 0 {
+            perms.set_mode(mode | 0o200);
+            fs::set_permissions(path, perms)
+                .with_context(|| format!("Failed to chmod {}", path.display()))?;
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        let mut perms = fs::metadata(path)?.permissions();
+
+        if perms.readonly() {
+            perms.set_readonly(false);
+            fs::set_permissions(path, perms).with_context(|| {
+                format!("Failed to clear read-only attribute on {}", path.display())
+            })?;
+        }
+    }
+
+    Ok(())
+}
+
+pub fn make_writable_recursive(dir: &Path) -> anyhow::Result<()> {
+    for entry in walkdir::WalkDir::new(dir) {
+        let entry = entry?;
+
+        if entry.file_type().is_symlink() {
+            continue;
+        }
+
+        make_writable(entry.path())?;
+    }
+    Ok(())
+}

@@ -5,8 +5,8 @@ use std::{
 
 use crate::{io, paths};
 
-pub fn link_npm(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
-    let files = io::list_files(&pkg_path.join("node_modules").join(".bin"))?;
+fn link(bins: &[&str], bin_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
+    let files = io::list_files(bin_path)?;
     let mut map = HashMap::new();
 
     for file in files {
@@ -16,6 +16,7 @@ pub fn link_npm(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<Stri
             .ok_or_else(|| anyhow::anyhow!("Invalid file path: '{}'", file.display()))?;
 
         if !bins.contains(&name.as_str()) {
+            // binary not in the registry; skip it.
             continue;
         }
 
@@ -27,6 +28,10 @@ pub fn link_npm(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<Stri
     Ok(map)
 }
 
+pub fn link_npm(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
+    link(&bins, &pkg_path.join("node_modules").join(".bin"))
+}
+
 pub fn link_go(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
-    todo!()
+    link(&bins, &pkg_path.join("bin"))
 }
