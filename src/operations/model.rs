@@ -31,4 +31,8 @@ pub struct ListArgs {
     /// List installed packages instead
     #[arg(short, long)]
     pub installed: bool,
+
+    /// Write more info when listing; this will write more than one line per package
+    #[arg(short, long)]
+    pub verbose: bool,
 }

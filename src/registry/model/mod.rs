@@ -1,4 +1,5 @@
 mod common;
+mod display;
 mod parsed;
 mod raw;
 mod release;

@@ -84,7 +84,7 @@ fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action) -> bool {
     );
 
     for pkg in pkgs {
-        list!("{}", pkg);
+        list!("{}", pkg.format_line());
     }
 
     yes || {

@@ -1,11 +1,8 @@
-use std::fmt::Display;
-
 use anyhow::anyhow;
 use packageurl::PackageUrl;
 
 use crate::registry::model::{
-    Arch, AssetVars, Entry, InstallKind, Libc, OneOrMany, OneOrMap, Os, PackageManager, Platform,
-    Purl, Variant,
+    AssetVars, InstallKind, OneOrMany, OneOrMap, PackageManager, Platform, Purl,
 };
 
 impl<T> From<OneOrMany<T>> for Vec<T> {
@@ -123,98 +120,6 @@ impl Platform {
     /// more specific match if an asset array has overlapping targets.
     pub fn specificity(&self) -> u8 {
         1 + self.arch.is_some() as u8 + self.libc.is_some() as u8
-    }
-}
-
-// yes, the space is intended
-fn display_option<T: Display>(opt: Option<T>) -> String {
-    opt.map_or_else(String::new, |t| format!(" {t}"))
-}
-
-impl Display for Platform {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}{}{}",
-            self.os,
-            display_option(self.arch),
-            display_option(self.libc)
-        )
-    }
-}
-
-impl Display for Os {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Os::Linux => write!(f, "Linux"),
-            Os::Darwin => write!(f, "Darwin"),
-            Os::Windows => write!(f, "Windows"),
-        }
-    }
-}
-
-impl Display for Arch {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Arch::X64 => write!(f, "x64"),
-            Arch::X86 => write!(f, "x86"),
-            Arch::Arm64 => write!(f, "Arm64"),
-            Arch::Arm => write!(f, "Arm"),
-            Arch::Armv6l => write!(f, "Arm-v6L"),
-            Arch::Armv7l => write!(f, "Arm-v7L"),
-        }
-    }
-}
-impl Display for Libc {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Libc::Gnu => write!(f, "GLibc"),
-            Libc::Musl => write!(f, "Musl"),
-            Libc::OpenBSD => write!(f, "OpenBSD"),
-        }
-    }
-}
-
-impl Display for Entry {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} {} ({})",
-            self.name, self.source.purl.version, self.source.purl.kind
-        )
-    }
-}
-
-impl Display for InstallKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            InstallKind::Npm => write!(f, "npm"),
-            InstallKind::PyPI => write!(f, "PyPI"),
-            InstallKind::Go => write!(f, "Go"),
-            InstallKind::Cargo => write!(f, "Cargo"),
-            InstallKind::Gem => write!(f, "Gem"),
-            InstallKind::Composer => write!(f, "Composer"),
-            InstallKind::LuaRocks => write!(f, "LuaRocks"),
-            InstallKind::Opam => write!(f, "Opam"),
-            InstallKind::NuGet => write!(f, "NuGet"),
-            InstallKind::GitHub => write!(f, "GitHub"),
-            InstallKind::Generic => write!(f, "Generic"),
-            InstallKind::OpenVSX => write!(f, "OpenVSX"),
-        }
-    }
-}
-
-impl Display for Variant {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Variant::PackageManager {
-                manager: _,
-                extra_packages: _,
-            } => write!(f, "package manager"),
-            Variant::Asset(_) => write!(f, "asset"),
-            Variant::Download(_) => write!(f, "download"),
-            Variant::Build(_) => write!(f, "build"),
-        }
     }
 }
 

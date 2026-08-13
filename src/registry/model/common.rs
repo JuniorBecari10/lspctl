@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Deprecation {
-    since: String,
-    message: String,
+    pub since: String,
+    pub message: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
