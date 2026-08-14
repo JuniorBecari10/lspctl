@@ -28,8 +28,8 @@ pub fn install(entry: ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
         &entry,
         &paths::package_dir(&entry.name, &entry.source.purl.version),
     )?;
-    state.add_entry(&entry, bins);
 
+    state.add_entry(&entry, bins);
     Ok(())
 }
 
