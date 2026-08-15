@@ -3,10 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{io, paths};
+use crate::{disk, paths};
 
 fn link(bins: &[&str], bin_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
-    let files = io::list_files(bin_path)?;
+    let files = disk::list_files(bin_path)?;
     let mut map = HashMap::new();
 
     for file in files {
@@ -21,7 +21,7 @@ fn link(bins: &[&str], bin_path: &Path) -> anyhow::Result<HashMap<String, PathBu
         }
 
         let bin = paths::bin_dir().join(&name);
-        io::link_files(&file, &bin)?;
+        disk::link_files(&file, &bin)?;
         map.insert(name, bin);
     }
 

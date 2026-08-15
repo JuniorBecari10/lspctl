@@ -37,18 +37,21 @@ impl Action {
             Action::Remove => "remove",
         }
     }
+
     fn gerund(&self) -> &'static str {
         match self {
             Action::Install => "Installing",
             Action::Remove => "Removing",
         }
     }
+
     fn past_participle(&self) -> &'static str {
         match self {
             Action::Install => "installed",
             Action::Remove => "removed",
         }
     }
+
     fn noun(&self) -> &'static str {
         match self {
             Action::Install => "installation",
@@ -62,12 +65,14 @@ impl Action {
             Action::Remove => !state.package_exists(name),
         }
     }
+
     fn skip_reason(&self) -> &'static str {
         match self {
             Action::Install => "is already installed",
             Action::Remove => "is already not installed",
         }
     }
+
     fn skip_tally_word(&self) -> &'static str {
         match self {
             Action::Install => "already installed",
@@ -181,6 +186,6 @@ fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str
     (found, missing)
 }
 
-fn plural<'a>(var: i32, singular: &'a str, plural: &'a str) -> &'a str {
-    if var == 1 { singular } else { plural }
+fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a str {
+    if count == 1 { singular } else { plural }
 }

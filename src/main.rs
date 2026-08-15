@@ -2,8 +2,8 @@ use std::process::ExitCode;
 
 mod cli;
 mod consts;
+mod disk;
 mod global;
-mod io;
 mod log;
 mod operations;
 mod packages;

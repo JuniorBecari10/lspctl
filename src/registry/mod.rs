@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use anyhow::anyhow;
 
-use crate::{io, note, paths, registry::model::RawRegistry, step};
+use crate::{disk, note, paths, registry::model::RawRegistry, step};
 
 pub mod model;
 pub mod parser;
@@ -18,7 +18,7 @@ fn get_latest_release() -> anyhow::Result<()> {
     let data = parse_release(&util::perform_request(MASON_URL)?)?;
     let asset = find_registry_asset(&data)?;
 
-    let mut tmp = io::new_temp()?;
+    let mut tmp = disk::new_temp()?;
     let temp_zip = tmp.as_file_mut();
 
     util::download_file(&asset.url, temp_zip)?;

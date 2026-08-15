@@ -7,7 +7,7 @@ use std::{
 use const_format::concatcp;
 use zip::ZipArchive;
 
-use crate::{consts, def_consts, io, paths};
+use crate::{consts, def_consts, disk, paths};
 
 def_consts!(
     REGISTRY_FILE = "registry.json",
@@ -31,7 +31,7 @@ pub fn extract_to_memory(zip: &File) -> anyhow::Result<Vec<u8>> {
 }
 
 pub fn write_registry_to_disk(data: &[u8]) -> anyhow::Result<()> {
-    io::write_file_atomic_contents(&get_registry_path(), data, true)
+    disk::write_file_atomic_contents(&get_registry_path(), data, true)
 }
 
 pub fn perform_request(url: &str) -> anyhow::Result<Vec<u8>> {

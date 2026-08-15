@@ -3,7 +3,7 @@ use std::{collections::HashMap, fs::File, io::Read, path::PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    global, io, paths,
+    disk, global, paths,
     registry::model::{InstallKind, ResolvedEntry},
 };
 
@@ -50,7 +50,7 @@ impl State {
 
     pub fn save(&self) -> anyhow::Result<()> {
         let contents = serde_json::to_vec_pretty(self)?;
-        io::write_file_atomic_contents(&paths::state_file(), &contents, true)
+        disk::write_file_atomic_contents(&paths::state_file(), &contents, true)
     }
 
     pub fn add_entry(&mut self, e: &ResolvedEntry, bin: HashMap<String, PathBuf>) {
