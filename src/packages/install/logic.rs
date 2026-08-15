@@ -7,6 +7,7 @@ use std::{
 };
 
 use crate::{
+    disk, note,
     packages::{install::link, util},
     paths,
     registry::model::{
@@ -83,7 +84,19 @@ fn install_manager(
 }
 
 fn install_asset(entry: &ResolvedEntry, asset: &Asset, tmp_pkg_path: &Path) -> anyhow::Result<()> {
-    todo!()
+    for file in &asset.files {
+        note!("Downloading '{file}'..");
+
+        let mut zip = disk::new_temp()?;
+        disk::download_file(
+            &link::asset::github_url(&entry.source, file),
+            zip.as_file_mut(),
+        )?;
+
+        let data = disk::extract_to_memory(zip.as_file())?;
+    }
+
+    Ok(())
 }
 
 fn install_download(

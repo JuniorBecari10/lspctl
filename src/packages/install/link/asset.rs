@@ -1,10 +1,21 @@
-use crate::registry::model::{Asset, Source};
+use std::borrow::Cow;
 
-fn github_url(source: &Source, asset: &Asset) -> String {
+use crate::registry::model::{Purl, ResolvedSource};
+
+// just to not clone the name :)
+fn url_source(purl: &Purl) -> Cow<'_, str> {
+    match purl.namespace {
+        Some(ref namespace) => Cow::Owned(format!("{namespace}/{}", purl.name)),
+        None => Cow::Borrowed(&purl.name),
+    }
+}
+
+/// select a file from Asset to use it here
+pub fn github_url(source: &ResolvedSource, file: &str) -> String {
     format!(
         "https://github.com/{}/releases/download/{}/{}",
-        source.purl.name,
+        url_source(&source.purl),
         source.purl.version,
-        todo!("file")
+        file,
     )
 }

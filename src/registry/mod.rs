@@ -15,16 +15,19 @@ pub use util::REGISTRY_FILE;
 const MASON_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases/latest";
 
 fn get_latest_release() -> anyhow::Result<()> {
-    let data = parse_release(&util::perform_request(MASON_URL)?)?;
+    let mut raw_data = Vec::new();
+    disk::perform_request(MASON_URL)?.read_to_end(&mut raw_data)?;
+
+    let data = parse_release(&raw_data)?;
     let asset = find_registry_asset(&data)?;
 
-    let mut tmp = disk::new_temp()?;
-    let temp_zip = tmp.as_file_mut();
+    let mut zip = disk::new_temp()?;
+    let zip_file = zip.as_file_mut();
 
-    util::download_file(&asset.url, temp_zip)?;
+    disk::download_file(&asset.url, zip_file)?;
 
-    // maybe use this to pass the json around to not read it again
-    let extracted = util::extract_to_memory(temp_zip)?;
+    // TODO: extract the zip with an iterator to the file and write it directly into the final destination
+    let extracted = disk::extract_to_memory(zip_file, REGISTRY_FILE)?;
     util::write_registry_to_disk(&extracted)?;
 
     Ok(())

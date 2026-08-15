@@ -1,13 +1,15 @@
 use std::{
-    fs,
-    io::{ErrorKind, Write},
+    fs::{self, File},
+    io::{self, ErrorKind, Read, Write},
     path::{Path, PathBuf},
 };
 
 use anyhow::Context;
 use tempfile::NamedTempFile;
+use ureq::BodyReader;
+use zip::ZipArchive;
 
-use crate::paths;
+use crate::{consts, paths};
 
 /// creates a new temporary file in lspctl/tmp.
 /// requires tmp to exist. error if not.
@@ -133,4 +135,32 @@ pub fn make_writable_recursive(dir: &Path) -> anyhow::Result<()> {
         make_writable(entry.path())?;
     }
     Ok(())
+}
+
+pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
+    let mut reader = perform_request(url)?;
+    io::copy(&mut reader, dest)?;
+
+    Ok(())
+}
+
+pub fn perform_request(url: &str) -> anyhow::Result<BodyReader<'static>> {
+    if !url.starts_with("https://") {
+        anyhow::bail!("This only performs 'https' requests. URL: '{url}'.");
+    }
+
+    Ok(ureq::get(url)
+        .header("User-Agent", consts::APP_NAME)
+        .call()?
+        .into_body()
+        .into_reader())
+}
+
+pub fn extract_to_memory(zip: &File, entry_name: &str) -> anyhow::Result<Vec<u8>> {
+    let mut archive = ZipArchive::new(zip)?;
+    let mut entry = archive.by_name(entry_name)?;
+    let mut contents = Vec::new();
+
+    entry.read_to_end(&mut contents)?;
+    Ok(contents)
 }
