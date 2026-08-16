@@ -1,7 +1,6 @@
-use std::{fs::File, io::Read, path::PathBuf};
+use std::path::PathBuf;
 
 use const_format::concatcp;
-use zip::ZipArchive;
 
 use crate::{def_consts, disk, paths};
 

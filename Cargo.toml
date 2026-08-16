@@ -5,18 +5,23 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.103"
+bzip2 = "0.6.1"
 clap = { version = "4.6.1", features = ["derive"] }
 colored = "3.1.1"
 const_format = "0.2.36"
 dialoguer = "0.12.0"
 dirs = "6.0.0"
+flate2 = "1.1.9"
 logos = "0.16.1"
 maplit = "1.0.2"
 packageurl = "0.6.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
+tar = "0.4.46"
 tempfile = "3.27.0"
 time = { version = "0.3.54", features = ["formatting"] }
 ureq = "3.3.0"
 walkdir = "2.5.0"
+xz2 = "0.1.7"
 zip = "8.6.0"
+zstd = "0.13.3"

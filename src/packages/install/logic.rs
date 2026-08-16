@@ -16,6 +16,8 @@ use crate::{
     state::State,
 };
 
+// TODO: revert all steps done here if something goes wrong, including removing symlinks
+// and the move into the definitive folder
 pub fn install(entry: ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
     let tmp_pkg_path = paths::tmp_package_dir(&entry.name, &entry.source.purl.version);
     fs::create_dir_all(&tmp_pkg_path)?;
@@ -84,16 +86,19 @@ fn install_manager(
 }
 
 fn install_asset(entry: &ResolvedEntry, asset: &Asset, tmp_pkg_path: &Path) -> anyhow::Result<()> {
-    for file in &asset.files {
-        note!("Downloading '{file}'..");
+    fs::create_dir_all(tmp_pkg_path)?;
 
-        let mut zip = disk::new_temp()?;
+    for file_spec in &asset.files {
+        let (source, dest) = super::util::parse_file_spec(file_spec);
+
+        note!("Downloading '{source}'..");
+        let mut scratch = disk::new_temp()?;
         disk::download_file(
-            &link::asset::github_url(&entry.source, file),
-            zip.as_file_mut(),
+            &link::asset::github_url(&entry.source, source),
+            scratch.as_file_mut(),
         )?;
 
-        let data = disk::extract_to_memory(zip.as_file())?;
+        super::util::place_or_extract(scratch.path(), source, dest, tmp_pkg_path)?;
     }
 
     Ok(())
