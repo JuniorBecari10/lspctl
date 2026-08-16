@@ -109,9 +109,9 @@ fn install_download(
     downloads: &ResolvedDownloads,
     tmp_pkg_path: &Path,
 ) -> anyhow::Result<()> {
-    todo!()
+    anyhow::bail!("todo")
 }
 
 fn install_build(entry: &ResolvedEntry, build: &Build, tmp_pkg_path: &Path) -> anyhow::Result<()> {
-    todo!()
+    anyhow::bail!("todo")
 }

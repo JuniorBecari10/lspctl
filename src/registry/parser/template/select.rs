@@ -2,6 +2,18 @@ use crate::registry::model::{Asset, Build, Download, Downloads, Platform, Varian
 
 pub trait Targets {
     fn targets(&self) -> &[Platform];
+
+    fn matches(&self, host: &Platform) -> bool {
+        self.targets().is_empty() || self.targets().iter().any(|p| p.matches(host))
+    }
+
+    fn specificity(&self) -> u8 {
+        self.targets()
+            .iter()
+            .map(Platform::specificity)
+            .max()
+            .unwrap_or(0)
+    }
 }
 
 impl Targets for Asset {

@@ -20,14 +20,14 @@ pub fn link_manager(
 
     let link_fn = match manager {
         PackageManager::Npm => manager::link_npm,
-        PackageManager::PyPI => todo!(),
+        PackageManager::PyPI => anyhow::bail!("todo"),
         PackageManager::Go => manager::link_go,
-        PackageManager::Cargo => todo!(),
-        PackageManager::Gem => todo!(),
-        PackageManager::Composer => todo!(),
-        PackageManager::LuaRocks => todo!(),
-        PackageManager::Opam => todo!(),
-        PackageManager::NuGet => todo!(),
+        PackageManager::Cargo => anyhow::bail!("todo"),
+        PackageManager::Gem => anyhow::bail!("todo"),
+        PackageManager::Composer => anyhow::bail!("todo"),
+        PackageManager::LuaRocks => anyhow::bail!("todo"),
+        PackageManager::Opam => anyhow::bail!("todo"),
+        PackageManager::NuGet => anyhow::bail!("todo"),
     };
 
     link_fn(bins, pkg_path)
@@ -38,7 +38,7 @@ pub fn link_asset(
     asset: &Asset,
     pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
-    todo!()
+    anyhow::bail!("todo")
 }
 
 pub fn link_download(
@@ -46,7 +46,7 @@ pub fn link_download(
     downloads: &ResolvedDownloads,
     pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
-    todo!()
+    anyhow::bail!("todo")
 }
 
 pub fn link_build(
@@ -54,5 +54,5 @@ pub fn link_build(
     build: &Build,
     pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
-    todo!()
+    anyhow::bail!("todo")
 }
