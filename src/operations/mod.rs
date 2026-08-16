@@ -1,4 +1,7 @@
-use crate::operations::util::{Action, OperationResult};
+use crate::{
+    end, error,
+    operations::util::{Action, OperationResult},
+};
 
 mod logic;
 pub mod model;
@@ -16,9 +19,27 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
 pub fn list(args: model::ListArgs) -> OperationResult {
     let (registry, _, state) = prelude::prelude();
 
-    dbg!(registry);
-    dbg!(args);
-    dbg!(state);
+    if args.installed {
+        let keys = state.installed.keys().cloned().collect::<Vec<_>>();
+        let (installed, missing) = util::filter_registry(registry, keys.as_slice());
+
+        if !missing.is_empty() {
+            for m in missing {
+                error!("Package '{m}' doesn't exist.");
+            }
+
+            return OperationResult::Failure;
+        }
+
+        if installed.is_empty() {
+            end!("There are no packages installed.");
+            return OperationResult::Success;
+        }
+
+        util::write_entries(&installed, args.verbose);
+    } else {
+        util::write_entries(&registry.0, args.verbose);
+    }
 
     OperationResult::Success
 }

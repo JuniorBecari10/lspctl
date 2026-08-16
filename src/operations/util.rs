@@ -166,7 +166,7 @@ pub fn run_action(
     }
 }
 
-fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str>) {
+pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str>) {
     let wanted: HashSet<&str> = pkgs.iter().map(String::as_str).collect();
 
     let found: Vec<Entry> = registry
@@ -188,4 +188,40 @@ fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str
 
 fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a str {
     if count == 1 { singular } else { plural }
+}
+
+pub fn write_entries(entries: &[Entry], verbose: bool) {
+    if verbose {
+        for entry in entries {
+            entry.print_detailed();
+        }
+    } else {
+        let name_width = entries
+            .iter()
+            .map(|e| e.name.len())
+            .max()
+            .unwrap_or(0)
+            .max(20);
+
+        let version_width = entries
+            .iter()
+            .map(|e| e.source.purl.version.len())
+            .max()
+            .unwrap_or(0);
+
+        println!(
+            "{:<name_width$}  {:<version_width$}  {}",
+            "Name".bold(),
+            "Version".bold(),
+            "Source".bold(),
+            name_width = name_width,
+            version_width = version_width,
+        );
+
+        println!("{}", "─".repeat(name_width + version_width + 10).dimmed());
+
+        for entry in entries {
+            entry.print_line(name_width, version_width);
+        }
+    }
 }

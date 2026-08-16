@@ -17,14 +17,31 @@ impl Entry {
         }
     }
 
+    pub fn print_line(&self, name_width: usize, version_width: usize) {
+        let name = if self.deprecation.is_some() {
+            self.name.bold().strikethrough()
+        } else {
+            self.name.bold()
+        };
+
+        println!(
+            "{:<name_width$}  {:<version_width$}  {}",
+            name,
+            self.source.purl.version.cyan(),
+            self.source.purl.kind.to_string().dimmed(),
+            name_width = name_width,
+            version_width = version_width,
+        );
+    }
+
+    // TODO: add (installed) marker in green
     pub fn print_detailed(&self) {
-        println!();
         if self.deprecation.is_some() {
             println!("{}", self.name.bold().strikethrough());
         } else {
             println!("{}", self.name.bold());
         }
-        println!("{}", "-".repeat(self.name.len().max(20)).dimmed());
+        println!("{}", "─".repeat(self.description.len()).dimmed());
 
         println!("{}", self.description);
         println!();
