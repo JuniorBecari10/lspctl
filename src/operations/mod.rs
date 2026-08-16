@@ -17,6 +17,7 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
 }
 
 pub fn list(args: model::ListArgs) -> OperationResult {
+    // TODO: disable 'Registry is already downloaded' log here
     let (registry, _, state) = prelude::prelude();
 
     if args.installed {
