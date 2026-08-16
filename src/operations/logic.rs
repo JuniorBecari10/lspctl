@@ -12,10 +12,11 @@ fn resolve_and_perform(
     e: Entry,
     host: &Platform,
     state: &mut State,
-    op: fn(ResolvedEntry, &mut State) -> anyhow::Result<()>,
+    op: fn(&ResolvedEntry, &mut State) -> anyhow::Result<()>,
 ) -> anyhow::Result<()> {
     let entry = resolver::resolve_entry(e, host)?;
-    op(entry, state)?;
+    op(&entry, state)?;
+
     state.save()
 }
 

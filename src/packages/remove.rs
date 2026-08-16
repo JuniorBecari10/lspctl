@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use crate::{disk, paths, registry::model::ResolvedEntry, state::State};
 
-pub fn remove(entry: ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
+pub fn remove(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
     let state_entry = state
         .get_entry(&entry.name)
         .ok_or_else(|| anyhow::anyhow!("Package '{}' is not installed", entry.name))?;
