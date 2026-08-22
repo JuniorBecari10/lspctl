@@ -3,7 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::registry::model::{Purl, ResolvedSource};
+use crate::{
+    disk,
+    registry::model::{Purl, ResolvedSource},
+};
 
 // just to not clone the name :)
 fn url_source(purl: &Purl) -> Cow<'_, str> {
@@ -23,6 +26,94 @@ pub fn github_url(source: &ResolvedSource, file: &str) -> String {
     )
 }
 
-pub fn get_target(bin: &str, pkg_path: &Path) -> anyhow::Result<PathBuf> {
-    match bin.split_once(':') {}
+fn get_wrapper(wrapper: &str) -> Option<(&str, &[&str])> {
+    match wrapper {
+        "node" => Some((wrapper, &[])),
+        "php" => Some((wrapper, &[])),
+        "ruby" => Some((wrapper, &[])),
+        "python" => Some(("python3", &[])),
+        "java-jar" => Some(("java", &["-jar"])),
+        "dotnet" => Some((wrapper, &[])),
+        _ => None,
+    }
+}
+
+pub fn get_target(name: &str, value: &str, bin: &Path, pkg_path: &Path) -> anyhow::Result<PathBuf> {
+    match value.split_once(':') {
+        // no scheme, value points to a runnable binary already,
+        // so we only need to link it in the 'bin' folder.
+        None => {
+            let target = pkg_path.join(value);
+            if !target.exists() {
+                anyhow::bail!(
+                    "Expected binary '{name}' at '{}' but it doesn't exist after extraction",
+                    target.display()
+                );
+            }
+
+            disk::link_files(&target, bin)?;
+            Ok(target)
+        }
+
+        Some((wrapper, path)) => {
+            let target = pkg_path.join(path);
+            let (interpreter, args) = get_wrapper(wrapper).ok_or_else(|| {
+                anyhow::anyhow!("Unsupported wrapper '{wrapper}' for '{name}' in Asset entry")
+            })?;
+
+            write_shim(bin, interpreter, args, &target)
+        }
+    }
+}
+
+fn write_shim(
+    bin: &Path,
+    interpreter: &str,
+    extra_args: &[&str],
+    target: &Path,
+) -> anyhow::Result<PathBuf> {
+    if !target.exists() {
+        anyhow::bail!("Shim target doesn't exist: '{}'", target.display());
+    }
+
+    #[cfg(unix)]
+    {
+        use std::{fs, os::unix::fs::PermissionsExt};
+
+        let args_str = extra_args.join(" ");
+        let script = if args_str.is_empty() {
+            format!(
+                "#!/bin/sh\nexec {interpreter} \"{}\" \"$@\"\n",
+                target.display()
+            )
+        } else {
+            format!(
+                "#!/bin/sh\nexec {interpreter} {args_str} \"{}\" \"$@\"\n",
+                target.display()
+            )
+        };
+
+        fs::write(bin, script)?;
+        let mut perms = fs::metadata(bin)?.permissions();
+
+        perms.set_mode(perms.mode() | 0o111);
+        fs::set_permissions(bin, perms)?;
+    }
+
+    #[cfg(windows)]
+    {
+        use std::fs;
+
+        let cmd_path = bin.with_extension("cmd");
+        let args_str = extra_args.join(" ");
+
+        let script = format!(
+            "@echo off\r\n{interpreter} {args_str} \"{}\" %*\r\n",
+            target.display()
+        );
+
+        fs::write(&cmd_path, script)?;
+    }
+
+    Ok(bin.to_path_buf())
 }

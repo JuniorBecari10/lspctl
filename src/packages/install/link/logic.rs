@@ -42,7 +42,7 @@ pub fn link_asset(
 
     for (name, value) in entry.bin.iter().flatten() {
         let bin = paths::bin_dir().join(name);
-        let target = super::asset::get_target(value, pkg_path)?;
+        let target = super::asset::get_target(name, value, &bin, pkg_path)?;
 
         map.insert(name.clone(), target);
     }
