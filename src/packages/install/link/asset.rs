@@ -1,4 +1,7 @@
-use std::borrow::Cow;
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
 
 use crate::registry::model::{Purl, ResolvedSource};
 
@@ -18,4 +21,8 @@ pub fn github_url(source: &ResolvedSource, file: &str) -> String {
         source.purl.version,
         file,
     )
+}
+
+pub fn get_target(bin: &str, pkg_path: &Path) -> anyhow::Result<PathBuf> {
+    match bin.split_once(':') {}
 }

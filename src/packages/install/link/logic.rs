@@ -7,6 +7,7 @@ use std::{
 
 use crate::{
     packages::install::link::manager,
+    paths,
     registry::model::{Asset, Build, PackageManager, ResolvedDownloads, ResolvedEntry},
 };
 
@@ -35,10 +36,18 @@ pub fn link_manager(
 
 pub fn link_asset(
     entry: &ResolvedEntry,
-    asset: &Asset,
     pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
-    anyhow::bail!("todo")
+    let mut map = HashMap::new();
+
+    for (name, value) in entry.bin.iter().flatten() {
+        let bin = paths::bin_dir().join(name);
+        let target = super::asset::get_target(value, pkg_path)?;
+
+        map.insert(name.clone(), target);
+    }
+
+    Ok(map)
 }
 
 pub fn link_download(

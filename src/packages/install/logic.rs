@@ -56,7 +56,7 @@ fn make_links(entry: &ResolvedEntry, pkg_path: &Path) -> anyhow::Result<HashMap<
             extra_packages: _,
         } => link::link_manager(entry, *manager, pkg_path),
 
-        ResolvedVariant::Asset(asset) => link::link_asset(entry, asset, pkg_path),
+        ResolvedVariant::Asset(_) => link::link_asset(entry, pkg_path),
         ResolvedVariant::Download(downloads) => link::link_download(entry, downloads, pkg_path),
         ResolvedVariant::Build(build) => link::link_build(entry, build, pkg_path),
     }
