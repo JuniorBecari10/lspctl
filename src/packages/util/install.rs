@@ -32,7 +32,7 @@ pub fn get_install_command(
     tmp_pkg_path: &Path,
 ) -> InstallCommand {
     let binary = manager.get_command();
-    let args = get_install_args(manager, name, version, extra_packages);
+    let args = get_install_args(manager, name, version, extra_packages, tmp_pkg_path);
     let env = get_install_env(manager, tmp_pkg_path);
 
     InstallCommand { binary, args, env }
@@ -74,6 +74,7 @@ fn get_install_args(
     name: &str,
     version: &str,
     extra_packages: &[String],
+    pkg_dir: &Path,
 ) -> Vec<String> {
     match manager {
         PackageManager::Npm => vec![
@@ -87,7 +88,14 @@ fn get_install_args(
         .collect(),
 
         PackageManager::PyPI => todo!(),
-        PackageManager::Cargo => todo!(),
+
+        PackageManager::Cargo => vec![
+            "install".into(),
+            "--root".into(),
+            pkg_dir.to_string_lossy().into_owned(),
+            name.into(),
+        ],
+
         PackageManager::Gem => todo!(),
         PackageManager::Go => vec!["install".into(), format!("{name}@{version}")],
         PackageManager::Composer => todo!(),
@@ -107,7 +115,7 @@ fn get_install_env(manager: PackageManager, pkg_dir: &Path) -> HashMap<String, S
             "GOMODCACHE".to_string() => pkg_dir.join("gomodcache").to_string_lossy().into_owned(),
         },
 
-        PackageManager::Cargo => todo!(),
+        PackageManager::Cargo => hashmap! {},
         PackageManager::Gem => todo!(),
         PackageManager::Composer => todo!(),
         PackageManager::LuaRocks => todo!(),

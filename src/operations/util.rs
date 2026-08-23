@@ -187,7 +187,7 @@ pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<
     (found, missing)
 }
 
-fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a str {
+const fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a str {
     if count == 1 { singular } else { plural }
 }
 
@@ -264,6 +264,7 @@ pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) ->
             (false, Some(p)) => format!("No packages match '{}'.", p.as_str()),
             (false, None) => "No packages found.".to_string(),
         };
+
         end!("{msg}");
         return OperationResult::Success;
     }
