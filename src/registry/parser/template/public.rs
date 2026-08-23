@@ -38,5 +38,6 @@ pub fn parse_template(template: String, ctx: &ResolveContext) -> anyhow::Result<
         }
     }
 
-    Ok(out)
+    // recursively parse templates
+    parse_template(out, ctx)
 }

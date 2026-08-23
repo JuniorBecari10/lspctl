@@ -13,15 +13,13 @@ use crate::registry::{
 };
 
 pub fn resolve_entry(e: Entry, ctx: &ResolveContext) -> anyhow::Result<Entry> {
-    let source = resolve_source(e.source, ctx)?;
-
     Ok(Entry {
         bin: e
             .bin
             .map(|b| public::parse_template_hashmap(b, ctx))
             .transpose()?,
 
-        source,
+        source: resolve_source(e.source, ctx)?,
         ..e
     })
 }

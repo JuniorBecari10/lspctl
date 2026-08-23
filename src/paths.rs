@@ -7,7 +7,8 @@ def_consts!(
     TMP_DIR = "tmp",
     REGISTRY_DIR = "registry",
     PACKAGES_DIR = "packages",
-    STATE_FILE = "state.json"
+    STATE_FILE = "state.json",
+    LOCK_FILE = "lspctl.lock",
 );
 
 fn root_dir() -> PathBuf {
@@ -36,6 +37,10 @@ pub fn tmp_dir() -> PathBuf {
 
 pub fn state_file() -> PathBuf {
     root_dir().join(STATE_FILE)
+}
+
+pub fn lock_file() -> PathBuf {
+    root_dir().join(LOCK_FILE)
 }
 
 pub fn registry_file() -> PathBuf {
