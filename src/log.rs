@@ -80,7 +80,7 @@ pub trait Fatal<T> {
     fn fatal(self, message: &str) -> T;
 }
 
-impl<T> Fatal<T> for anyhow::Result<T> {
+impl<T, E: Display> Fatal<T> for Result<T, E> {
     fn fatal(self, message: &str) -> T {
         match self {
             Ok(t) => t,

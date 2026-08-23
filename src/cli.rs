@@ -28,6 +28,10 @@ enum Command {
     /// List all packages or installed ones
     #[command(visible_alias = "l")]
     List(operations::model::ListArgs),
+
+    /// Search all packages or installed ones
+    #[command(visible_alias = "s")]
+    Search(operations::model::SearchArgs),
 }
 
 pub fn cli() -> OperationResult {
@@ -35,5 +39,6 @@ pub fn cli() -> OperationResult {
         Command::Install(args) => operations::install(args),
         Command::Remove(args) => operations::remove(args),
         Command::List(args) => operations::list(args),
+        Command::Search(args) => operations::search(args),
     }
 }

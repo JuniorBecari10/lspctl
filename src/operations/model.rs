@@ -36,3 +36,18 @@ pub struct ListArgs {
     #[arg(short, long)]
     pub verbose: bool,
 }
+
+#[derive(Args, Debug)]
+pub struct SearchArgs {
+    // The regex pattern to search
+    #[arg(required = true)]
+    pub pattern: String,
+
+    /// List installed packages instead
+    #[arg(short, long)]
+    pub installed: bool,
+
+    /// Write more info when listing; this will write more than one line per package
+    #[arg(short, long)]
+    pub verbose: bool,
+}

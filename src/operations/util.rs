@@ -31,28 +31,28 @@ pub enum Action {
 }
 
 impl Action {
-    fn verb_base(&self) -> &'static str {
+    const fn verb_base(&self) -> &'static str {
         match self {
             Action::Install => "install",
             Action::Remove => "remove",
         }
     }
 
-    fn gerund(&self) -> &'static str {
+    const fn gerund(&self) -> &'static str {
         match self {
             Action::Install => "Installing",
             Action::Remove => "Removing",
         }
     }
 
-    fn past_participle(&self) -> &'static str {
+    const fn past_participle(&self) -> &'static str {
         match self {
             Action::Install => "installed",
             Action::Remove => "removed",
         }
     }
 
-    fn noun(&self) -> &'static str {
+    const fn noun(&self) -> &'static str {
         match self {
             Action::Install => "installation",
             Action::Remove => "removal",
@@ -66,14 +66,14 @@ impl Action {
         }
     }
 
-    fn skip_reason(&self) -> &'static str {
+    const fn skip_reason(&self) -> &'static str {
         match self {
             Action::Install => "is already installed",
             Action::Remove => "is already not installed",
         }
     }
 
-    fn skip_tally_word(&self) -> &'static str {
+    const fn skip_tally_word(&self) -> &'static str {
         match self {
             Action::Install => "already installed",
             Action::Remove => "already not installed",
@@ -108,7 +108,7 @@ pub fn run_action(
     action: Action,
     op: fn(Entry, &Platform, &mut State) -> anyhow::Result<()>,
 ) -> OperationResult {
-    let (registry, platform, mut state) = prelude::prelude();
+    let (registry, platform, mut state, _lock) = prelude::prelude();
     let (entries, missing) = filter_registry(registry, &pkgs);
 
     if !missing.is_empty() {

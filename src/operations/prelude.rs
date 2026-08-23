@@ -1,6 +1,9 @@
+use std::fs::{File, OpenOptions, TryLockError};
+
 use crate::{
-    global,
+    consts, end, error, fatal, global,
     log::Fatal,
+    paths,
     registry::{
         self,
         model::{Platform, Registry},
@@ -9,9 +12,18 @@ use crate::{
     state::State,
 };
 
-pub fn prelude() -> (Registry, Platform, State) {
+pub struct ProcessLock {
+    _file: File,
+}
+
+pub fn prelude() -> (Registry, Platform, State, ProcessLock) {
     setup_root();
-    (read_registry(), get_platform(), load_state())
+    (
+        read_registry(),
+        get_platform(),
+        load_state(),
+        acquire_lock(),
+    )
 }
 
 // ---
@@ -30,4 +42,36 @@ fn get_platform() -> Platform {
 
 fn load_state() -> State {
     State::load().fatal("Cannot read state")
+}
+
+// ---
+
+pub fn acquire_lock() -> ProcessLock {
+    let path = paths::lock_file();
+
+    let file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(false)
+        .open(&path)
+        .fatal(&format!("Failed to open lock file at {}", path.display()));
+
+    match file.try_lock() {
+        Ok(()) => {}
+
+        Err(TryLockError::WouldBlock) => {
+            end!(
+                "One instance of {} is already running. Waiting for the lock to be released..",
+                consts::APP_NAME
+            );
+
+            file.lock().fatal("Failed to acquire process lock");
+        }
+
+        Err(TryLockError::Error(e)) => {
+            fatal!("Failed to acquire process lock: {e}");
+        }
+    }
+
+    ProcessLock { _file: file }
 }

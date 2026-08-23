@@ -1,5 +1,5 @@
 use crate::{
-    end, error,
+    end, error, header,
     operations::util::{Action, OperationResult},
 };
 
@@ -18,7 +18,7 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
 
 pub fn list(args: model::ListArgs) -> OperationResult {
     // TODO: disable 'Registry is already downloaded' log here
-    let (registry, _, state) = prelude::prelude();
+    let (registry, _, state, _lock) = prelude::prelude();
 
     if args.installed {
         let keys = state.installed.keys().cloned().collect::<Vec<_>>();
@@ -37,10 +37,16 @@ pub fn list(args: model::ListArgs) -> OperationResult {
             return OperationResult::Success;
         }
 
+        header!("Installed packages:\n");
         util::write_entries(&installed, args.verbose);
     } else {
+        header!("All packages:\n");
         util::write_entries(&registry.0, args.verbose);
     }
 
     OperationResult::Success
+}
+
+pub fn search(args: model::SearchArgs) -> OperationResult {
+    todo!()
 }

@@ -19,17 +19,18 @@ impl Entry {
 
     pub fn print_line(&self, name_width: usize, version_width: usize) {
         let name = if self.deprecation.is_some() {
-            self.name.bold().strikethrough()
+            self.name.bold().strikethrough().dimmed()
         } else {
             self.name.bold()
         };
 
         println!(
-            "{:<name_width$}  {:<version_width$}  {}",
+            "{}{:width$}  {:<version_width$}  {}",
             name,
+            "",
             self.source.purl.version.cyan(),
             self.source.purl.kind.to_string().dimmed(),
-            name_width = name_width,
+            width = name_width.saturating_sub(self.name.len()),
             version_width = version_width,
         );
     }
@@ -41,7 +42,16 @@ impl Entry {
         } else {
             println!("{}", self.name.bold());
         }
-        println!("{}", "─".repeat(self.description.len()).dimmed());
+        println!(
+            "{}",
+            "─"
+                .repeat(
+                    self.description
+                        .find("\n")
+                        .unwrap_or(self.description.len())
+                )
+                .dimmed()
+        );
 
         println!("{}", self.description);
         println!();
@@ -55,8 +65,8 @@ impl Entry {
         if let Some(dep) = &self.deprecation {
             println!();
             println!(
-                "  {} deprecated since {}: {}",
-                "⚠".yellow().bold(),
+                "  {} Deprecated since {}: {}",
+                "[!]".yellow().bold(),
                 dep.since,
                 dep.message
             );
