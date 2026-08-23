@@ -2,6 +2,7 @@ use std::{collections::HashSet, process::ExitCode};
 
 use colored::Colorize;
 use dialoguer::Confirm;
+use regex::Regex;
 
 use crate::{
     end, error, header, list,
@@ -89,7 +90,7 @@ fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action) -> bool {
     );
 
     for pkg in pkgs {
-        list!("{}", pkg.format_line());
+        list!("{}", pkg.format_line(false));
     }
 
     yes || {
@@ -190,10 +191,12 @@ fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a str {
     if count == 1 { singular } else { plural }
 }
 
-pub fn write_entries(entries: &[Entry], verbose: bool) {
+pub fn write_entries(entries: &[Entry], verbose: bool, installed_names: Option<&HashSet<String>>) {
+    let is_installed = |e: &Entry| installed_names.is_some_and(|s| s.contains(&e.name));
+
     if verbose {
         for entry in entries {
-            entry.print_detailed();
+            entry.print_detailed(is_installed(entry));
         }
     } else {
         let name_width = entries
@@ -201,13 +204,14 @@ pub fn write_entries(entries: &[Entry], verbose: bool) {
             .map(|e| e.name.len())
             .max()
             .unwrap_or(0)
-            .max(20);
+            .max(15);
 
         let version_width = entries
             .iter()
             .map(|e| e.source.purl.version.len())
             .max()
-            .unwrap_or(0);
+            .unwrap_or(0)
+            .max(10);
 
         println!(
             "{:<name_width$}  {:<version_width$}  {}",
@@ -219,9 +223,67 @@ pub fn write_entries(entries: &[Entry], verbose: bool) {
         );
 
         println!("{}", "─".repeat(name_width + version_width + 10).dimmed());
-
         for entry in entries {
-            entry.print_line(name_width, version_width);
+            entry.print_line(name_width, version_width, is_installed(entry));
         }
     }
+}
+
+pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) -> OperationResult {
+    let (registry, _, state, _lock) = prelude::prelude_no_log();
+    let installed_names: HashSet<String> = state.installed.keys().cloned().collect();
+
+    let entries: Vec<Entry> = if installed {
+        let keys = state.installed.keys().cloned().collect::<Vec<_>>();
+        let (found, missing) = filter_registry(registry, keys.as_slice());
+
+        if !missing.is_empty() {
+            for m in missing {
+                error!("Package '{m}' doesn't exist.");
+            }
+            return OperationResult::Failure;
+        }
+
+        found
+    } else {
+        registry.0
+    };
+
+    let entries: Vec<Entry> = match pattern {
+        Some(re) => entries
+            .into_iter()
+            .filter(|e| re.is_match(&e.name))
+            .collect(),
+        None => entries,
+    };
+
+    if entries.is_empty() {
+        let msg = match (installed, pattern) {
+            (true, Some(p)) => format!("No installed packages match '{}'.", p.as_str()),
+            (true, None) => "There are no packages installed.".to_string(),
+            (false, Some(p)) => format!("No packages match '{}'.", p.as_str()),
+            (false, None) => "No packages found.".to_string(),
+        };
+        end!("{msg}");
+        return OperationResult::Success;
+    }
+
+    let header_text = match (installed, pattern.is_some()) {
+        (true, true) => "All matching installed packages:\n",
+        (true, false) => "Installed packages:\n",
+        (false, true) => "All matching packages:\n",
+        (false, false) => "All packages:\n",
+    };
+
+    header!("{header_text}");
+
+    // suppress '(installed)' marking for installed-only listings.
+    let marker_set = if installed {
+        None
+    } else {
+        Some(&installed_names)
+    };
+
+    write_entries(&entries, verbose, marker_set);
+    OperationResult::Success
 }

@@ -2,12 +2,15 @@ use std::fs;
 
 use crate::{disk, paths, registry, step};
 
-pub fn setup_root() -> anyhow::Result<()> {
+pub fn setup_root(log: bool) -> anyhow::Result<()> {
     ensure_root_items()?;
 
     match paths::registry_file().try_exists() {
         Ok(true) => {
-            step!("Registry is already downloaded.");
+            if log {
+                step!("Registry is already downloaded.");
+            }
+
             Ok(())
         }
 
@@ -31,6 +34,7 @@ fn ensure_root_items() -> anyhow::Result<()> {
 }
 
 // this ignores errors because if it doesn't exist, there's nothing to clean.
+// it may ignore other errors as well.
 fn clean_tmp() {
     let _ = disk::make_writable_recursive(&paths::tmp_dir());
     let _ = fs::remove_dir_all(paths::tmp_dir());

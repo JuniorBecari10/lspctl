@@ -1,7 +1,9 @@
 use crate::{
-    end, error, header,
+    error,
     operations::util::{Action, OperationResult},
 };
+
+use regex::Regex;
 
 mod logic;
 pub mod model;
@@ -17,36 +19,18 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
 }
 
 pub fn list(args: model::ListArgs) -> OperationResult {
-    // TODO: disable 'Registry is already downloaded' log here
-    let (registry, _, state, _lock) = prelude::prelude();
-
-    if args.installed {
-        let keys = state.installed.keys().cloned().collect::<Vec<_>>();
-        let (installed, missing) = util::filter_registry(registry, keys.as_slice());
-
-        if !missing.is_empty() {
-            for m in missing {
-                error!("Package '{m}' doesn't exist.");
-            }
-
-            return OperationResult::Failure;
-        }
-
-        if installed.is_empty() {
-            end!("There are no packages installed.");
-            return OperationResult::Success;
-        }
-
-        header!("Installed packages:\n");
-        util::write_entries(&installed, args.verbose);
-    } else {
-        header!("All packages:\n");
-        util::write_entries(&registry.0, args.verbose);
-    }
-
-    OperationResult::Success
+    util::list_packages(args.installed, args.verbose, None)
 }
 
 pub fn search(args: model::SearchArgs) -> OperationResult {
-    todo!()
+    let pattern = match Regex::new(&args.pattern) {
+        Ok(re) => re,
+
+        Err(e) => {
+            error!("Invalid pattern '{}': {e}", args.pattern);
+            return OperationResult::Failure;
+        }
+    };
+
+    util::list_packages(args.installed, args.verbose, Some(&pattern))
 }

@@ -4,28 +4,40 @@ use crate::registry::model::{Arch, Entry, InstallKind, Libc, Os, Platform, Varia
 use colored::Colorize;
 
 impl Entry {
-    pub fn format_line(&self) -> String {
+    pub fn format_line(&self, installed: bool) -> String {
         let line = format!(
             "{} {} ({})",
             self.name, self.source.purl.version, self.source.purl.kind
         );
 
-        if self.deprecation.is_some() {
+        let line = if self.deprecation.is_some() {
             format!("{} (deprecated)", line.strikethrough())
+        } else {
+            line
+        };
+
+        if installed {
+            format!("{line} {}", "(installed)".green())
         } else {
             line
         }
     }
 
-    pub fn print_line(&self, name_width: usize, version_width: usize) {
+    pub fn print_line(&self, name_width: usize, version_width: usize, installed: bool) {
         let name = if self.deprecation.is_some() {
             self.name.bold().strikethrough().dimmed()
         } else {
             self.name.bold()
         };
 
+        let marker = if installed {
+            format!("  {}", "(installed)".green())
+        } else {
+            String::new()
+        };
+
         println!(
-            "{}{:width$}  {:<version_width$}  {}",
+            "{}{:width$}  {:<version_width$}  {}{marker}",
             name,
             "",
             self.source.purl.version.cyan(),
@@ -35,19 +47,19 @@ impl Entry {
         );
     }
 
-    // TODO: add (installed) marker in green
-    pub fn print_detailed(&self) {
+    pub fn print_detailed(&self, installed: bool) {
         if self.deprecation.is_some() {
             println!("{}", self.name.bold().strikethrough());
         } else {
             println!("{}", self.name.bold());
         }
+
         println!(
             "{}",
             "─"
                 .repeat(
                     self.description
-                        .find("\n")
+                        .find('\n')
                         .unwrap_or(self.description.len())
                 )
                 .dimmed()
@@ -55,6 +67,12 @@ impl Entry {
 
         println!("{}", self.description);
         println!();
+
+        if installed {
+            println!("  {}", "● Installed".green().bold());
+            println!();
+        }
+
         println!("  {:<12} {}", "Homepage:", self.homepage.blue().underline());
         println!("  {:<12} {}", "Version:", self.source.purl.version);
         println!("  {:<12} {}", "Source:", self.source.purl.kind);
@@ -71,7 +89,6 @@ impl Entry {
                 dep.message
             );
         }
-
         println!();
     }
 }
