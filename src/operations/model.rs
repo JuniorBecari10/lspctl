@@ -61,7 +61,6 @@ pub struct InfoArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum DeleteSubcommand {
-    Registry,
     Packages,
     Lockfile,
 }

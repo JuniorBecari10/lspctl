@@ -57,7 +57,6 @@ pub fn cli() -> OperationResult {
         Command::Info(args) => operations::info(args),
 
         Command::Delete { command } => match command {
-            DeleteSubcommand::Registry => todo!(),
             DeleteSubcommand::Packages => todo!(),
             DeleteSubcommand::Lockfile => todo!(),
         },
