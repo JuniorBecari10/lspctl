@@ -5,7 +5,7 @@ use dialoguer::Confirm;
 use regex::Regex;
 
 use crate::{
-    end, error, header, list,
+    end, error, header,
     operations::prelude,
     registry::model::{Entry, Platform, Registry},
     state::State,
@@ -84,14 +84,12 @@ impl Action {
 
 fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action) -> bool {
     header!(
-        "Packages to be {} ({}):",
+        "Packages to be {} ({}):\n",
         action.past_participle(),
         pkgs.len()
     );
 
-    for pkg in pkgs {
-        list!("{}", pkg.format_line(false));
-    }
+    print_entries(pkgs, |_| false);
 
     yes || {
         eprintln!();
@@ -199,33 +197,7 @@ pub fn write_entries(entries: &[Entry], verbose: bool, installed_names: Option<&
             entry.print_detailed(is_installed(entry));
         }
     } else {
-        let name_width = entries
-            .iter()
-            .map(|e| e.name.len())
-            .max()
-            .unwrap_or(0)
-            .max(15);
-
-        let version_width = entries
-            .iter()
-            .map(|e| e.source.purl.version.len())
-            .max()
-            .unwrap_or(0)
-            .max(10);
-
-        println!(
-            "{:<name_width$}  {:<version_width$}  {}",
-            "Name".bold(),
-            "Version".bold(),
-            "Source".bold(),
-            name_width = name_width,
-            version_width = version_width,
-        );
-
-        println!("{}", "─".repeat(name_width + version_width + 10).dimmed());
-        for entry in entries {
-            entry.print_line(name_width, version_width, is_installed(entry));
-        }
+        print_entries(entries, is_installed);
     }
 }
 
@@ -287,4 +259,53 @@ pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) ->
 
     write_entries(&entries, verbose, marker_set);
     OperationResult::Success
+}
+
+fn print_entries(entries: &[Entry], is_installed: impl Fn(&Entry) -> bool) {
+    let name_width = entries
+        .iter()
+        .map(|e| e.name.len())
+        .max()
+        .unwrap_or(0)
+        .max(15);
+
+    let version_width = entries
+        .iter()
+        .map(|e| e.source.purl.version.len())
+        .max()
+        .unwrap_or(0)
+        .max(15);
+
+    println!(
+        "{:<name_width$}  {:<version_width$}  {}",
+        "Name".bold(),
+        "Version".bold(),
+        "Source".bold(),
+        name_width = name_width,
+        version_width = version_width,
+    );
+
+    println!("{}", "─".repeat(name_width + version_width + 10).dimmed());
+
+    for entry in entries {
+        let name = if entry.deprecation.is_some() {
+            entry.name.strikethrough().dimmed().to_string()
+        } else {
+            entry.name.clone()
+        };
+
+        let installed = if is_installed(entry) {
+            format!("  {}", "(installed)".green())
+        } else {
+            String::new()
+        };
+
+        println!(
+            "{name}{}  {:<version_width$}  {:<6}{installed}",
+            " ".repeat(name_width.saturating_sub(entry.name.len())),
+            entry.source.purl.version.cyan(),
+            entry.source.purl.kind.to_string().dimmed(),
+            version_width = version_width,
+        );
+    }
 }

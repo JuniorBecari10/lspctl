@@ -4,49 +4,6 @@ use crate::registry::model::{Arch, Entry, InstallKind, Libc, Os, Platform, Varia
 use colored::Colorize;
 
 impl Entry {
-    pub fn format_line(&self, installed: bool) -> String {
-        let line = format!(
-            "{} {} ({})",
-            self.name, self.source.purl.version, self.source.purl.kind
-        );
-
-        let line = if self.deprecation.is_some() {
-            format!("{} (deprecated)", line.strikethrough())
-        } else {
-            line
-        };
-
-        if installed {
-            format!("{line} {}", "(installed)".green())
-        } else {
-            line
-        }
-    }
-
-    pub fn print_line(&self, name_width: usize, version_width: usize, installed: bool) {
-        let name = if self.deprecation.is_some() {
-            self.name.bold().strikethrough().dimmed()
-        } else {
-            self.name.bold()
-        };
-
-        let marker = if installed {
-            format!("  {}", "(installed)".green())
-        } else {
-            String::new()
-        };
-
-        println!(
-            "{}{:width$}  {:<version_width$}  {}{marker}",
-            name,
-            "",
-            self.source.purl.version.cyan(),
-            self.source.purl.kind.to_string().dimmed(),
-            width = name_width.saturating_sub(self.name.len()),
-            version_width = version_width,
-        );
-    }
-
     pub fn print_detailed(&self, installed: bool) {
         if self.deprecation.is_some() {
             println!("{}", self.name.bold().strikethrough());
@@ -69,7 +26,7 @@ impl Entry {
         println!();
 
         if installed {
-            println!("  {}", "● Installed".green().bold());
+            println!("  {}", "Installed".green().bold());
             println!();
         }
 

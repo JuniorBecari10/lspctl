@@ -64,18 +64,6 @@ macro_rules! header {
     };
 }
 
-/// `  - message`: one line in a list (e.g. `lspctl list`), dim bullet.
-#[macro_export]
-macro_rules! list {
-    ($($arg:tt)*) => {
-        println!(
-            "   {} {}",
-            colored::Colorize::dimmed("-"),
-            format!($($arg)*)
-        )
-    };
-}
-
 pub trait Fatal<T> {
     fn fatal(self, message: &str) -> T;
 }
