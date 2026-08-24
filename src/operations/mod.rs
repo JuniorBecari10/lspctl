@@ -1,6 +1,7 @@
 use crate::{
     error,
     operations::util::{Action, OperationResult},
+    registry::model::Entry,
 };
 
 use regex::Regex;
@@ -33,4 +34,24 @@ pub fn search(args: model::SearchArgs) -> OperationResult {
     };
 
     util::list_packages(args.installed, args.verbose, Some(&pattern))
+}
+
+pub fn info(args: model::InfoArgs) -> OperationResult {
+    let (registry, _, state, _lock) = prelude::prelude_no_log();
+    let (entries, missing) = util::filter_registry(registry, &args.pkgs);
+
+    if !missing.is_empty() {
+        for m in missing {
+            error!("Package '{m}' doesn't exist.");
+        }
+
+        return OperationResult::Failure;
+    }
+    let is_installed = |e: &Entry| state.installed.contains_key(&e.name);
+
+    for e in entries {
+        e.print_detailed(is_installed(&e));
+    }
+
+    OperationResult::Success
 }

@@ -1,6 +1,10 @@
 use crate::{
     consts,
-    operations::{self, util::OperationResult},
+    operations::{
+        self,
+        model::{DeleteSubcommand, InfoArgs, InstallArgs, ListArgs, RemoveArgs, SearchArgs},
+        util::OperationResult,
+    },
 };
 use clap::{Parser, Subcommand};
 
@@ -19,19 +23,29 @@ struct Cli {
 enum Command {
     /// Install packages
     #[command(visible_alias = "i")]
-    Install(operations::model::InstallArgs),
+    Install(InstallArgs),
 
     /// Remove packages
     #[command(visible_alias = "r")]
-    Remove(operations::model::RemoveArgs),
+    Remove(RemoveArgs),
 
     /// List all packages or installed ones
     #[command(visible_alias = "l")]
-    List(operations::model::ListArgs),
+    List(ListArgs),
 
     /// Search all packages or installed ones
     #[command(visible_alias = "s")]
-    Search(operations::model::SearchArgs),
+    Search(SearchArgs),
+
+    /// Get more information about packages
+    Info(InfoArgs),
+
+    /// Deletion-related utilities
+    #[command(visible_alias = "d")]
+    Delete {
+        #[command(subcommand)]
+        command: DeleteSubcommand,
+    },
 }
 
 pub fn cli() -> OperationResult {
@@ -40,5 +54,12 @@ pub fn cli() -> OperationResult {
         Command::Remove(args) => operations::remove(args),
         Command::List(args) => operations::list(args),
         Command::Search(args) => operations::search(args),
+        Command::Info(args) => operations::info(args),
+
+        Command::Delete { command } => match command {
+            DeleteSubcommand::Registry => todo!(),
+            DeleteSubcommand::Packages => todo!(),
+            DeleteSubcommand::Lockfile => todo!(),
+        },
     }
 }

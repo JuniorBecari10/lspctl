@@ -114,6 +114,7 @@ pub fn run_action(
         for m in missing {
             error!("Package '{m}' doesn't exist.");
         }
+
         return OperationResult::Failure;
     }
 

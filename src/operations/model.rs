@@ -1,4 +1,4 @@
-use clap::Args;
+use clap::{Args, Subcommand};
 
 #[derive(Args, Debug)]
 pub struct InstallArgs {
@@ -39,7 +39,7 @@ pub struct ListArgs {
 
 #[derive(Args, Debug)]
 pub struct SearchArgs {
-    // The regex pattern to search
+    /// The regex pattern to search
     #[arg(required = true)]
     pub pattern: String,
 
@@ -50,4 +50,18 @@ pub struct SearchArgs {
     /// Write more info when listing; this will write more than one line per package
     #[arg(short, long)]
     pub verbose: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct InfoArgs {
+    /// List of packages to list information about
+    #[arg(required = true)]
+    pub pkgs: Vec<String>,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum DeleteSubcommand {
+    Registry,
+    Packages,
+    Lockfile,
 }
