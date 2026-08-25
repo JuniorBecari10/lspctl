@@ -18,18 +18,10 @@ pub struct ProcessLock {
 
 type Prelude = (Registry, Platform, State, ProcessLock);
 
-pub fn prelude() -> Prelude {
-    prelude_inner(true)
-}
-
-pub fn prelude_no_log() -> Prelude {
-    prelude_inner(false)
-}
-
 // do NOT ignore the lock file. bind it to something like '_lock'
 // for it to exist throughout the entire function
-fn prelude_inner(log: bool) -> Prelude {
-    setup_root(log);
+pub fn prelude() -> Prelude {
+    setup_root();
 
     (
         read_registry(),
@@ -41,8 +33,8 @@ fn prelude_inner(log: bool) -> Prelude {
 
 // ---
 
-fn setup_root(log: bool) {
-    root::setup_root(log).fatal("Cannot create root folder structure");
+fn setup_root() {
+    root::setup_root().fatal("Cannot create root folder structure");
 }
 
 fn read_registry() -> Registry {

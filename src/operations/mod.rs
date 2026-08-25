@@ -1,6 +1,6 @@
 use crate::{
     error,
-    operations::util::{Action, OperationResult},
+    operations::util::{Action, OperationResult, PackageSelection},
     registry::model::Entry,
 };
 
@@ -12,11 +12,34 @@ mod prelude;
 pub mod util;
 
 pub fn install(args: model::InstallArgs) -> OperationResult {
-    util::run_action(args.pkgs, args.yes, Action::Install, logic::install_pkg)
+    util::run_action(
+        PackageSelection::Specific(args.pkgs),
+        args.yes,
+        true,
+        Action::Install,
+        logic::install_pkg,
+    )
 }
 
 pub fn remove(args: model::RemoveArgs) -> OperationResult {
-    util::run_action(args.pkgs, args.yes, Action::Remove, logic::remove_pkg)
+    if !args.all && args.pkgs.is_empty() {
+        error!("Specify '-a' / '--all' or one or more package names to remove.");
+        return OperationResult::Failure;
+    }
+
+    let selection = if args.all {
+        PackageSelection::All
+    } else {
+        PackageSelection::Specific(args.pkgs)
+    };
+
+    util::run_action(
+        selection,
+        args.yes,
+        false,
+        Action::Remove,
+        logic::remove_pkg,
+    )
 }
 
 pub fn list(args: model::ListArgs) -> OperationResult {
@@ -37,7 +60,7 @@ pub fn search(args: model::SearchArgs) -> OperationResult {
 }
 
 pub fn info(args: model::InfoArgs) -> OperationResult {
-    let (registry, _, state, _lock) = prelude::prelude_no_log();
+    let (registry, _, state, _lock) = prelude::prelude();
     let (entries, missing) = util::filter_registry(registry, &args.pkgs);
 
     if !missing.is_empty() {

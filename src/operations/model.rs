@@ -18,8 +18,12 @@ pub struct InstallArgs {
 #[derive(Args, Debug)]
 pub struct RemoveArgs {
     /// List of packages to remove
-    #[arg(required = true, num_args = 1..)]
+    #[arg(conflicts_with = "all")]
     pub pkgs: Vec<String>,
+
+    /// Remove all installed packages
+    #[arg(short, long)]
+    pub all: bool,
 
     /// Remove without confirmation prompts
     #[arg(short, long)]

@@ -17,6 +17,11 @@ pub enum OperationResult {
     Failure,
 }
 
+pub enum PackageSelection {
+    Specific(Vec<String>),
+    All,
+}
+
 impl From<OperationResult> for ExitCode {
     fn from(res: OperationResult) -> Self {
         match res {
@@ -82,14 +87,19 @@ impl Action {
     }
 }
 
-fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action) -> bool {
+fn accepted_action(
+    pkgs: &[Entry],
+    yes: bool,
+    action: &Action,
+    is_installed: impl Fn(&Entry) -> bool,
+) -> bool {
     header!(
         "Packages to be {} ({}):\n",
         action.past_participle(),
         pkgs.len()
     );
 
-    print_entries(pkgs, |_| false);
+    print_entries(pkgs, is_installed);
 
     yes || {
         eprintln!();
@@ -102,12 +112,24 @@ fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action) -> bool {
 }
 
 pub fn run_action(
-    pkgs: Vec<String>,
+    selection: PackageSelection,
     yes: bool,
+    list_installed: bool,
     action: Action,
     op: fn(Entry, &Platform, &mut State) -> anyhow::Result<()>,
 ) -> OperationResult {
     let (registry, platform, mut state, _lock) = prelude::prelude();
+
+    let pkgs = match selection {
+        PackageSelection::Specific(items) => items,
+        PackageSelection::All => state.installed.keys().cloned().collect(),
+    };
+
+    if pkgs.is_empty() {
+        end!("There are no packages to be {}.", action.past_participle());
+        return OperationResult::Success;
+    }
+
     let (entries, missing) = filter_registry(registry, &pkgs);
 
     if !missing.is_empty() {
@@ -118,7 +140,9 @@ pub fn run_action(
         return OperationResult::Failure;
     }
 
-    if !accepted_action(&entries, yes, &action) {
+    let is_installed = |e: &Entry| list_installed && state.installed.contains_key(&e.name);
+
+    if !accepted_action(&entries, yes, &action, is_installed) {
         return OperationResult::Success;
     }
 
@@ -203,7 +227,7 @@ pub fn write_entries(entries: &[Entry], verbose: bool, installed_names: Option<&
 }
 
 pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) -> OperationResult {
-    let (registry, _, state, _lock) = prelude::prelude_no_log();
+    let (registry, _, state, _lock) = prelude::prelude();
     let installed_names: HashSet<String> = state.installed.keys().cloned().collect();
 
     let entries: Vec<Entry> = if installed {
