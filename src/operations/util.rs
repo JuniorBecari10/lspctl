@@ -1,4 +1,7 @@
-use std::{collections::HashSet, process::ExitCode};
+use std::{
+    collections::{HashMap, HashSet},
+    process::ExitCode,
+};
 
 use colored::Colorize;
 use dialoguer::Confirm;
@@ -8,7 +11,7 @@ use crate::{
     end, error, header,
     operations::prelude,
     registry::model::{Entry, Platform, Registry},
-    state::State,
+    state::{InstalledPackage, State},
     step,
 };
 
@@ -91,7 +94,7 @@ fn accepted_action(
     pkgs: &[Entry],
     yes: bool,
     action: &Action,
-    is_installed: impl Fn(&Entry) -> bool,
+    is_installed: impl Fn(&Entry) -> Option<String>,
 ) -> bool {
     header!(
         "Packages to be {} ({}):\n",
@@ -114,7 +117,7 @@ fn accepted_action(
 pub fn run_action(
     selection: PackageSelection,
     yes: bool,
-    list_installed: bool,
+    show_installed_label: bool,
     action: Action,
     op: fn(Entry, &Platform, &mut State) -> anyhow::Result<()>,
 ) -> OperationResult {
@@ -140,9 +143,14 @@ pub fn run_action(
         return OperationResult::Failure;
     }
 
-    let is_installed = |e: &Entry| list_installed && state.installed.contains_key(&e.name);
-
-    if !accepted_action(&entries, yes, &action, is_installed) {
+    let installed_version = |e: &Entry| {
+        state
+            .installed
+            .get(&e.name)
+            .map(|pkg| pkg.version.clone())
+            .filter(|_| show_installed_label)
+    };
+    if !accepted_action(&entries, yes, &action, installed_version) {
         return OperationResult::Success;
     }
 
@@ -214,21 +222,28 @@ const fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a str {
     if count == 1 { singular } else { plural }
 }
 
-pub fn write_entries(entries: &[Entry], verbose: bool, installed_names: Option<&HashSet<String>>) {
-    let is_installed = |e: &Entry| installed_names.is_some_and(|s| s.contains(&e.name));
+pub fn write_entries(
+    entries: &[Entry],
+    verbose: bool,
+    installed_packages: &HashMap<String, InstalledPackage>,
+) {
+    let installed_version = |e: &Entry| {
+        installed_packages
+            .get(&e.name)
+            .map(|pkg| pkg.version.clone())
+    };
 
     if verbose {
         for entry in entries {
-            entry.print_detailed(is_installed(entry));
+            entry.print_detailed(installed_version(entry));
         }
     } else {
-        print_entries(entries, is_installed);
+        print_entries(entries, installed_version);
     }
 }
 
 pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
-    let installed_names: HashSet<String> = state.installed.keys().cloned().collect();
 
     let entries: Vec<Entry> = if installed {
         let keys = state.installed.keys().cloned().collect::<Vec<_>>();
@@ -275,18 +290,11 @@ pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) ->
 
     header!("{header_text}");
 
-    // suppress '(installed)' marking for installed-only listings.
-    let marker_set = if installed {
-        None
-    } else {
-        Some(&installed_names)
-    };
-
-    write_entries(&entries, verbose, marker_set);
+    write_entries(&entries, verbose, &state.installed);
     OperationResult::Success
 }
 
-fn print_entries(entries: &[Entry], is_installed: impl Fn(&Entry) -> bool) {
+fn print_entries(entries: &[Entry], installed_version: impl Fn(&Entry) -> Option<String>) {
     let name_width = entries
         .iter()
         .map(|e| e.name.len())
@@ -319,7 +327,7 @@ fn print_entries(entries: &[Entry], is_installed: impl Fn(&Entry) -> bool) {
             entry.name.clone()
         };
 
-        let installed = if is_installed(entry) {
+        let installed = if installed_version(entry).is_some() {
             format!("  {}", "(installed)".green())
         } else {
             String::new()

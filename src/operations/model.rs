@@ -6,10 +6,6 @@ pub struct InstallArgs {
     #[arg(required = true, num_args = 1..)]
     pub pkgs: Vec<String>,
 
-    /// Install the packages even if already installed
-    #[arg(short, long)]
-    pub force: bool,
-
     /// Install without confirmation prompts
     #[arg(short, long)]
     pub yes: bool,

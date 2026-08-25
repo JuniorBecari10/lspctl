@@ -49,14 +49,14 @@ pub fn registry_file() -> PathBuf {
 
 // ---
 
-pub fn tmp_package_dir(name: &str, version: &str) -> PathBuf {
-    get_pkg_dir(tmp_dir(), name, version)
+pub fn tmp_package_dir(name: &str) -> PathBuf {
+    get_pkg_dir(tmp_dir(), name)
 }
 
-pub fn package_dir(name: &str, version: &str) -> PathBuf {
-    get_pkg_dir(packages_dir(), name, version)
+pub fn package_dir(name: &str) -> PathBuf {
+    get_pkg_dir(packages_dir(), name)
 }
 
-fn get_pkg_dir(dir: PathBuf, name: &str, version: &str) -> PathBuf {
-    dir.join(name).join(version)
+fn get_pkg_dir(dir: PathBuf, name: &str) -> PathBuf {
+    dir.join(name)
 }

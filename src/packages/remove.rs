@@ -11,14 +11,14 @@ pub fn remove(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
         fs::remove_file(file)?;
     }
 
-    remove_package(&entry.name, &entry.source.purl.version)?;
+    remove_package(&entry.name)?;
     state.remove_entry(&entry.name);
 
     Ok(())
 }
 
-fn remove_package(name: &str, version: &str) -> anyhow::Result<()> {
-    let path = paths::package_dir(name, version);
+fn remove_package(name: &str) -> anyhow::Result<()> {
+    let path = paths::package_dir(name);
     disk::make_writable_recursive(&path)?;
     fs::remove_dir_all(&path)?;
 

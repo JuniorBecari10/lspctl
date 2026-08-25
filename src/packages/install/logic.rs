@@ -19,7 +19,7 @@ use crate::{
 // TODO: revert all steps done here if something goes wrong, including removing symlinks
 // and the move into the definitive folder
 pub fn install(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
-    let tmp_pkg_path = paths::tmp_package_dir(&entry.name, &entry.source.purl.version);
+    let tmp_pkg_path = paths::tmp_package_dir(&entry.name);
     fs::create_dir_all(&tmp_pkg_path)?;
 
     // install in tmp and move it to the definitive folder
@@ -27,10 +27,7 @@ pub fn install(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
     util::move_package(&entry.name)?;
 
     // make links in bin and add the entry to state
-    let bins = make_links(
-        entry,
-        &paths::package_dir(&entry.name, &entry.source.purl.version),
-    )?;
+    let bins = make_links(entry, &paths::package_dir(&entry.name))?;
 
     state.add_entry(entry, bins);
     Ok(())

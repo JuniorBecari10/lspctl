@@ -11,7 +11,6 @@ pub mod model;
 mod prelude;
 pub mod util;
 
-// TODO: support force flag
 pub fn install(args: model::InstallArgs) -> OperationResult {
     util::run_action(
         PackageSelection::Specific(args.pkgs),
@@ -71,10 +70,11 @@ pub fn info(args: model::InfoArgs) -> OperationResult {
 
         return OperationResult::Failure;
     }
-    let is_installed = |e: &Entry| state.installed.contains_key(&e.name);
+
+    let installed_version = |e: &Entry| state.installed.get(&e.name).map(|pkg| pkg.version.clone());
 
     for e in entries {
-        e.print_detailed(is_installed(&e));
+        e.print_detailed(installed_version(&e));
     }
 
     OperationResult::Success

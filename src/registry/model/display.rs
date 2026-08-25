@@ -4,7 +4,7 @@ use crate::registry::model::{Arch, Entry, InstallKind, Libc, Os, Platform, Varia
 use colored::Colorize;
 
 impl Entry {
-    pub fn print_detailed(&self, installed: bool) {
+    pub fn print_detailed(&self, installed_version: Option<String>) {
         if self.deprecation.is_some() {
             println!("{}", self.name.bold().strikethrough());
         } else {
@@ -25,13 +25,22 @@ impl Entry {
         println!("{}", self.description);
         println!();
 
-        if installed {
+        if installed_version.is_some() {
             println!("  {}", "Installed".green().bold());
             println!();
         }
 
         println!("  {:<12} {}", "Homepage:", self.homepage.blue().underline());
-        println!("  {:<12} {}", "Version:", self.source.purl.version);
+
+        match installed_version {
+            Some(ver) => {
+                println!("  {:<12} {}", "Registry Version:", self.source.purl.version);
+                println!("  {:<12} {}", "Installed Version:", ver);
+            }
+
+            None => println!("  {:<12} {}", "Version:", self.source.purl.version),
+        };
+
         println!("  {:<12} {}", "Source:", self.source.purl.kind);
         println!("  {:<12} {}", "Licenses:", self.licenses.join(", "));
         println!("  {:<12} {}", "Languages:", self.languages.join(", "));
