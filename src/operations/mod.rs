@@ -11,6 +11,7 @@ pub mod model;
 mod prelude;
 pub mod util;
 
+// TODO: support force flag
 pub fn install(args: model::InstallArgs) -> OperationResult {
     util::run_action(
         PackageSelection::Specific(args.pkgs),
