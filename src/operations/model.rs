@@ -59,8 +59,23 @@ pub struct InfoArgs {
     pub pkgs: Vec<String>,
 }
 
+#[derive(Args, Debug)]
+pub struct DeleteArgs {
+    #[command(subcommand)]
+    pub command: DeleteSubcommand,
+
+    #[command(flatten)]
+    pub flags: DeleteFlags,
+}
+
 #[derive(Subcommand, Debug)]
 pub enum DeleteSubcommand {
-    Packages,
     Lockfile,
+}
+
+#[derive(Args, Debug)]
+pub struct DeleteFlags {
+    /// Delete without confirmation prompts
+    #[arg(short, long)]
+    pub yes: bool,
 }

@@ -1,15 +1,16 @@
 use std::fs::{File, OpenOptions, TryLockError};
 
 use crate::{
-    consts, end, error, fatal, global,
+    consts, error, fatal, global,
     log::Fatal,
-    paths,
+    note, paths,
     registry::{
         self,
         model::{Platform, Registry},
     },
     root,
     state::State,
+    step,
 };
 
 pub struct ProcessLock {
@@ -65,11 +66,17 @@ pub fn acquire_lock() -> ProcessLock {
         Ok(()) => {}
 
         Err(TryLockError::WouldBlock) => {
-            end!(
+            step!(
                 "One instance of {} is already running. Waiting for the lock to be released..",
                 consts::APP_NAME
             );
 
+            note!(
+                "If this is an error, you can run '{} delete lockfile'",
+                consts::APP_NAME
+            );
+
+            note!("to delete the lockfile if no other instances are running.");
             file.lock().fatal("Failed to acquire process lock");
         }
 

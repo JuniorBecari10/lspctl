@@ -103,11 +103,14 @@ fn accepted_action(
     );
 
     print_entries(pkgs, is_installed);
+    confirm_action(&format!("Proceed with {}?", action.noun()), yes)
+}
 
+pub fn confirm_action(action: &str, yes: bool) -> bool {
     yes || {
         eprintln!();
         Confirm::new()
-            .with_prompt(format!(" {} Proceed with {}?", "-".green(), action.noun()))
+            .with_prompt(format!(" {} {}", "-".green(), action))
             .default(true)
             .interact()
             .unwrap_or(false)

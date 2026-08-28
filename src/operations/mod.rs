@@ -1,7 +1,16 @@
+use std::fs;
+
 use crate::{
-    error,
-    operations::util::{Action, OperationResult, PackageSelection},
+    end, error,
+    log::Fatal,
+    note,
+    operations::{
+        model::DeleteFlags,
+        util::{Action, OperationResult, PackageSelection},
+    },
+    paths,
     registry::model::Entry,
+    step,
 };
 
 use regex::Regex;
@@ -77,5 +86,27 @@ pub fn info(args: model::InfoArgs) -> OperationResult {
         e.print_detailed(installed_version(&e));
     }
 
+    OperationResult::Success
+}
+
+pub fn delete_lockfile(flags: DeleteFlags) -> OperationResult {
+    if !flags.yes {
+        step!("Proceed with lockfile deletion?");
+        note!(
+            "This should only be used when the program is in a deadlock and no other instances are running."
+        );
+    }
+
+    if !util::confirm_action("Proceed?", flags.yes) {
+        return OperationResult::Success;
+    }
+
+    // if an error occurs here, it should be caught by the remove_file call.
+    if let Ok(false) = fs::exists(paths::lock_file()) {
+        end!("Lockfile is already not present.");
+        return OperationResult::Success;
+    }
+
+    fs::remove_file(paths::lock_file()).fatal("Could not delete lockfile.");
     OperationResult::Success
 }

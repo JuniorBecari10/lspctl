@@ -2,7 +2,9 @@ use crate::{
     consts,
     operations::{
         self,
-        model::{DeleteSubcommand, InfoArgs, InstallArgs, ListArgs, RemoveArgs, SearchArgs},
+        model::{
+            DeleteArgs, DeleteSubcommand, InfoArgs, InstallArgs, ListArgs, RemoveArgs, SearchArgs,
+        },
         util::OperationResult,
     },
 };
@@ -42,10 +44,7 @@ enum Command {
 
     /// Deletion-related utilities
     #[command(visible_alias = "d")]
-    Delete {
-        #[command(subcommand)]
-        command: DeleteSubcommand,
-    },
+    Delete(DeleteArgs),
 }
 
 pub fn cli() -> OperationResult {
@@ -56,9 +55,8 @@ pub fn cli() -> OperationResult {
         Command::Search(args) => operations::search(args),
         Command::Info(args) => operations::info(args),
 
-        Command::Delete { command } => match command {
-            DeleteSubcommand::Packages => todo!(),
-            DeleteSubcommand::Lockfile => todo!(),
+        Command::Delete(DeleteArgs { command, flags }) => match command {
+            DeleteSubcommand::Lockfile => operations::delete_lockfile(flags),
         },
     }
 }
