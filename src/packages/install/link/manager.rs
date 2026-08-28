@@ -32,6 +32,12 @@ pub fn link_npm(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<Stri
     link(&bins, &pkg_path.join("node_modules").join(".bin"))
 }
 
-pub fn link_go(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
+// all package managers that use plain /bin
+pub fn link_bin(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
     link(&bins, &pkg_path.join("bin"))
+}
+
+// all package managers that puts binaries at the root folder
+pub fn link_root(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
+    link(&bins, pkg_path)
 }

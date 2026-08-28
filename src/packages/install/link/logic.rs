@@ -22,13 +22,13 @@ pub fn link_manager(
     let link_fn = match manager {
         PackageManager::Npm => manager::link_npm,
         PackageManager::PyPI => anyhow::bail!("todo"),
-        PackageManager::Go => manager::link_go,
+        PackageManager::Go => manager::link_bin,
         PackageManager::Cargo => anyhow::bail!("todo"),
-        PackageManager::Gem => anyhow::bail!("todo"),
+        PackageManager::Gem => manager::link_bin,
         PackageManager::Composer => anyhow::bail!("todo"),
-        PackageManager::LuaRocks => anyhow::bail!("todo"),
+        PackageManager::LuaRocks => manager::link_bin,
         PackageManager::Opam => anyhow::bail!("todo"),
-        PackageManager::NuGet => anyhow::bail!("todo"),
+        PackageManager::NuGet => manager::link_root,
     };
 
     link_fn(bins, pkg_path)

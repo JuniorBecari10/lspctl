@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::fs;
 
 use crate::{disk, paths, registry::model::ResolvedEntry, state::State};
 
@@ -22,18 +22,5 @@ fn remove_package(name: &str) -> anyhow::Result<()> {
     disk::make_writable_recursive(&path)?;
     fs::remove_dir_all(&path)?;
 
-    let parent = path
-        .parent()
-        .ok_or_else(|| anyhow::anyhow!("Package folder should have a parent"))?;
-
-    if is_dir_empty(parent)? {
-        disk::make_writable_recursive(parent)?;
-        fs::remove_dir_all(parent)?;
-    }
-
     Ok(())
-}
-
-fn is_dir_empty(p: &Path) -> anyhow::Result<bool> {
-    Ok(p.read_dir()?.next().is_none())
 }

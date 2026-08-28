@@ -179,7 +179,7 @@ pub fn run_action(
                 ok_count += 1;
             }
             Err(e) => {
-                error!("Failed to {} '{name}': {e}.", action.verb_base());
+                error!("Failed to {} '{name}': {e}", action.verb_base());
                 err_count += 1;
             }
         }

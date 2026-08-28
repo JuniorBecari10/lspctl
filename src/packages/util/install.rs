@@ -87,6 +87,7 @@ fn get_install_args(
         .chain(extra_packages.iter().cloned())
         .collect(),
 
+        // needs /install/__main__.py and generates .pyc
         PackageManager::PyPI => todo!(),
 
         PackageManager::Cargo => vec![
@@ -96,31 +97,60 @@ fn get_install_args(
             name.into(),
         ],
 
-        PackageManager::Gem => todo!(),
+        // installs but cannot run because Ruby cannot find the gem
+        PackageManager::Gem => vec![
+            "install".into(),
+            "--no-user-install".into(),
+            "--install-dir".into(),
+            ".".into(),
+            "--no-format-executable".into(),
+            name.into(),
+            "--version".into(),
+            version.into(),
+        ],
+
         PackageManager::Go => vec!["install".into(), format!("{name}@{version}")],
+
+        // TODO: works but shim points to the binary at tmp
+        PackageManager::LuaRocks => vec![
+            "install".into(),
+            "--tree".into(),
+            ".".into(),
+            name.into(),
+            version.into(),
+        ],
+
+        PackageManager::NuGet => vec![
+            "tool".into(),
+            "install".into(),
+            "--tool-path".into(),
+            ".".into(),
+            name.into(),
+            "--version".into(),
+            version.into(),
+        ],
+
         PackageManager::Composer => todo!(),
-        PackageManager::LuaRocks => todo!(),
         PackageManager::Opam => todo!(),
-        PackageManager::NuGet => todo!(),
     }
 }
 
 fn get_install_env(manager: PackageManager, pkg_dir: &Path) -> HashMap<String, String> {
     match manager {
-        PackageManager::Npm => hashmap! {},
-        PackageManager::PyPI => todo!(),
+        PackageManager::Npm
+        | PackageManager::Cargo
+        | PackageManager::Gem
+        | PackageManager::LuaRocks
+        | PackageManager::NuGet => hashmap! {},
 
         PackageManager::Go => hashmap! {
             "GOBIN".to_string() => pkg_dir.join("bin").to_string_lossy().into_owned(),
             "GOMODCACHE".to_string() => pkg_dir.join("gomodcache").to_string_lossy().into_owned(),
         },
 
-        PackageManager::Cargo => hashmap! {},
-        PackageManager::Gem => todo!(),
+        PackageManager::PyPI => todo!(),
         PackageManager::Composer => todo!(),
-        PackageManager::LuaRocks => todo!(),
         PackageManager::Opam => todo!(),
-        PackageManager::NuGet => todo!(),
     }
 }
 
