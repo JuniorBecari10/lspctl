@@ -97,7 +97,6 @@ fn get_install_args(
             name.into(),
         ],
 
-        // installs but cannot run because Ruby cannot find the gem
         PackageManager::Gem => vec![
             "install".into(),
             "--no-user-install".into(),

@@ -61,16 +61,17 @@ pub fn get_target(name: &str, value: &str, bin: &Path, pkg_path: &Path) -> anyho
                 anyhow::anyhow!("Unsupported wrapper '{wrapper}' for '{name}' in Asset entry")
             })?;
 
-            write_shim(bin, interpreter, args, &target)
+            write_shim(bin, interpreter, args, &target, &[])
         }
     }
 }
 
-fn write_shim(
-    bin: &Path,
+pub fn write_shim(
+    output: &Path,
     interpreter: &str,
     extra_args: &[&str],
     target: &Path,
+    env: &[(&str, &str)],
 ) -> anyhow::Result<PathBuf> {
     if !target.exists() {
         anyhow::bail!("Shim target doesn't exist: '{}'", target.display());
@@ -79,41 +80,54 @@ fn write_shim(
     #[cfg(unix)]
     {
         use std::{fs, os::unix::fs::PermissionsExt};
-
         let args_str = extra_args.join(" ");
+
+        let env_str = env
+            .iter()
+            .map(|(key, value)| format!("{key}=\"{value}\""))
+            .collect::<Vec<_>>()
+            .join(" ");
+
         let script = if args_str.is_empty() {
             format!(
-                "#!/bin/sh\nexec {interpreter} \"{}\" \"$@\"\n",
+                "#!/bin/sh\n\
+                {env_str} exec {interpreter} \"{}\" \"$@\"\n",
                 target.display()
             )
         } else {
             format!(
-                "#!/bin/sh\nexec {interpreter} {args_str} \"{}\" \"$@\"\n",
+                "#!/bin/sh\n\
+                {env_str} exec {interpreter} {args_str} \"{}\" \"$@\"\n",
                 target.display()
             )
         };
 
-        fs::write(bin, script)?;
-        let mut perms = fs::metadata(bin)?.permissions();
+        fs::write(output, script)?;
 
+        let mut perms = fs::metadata(output)?.permissions();
         perms.set_mode(perms.mode() | 0o111);
-        fs::set_permissions(bin, perms)?;
+        fs::set_permissions(output, perms)?;
     }
-
     #[cfg(windows)]
     {
         use std::fs;
 
-        let cmd_path = bin.with_extension("cmd");
+        let cmd_path = output.with_extension("cmd");
         let args_str = extra_args.join(" ");
 
+        let env_str = env
+            .iter()
+            .map(|(key, value)| format!("set \"{key}={value}\"\r\n"))
+            .collect::<String>();
+
         let script = format!(
-            "@echo off\r\n{interpreter} {args_str} \"{}\" %*\r\n",
+            "@echo off\r\n\
+            {env_str} {interpreter} {args_str} \"{}\" %*\r\n",
             target.display()
         );
 
         fs::write(&cmd_path, script)?;
     }
 
-    Ok(bin.to_path_buf())
+    Ok(output.to_path_buf())
 }

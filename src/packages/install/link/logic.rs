@@ -24,7 +24,7 @@ pub fn link_manager(
         PackageManager::PyPI => anyhow::bail!("todo"),
         PackageManager::Go => manager::link_bin,
         PackageManager::Cargo => manager::link_bin,
-        PackageManager::Gem => manager::link_bin,
+        PackageManager::Gem => manager::link_gem,
         PackageManager::Composer => anyhow::bail!("todo"),
         PackageManager::LuaRocks => manager::link_bin,
         PackageManager::Opam => anyhow::bail!("todo"),
