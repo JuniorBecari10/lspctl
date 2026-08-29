@@ -71,7 +71,7 @@ fn install_manager(
     extra_packages: &[String],
     tmp_pkg_path: &Path,
 ) -> anyhow::Result<()> {
-    let command = util::get_install_command(
+    let commands = util::get_install_commands(
         manager,
         &entry.source.purl.qualified_package_name(),
         &entry.source.purl.version,
@@ -79,7 +79,11 @@ fn install_manager(
         tmp_pkg_path,
     );
 
-    util::run_command(command, tmp_pkg_path)
+    for command in commands {
+        util::run_command(command, tmp_pkg_path);
+    }
+
+    Ok(())
 }
 
 fn install_asset(entry: &ResolvedEntry, asset: &Asset, tmp_pkg_path: &Path) -> anyhow::Result<()> {

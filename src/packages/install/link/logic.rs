@@ -21,7 +21,7 @@ pub fn link_manager(
 
     let link_fn = match manager {
         PackageManager::Npm => manager::link_npm,
-        PackageManager::PyPI => anyhow::bail!("todo"),
+        PackageManager::PyPI => manager::link_pypi,
         PackageManager::Go => manager::link_bin,
         PackageManager::Cargo => manager::link_bin,
         PackageManager::Gem => manager::link_gem,

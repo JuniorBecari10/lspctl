@@ -74,3 +74,36 @@ pub fn link_gem(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<Stri
 
     Ok(linked)
 }
+
+pub fn link_pypi(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
+    let files = disk::list_files(&pkg_path.join("bin"))?;
+    let mut linked = HashMap::new();
+
+    let dir = if cfg!(windows) { "Scripts" } else { "bin" };
+    let join = pkg_path.join(dir);
+    let interpreter = join.join("python3");
+
+    for file in files {
+        let name = file
+            .file_name()
+            .map(|s| s.to_string_lossy().into_owned())
+            .ok_or_else(|| anyhow::anyhow!("Invalid file path: '{}'", file.display()))?;
+
+        if !bins.contains(&name.as_str()) {
+            // binary not in the registry; skip it.
+            continue;
+        }
+
+        let shim = write_shim(
+            &paths::bin_dir().join(&name),
+            &interpreter.to_string_lossy(),
+            &[],
+            &join.join(&name),
+            &[],
+        )?;
+
+        linked.insert(name.to_owned(), shim);
+    }
+
+    Ok(linked)
+}

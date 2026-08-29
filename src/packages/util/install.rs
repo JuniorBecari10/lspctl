@@ -24,18 +24,43 @@ impl Display for InstallCommand {
     }
 }
 
-pub fn get_install_command(
+pub fn get_install_commands(
     manager: PackageManager,
     name: &str,
     version: &str,
     extra_packages: &[String],
     tmp_pkg_path: &Path,
-) -> InstallCommand {
-    let binary = manager.get_command();
-    let args = get_install_args(manager, name, version, extra_packages, tmp_pkg_path);
-    let env = get_install_env(manager, tmp_pkg_path);
+) -> Vec<InstallCommand> {
+    match manager {
+        PackageManager::PyPI => {
+            let venv_pip = if cfg!(windows) {
+                tmp_pkg_path.join("Scripts").join("pip.exe")
+            } else {
+                tmp_pkg_path.join("bin").join("pip")
+            };
 
-    InstallCommand { binary, args, env }
+            vec![
+                InstallCommand {
+                    binary: "python3".into(),
+                    args: vec!["-m".into(), "venv".into(), ".".into()],
+                    env: hashmap! {},
+                },
+                InstallCommand {
+                    binary: venv_pip.to_string_lossy().into_owned(),
+                    args: vec!["install".into(), format!("{name}=={version}")],
+                    env: hashmap! {},
+                },
+            ]
+        }
+
+        _ => {
+            let binary = manager.get_command();
+            let args = get_install_args(manager, name, version, extra_packages, tmp_pkg_path);
+            let env = get_install_env(manager, tmp_pkg_path);
+
+            vec![InstallCommand { binary, args, env }]
+        }
+    }
 }
 
 pub fn run_command(command: InstallCommand, dir: &Path) -> anyhow::Result<()> {
