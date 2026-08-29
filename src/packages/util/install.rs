@@ -112,9 +112,6 @@ fn get_install_args(
         .chain(extra_packages.iter().cloned())
         .collect(),
 
-        // needs /install/__main__.py and generates .pyc
-        PackageManager::PyPI => todo!(),
-
         PackageManager::Cargo => vec![
             "install".into(),
             "--root".into(),
@@ -135,7 +132,6 @@ fn get_install_args(
 
         PackageManager::Go => vec!["install".into(), format!("{name}@{version}")],
 
-        // TODO: works but shim points to the binary at tmp
         PackageManager::LuaRocks => vec![
             "install".into(),
             "--tree".into(),
@@ -153,6 +149,9 @@ fn get_install_args(
             "--version".into(),
             version.into(),
         ],
+
+        // handled elsewhere
+        PackageManager::PyPI => unreachable!(),
 
         PackageManager::Composer => todo!(),
         PackageManager::Opam => todo!(),
@@ -172,7 +171,9 @@ fn get_install_env(manager: PackageManager, pkg_dir: &Path) -> HashMap<String, S
             "GOMODCACHE".to_string() => pkg_dir.join("gomodcache").to_string_lossy().into_owned(),
         },
 
-        PackageManager::PyPI => todo!(),
+        // handled elsewhere
+        PackageManager::PyPI => unreachable!(),
+
         PackageManager::Composer => todo!(),
         PackageManager::Opam => todo!(),
     }

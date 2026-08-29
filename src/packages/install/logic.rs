@@ -27,7 +27,7 @@ pub fn install(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
     util::move_package(&entry.name)?;
 
     // make links in bin and add the entry to state
-    let bins = make_links(entry, &paths::package_dir(&entry.name))?;
+    let bins = make_links(entry, &paths::package_dir(&entry.name), &tmp_pkg_path)?;
 
     state.add_entry(entry, bins);
     Ok(())
@@ -46,12 +46,16 @@ fn install_by_variant(entry: &ResolvedEntry, tmp_pkg_path: &Path) -> anyhow::Res
     }
 }
 
-fn make_links(entry: &ResolvedEntry, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
+fn make_links(
+    entry: &ResolvedEntry,
+    pkg_path: &Path,
+    tmp_pkg_path: &Path,
+) -> anyhow::Result<HashMap<String, PathBuf>> {
     match &entry.source.variant {
         ResolvedVariant::PackageManager {
             manager,
             extra_packages: _,
-        } => link::link_manager(entry, *manager, pkg_path),
+        } => link::link_manager(entry, *manager, pkg_path, tmp_pkg_path),
 
         ResolvedVariant::Asset(_) => link::link_asset(entry, pkg_path),
         ResolvedVariant::Download(downloads) => link::link_download(entry, downloads, pkg_path),
