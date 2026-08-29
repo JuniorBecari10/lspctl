@@ -4,7 +4,7 @@ A standalone, cross-platform package manager for LSP servers, DAP adapters,
 linters, and formatters. Installs from the [Mason](https://github.com/mason-org/mason-registry)
 registry without depending on Neovim or any specific editor.
 
-Version: **Beta 1.0**
+Version: **Beta 1.0**.
 
 ## Motivation
 
@@ -14,11 +14,16 @@ From this friction, `lspctl` was born, with the aim to provide a unique and stan
 LSP servers, DAP adapters, linters and formatters for _any editor_, by exposing a single binary for each
 installed tool to be used by your editor.
 
+## Why this name?
+
+`lspctl` was chosen to mirror the name of [systemd](https://systemd.io/)'s command `systemctl`,
+which controls the running services, but now for LSPs and more.
+
 ## Status
 
-`lspctl` is under active development, with core operations such as _install_, _remove_, _list_ and _search_ are
+`lspctl` is under active development, with core operations such as _install_, _remove_, _list_ and _search_
 working reliably, by having been tested across several packages from the registry. Most of the packages are
-supported already; see the table below for the current state of the implementation:
+already supported; see the table below for the current state of the implementation:
 
 ### Current state
 
@@ -58,16 +63,16 @@ supported already; see the table below for the current state of the implementati
 ```sh
 # install one or more packages
 lspctl install gopls rust-analyzer
-lspctl i gopls rust-analyzer  # short alias
+lspctl i gopls rust-analyzer   # short alias
 
 # remove one or more packages
 lspctl remove gopls
-lspctl remove --all           # remove everything installed
+lspctl remove --all            # remove everything installed
 
 # list packages
-lspctl list                   # everything in the registry
-lspctl list --installed       # only what's installed
-lspctl list --verbose         # multi-line detail per package
+lspctl list                    # everything in the registry
+lspctl list --installed        # only what's installed
+lspctl list --verbose          # multi-line detail per package
 
 # search by name (regex)
 lspctl search '^rust'
