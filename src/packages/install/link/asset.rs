@@ -52,7 +52,7 @@ pub fn get_target(name: &str, value: &str, bin: &Path, pkg_path: &Path) -> anyho
             }
 
             disk::link_files(&target, bin)?;
-            Ok(target)
+            Ok(bin.into())
         }
 
         Some((wrapper, path)) => {
