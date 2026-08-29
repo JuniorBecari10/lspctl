@@ -9,6 +9,6 @@ macro_rules! def_consts {
 
 def_consts!(
     APP_NAME = "lspctl",
-    APP_VERSION = "alpha v0.1",
-    APP_DESC = "A TUI and CLI tool to manage installed LSPs, based on Mason's repository.",
+    APP_VERSION = "beta 1.0",
+    APP_DESC = "A standalone, cross-platform package manager for LSP servers, DAP adapters, linters, and formatters.",
 );
