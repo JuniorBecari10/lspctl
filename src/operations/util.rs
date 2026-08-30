@@ -92,21 +92,40 @@ impl Action {
             Action::Remove => "already not installed",
         }
     }
+
+    const fn marker(&self) -> Marker {
+        match self {
+            Action::Install => Marker::Installed,
+            Action::Remove => Marker::NotInstalled,
+        }
+    }
 }
 
-fn accepted_action(
-    pkgs: &[Entry],
-    yes: bool,
-    action: &Action,
-    is_installed: impl Fn(&Entry) -> Option<String>,
-) -> bool {
+enum Marker {
+    Installed,
+    NotInstalled,
+}
+
+impl Marker {
+    fn render(&self) -> colored::ColoredString {
+        match self {
+            Marker::Installed => "(installed)".green(),
+            Marker::NotInstalled => "(not installed)".yellow(),
+        }
+    }
+}
+
+fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State) -> bool {
     header!(
         "Packages to be {} ({}):\n",
         action.past_participle(),
         pkgs.len()
     );
 
-    print_entries(pkgs, is_installed);
+    print_entries(pkgs, |e| {
+        action.should_skip(state, &e.name).then(|| action.marker())
+    });
+
     confirm_action(&format!("Proceed with {}?", action.noun()), yes)
 }
 
@@ -124,7 +143,6 @@ pub fn confirm_action(action: &str, yes: bool) -> bool {
 pub fn run_action(
     selection: PackageSelection,
     yes: bool,
-    show_installed_label: bool,
     action: Action,
     op: fn(Entry, &Platform, &mut State) -> anyhow::Result<()>,
 ) -> OperationResult {
@@ -141,23 +159,14 @@ pub fn run_action(
     }
 
     let (entries, missing) = filter_registry(registry, &pkgs);
-
     if !missing.is_empty() {
         for m in missing {
             error!("Package '{m}' doesn't exist.");
         }
-
         return OperationResult::Failure;
     }
 
-    let installed_version = |e: &Entry| {
-        state
-            .installed
-            .get(&e.name)
-            .map(|pkg| pkg.version.clone())
-            .filter(|_| show_installed_label)
-    };
-    if !accepted_action(&entries, yes, &action, installed_version) {
+    if !accepted_action(&entries, yes, &action, &state) {
         return OperationResult::Success;
     }
 
@@ -233,6 +242,7 @@ pub fn write_entries(
     entries: &[Entry],
     verbose: bool,
     installed_packages: &HashMap<String, InstalledPackage>,
+    show_marker: bool,
 ) {
     let installed_version = |e: &Entry| {
         installed_packages
@@ -245,7 +255,9 @@ pub fn write_entries(
             entry.print_detailed(installed_version(entry));
         }
     } else {
-        print_entries(entries, installed_version);
+        print_entries(entries, |e| {
+            (show_marker && installed_packages.contains_key(&e.name)).then_some(Marker::Installed)
+        });
     }
 }
 
@@ -297,18 +309,17 @@ pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) ->
 
     header!("{header_text}");
 
-    write_entries(&entries, verbose, &state.installed);
+    write_entries(&entries, verbose, &state.installed, !installed);
     OperationResult::Success
 }
 
-fn print_entries(entries: &[Entry], installed_version: impl Fn(&Entry) -> Option<String>) {
+fn print_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>) {
     let name_width = entries
         .iter()
         .map(|e| e.name.len())
         .max()
         .unwrap_or(0)
         .max(15);
-
     let version_width = entries
         .iter()
         .map(|e| e.source.purl.version.len())
@@ -324,7 +335,6 @@ fn print_entries(entries: &[Entry], installed_version: impl Fn(&Entry) -> Option
         name_width = name_width,
         version_width = version_width,
     );
-
     println!("{}", "─".repeat(name_width + version_width + 10).dimmed());
 
     for entry in entries {
@@ -334,14 +344,12 @@ fn print_entries(entries: &[Entry], installed_version: impl Fn(&Entry) -> Option
             entry.name.clone()
         };
 
-        let installed = if installed_version(entry).is_some() {
-            format!("  {}", "(installed)".green())
-        } else {
-            String::new()
-        };
+        let label = marker(entry)
+            .map(|m| format!("  {}", m.render()))
+            .unwrap_or_default();
 
         println!(
-            "{name}{}  {:<version_width$}  {:<6}{installed}",
+            "{name}{}  {:<version_width$}  {:<6}{label}",
             " ".repeat(name_width.saturating_sub(entry.name.len())),
             entry.source.purl.version.cyan(),
             entry.source.purl.kind.to_string().dimmed(),

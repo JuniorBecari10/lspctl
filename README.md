@@ -10,7 +10,7 @@ Version: **Beta 1.0**.
 
 A long time ago I primarily used Neovim for coding, and I used Mason for installing the tools I needed.
 Now, I use [Helix](https://helix-editor.com/), and now I am unable to use Mason again for installing those tools.
-From this friction, `lspctl` was born, with the aim to provide a unique and standardized way for installing
+From this friction, `lspctl` was born, with the aim to provide a single and standardized way for installing
 LSP servers, DAP adapters, linters and formatters for _any editor_, by exposing a single binary for each
 installed tool to be used by your editor.
 
@@ -29,7 +29,7 @@ already supported; see the table below for the current state of the implementati
 
 #### Interfaces
 
-- [x] CLI (needs some polishing)
+- [x] CLI
 - [ ] TUI
 - [ ] GUI
 

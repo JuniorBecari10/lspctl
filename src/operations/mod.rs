@@ -21,7 +21,6 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
     util::run_action(
         PackageSelection::Specific(args.pkgs),
         args.yes,
-        true,
         Action::Install,
         logic::install_pkg,
     )
@@ -39,13 +38,7 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
         PackageSelection::Specific(args.pkgs)
     };
 
-    util::run_action(
-        selection,
-        args.yes,
-        false,
-        Action::Remove,
-        logic::remove_pkg,
-    )
+    util::run_action(selection, args.yes, Action::Remove, logic::remove_pkg)
 }
 
 pub fn list(args: model::ListArgs) -> OperationResult {
