@@ -13,7 +13,7 @@ use crate::{
     end, error, header,
     log::Fatal,
     note,
-    operations::{markers::Selection, prelude},
+    operations::prelude,
     registry::model::{Entry, Platform, Registry},
     state::{InstalledPackage, State},
     step,
