@@ -52,12 +52,12 @@ macro_rules! fatal {
     }};
 }
 
-/// ` * message`: header, usually at the start of a list. writes a '\n' before it.
+/// ` * message`: header, usually at the start of a list.
 #[macro_export]
 macro_rules! header {
     ($($arg:tt)*) => {
         eprintln!(
-            "\n {} {}",
+            " {} {}",
             colored::Colorize::bold(colored::Colorize::blue("*")),
             format!($($arg)*)
         )

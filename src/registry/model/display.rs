@@ -33,10 +33,17 @@ impl Entry {
         println!("  {:<12} {}", "Homepage:", self.homepage.blue().underline());
 
         match installed_version {
-            Some(ver) => {
+            Some(ver) if self.source.purl.version != ver => {
                 println!("  {:<12} {}", "Registry Version:", self.source.purl.version);
                 println!("  {:<12} {}", "Installed Version:", ver);
             }
+
+            Some(_) => println!(
+                "  {:<12} {}  {}",
+                "Version:",
+                self.source.purl.version,
+                "(matches registry)".green()
+            ),
 
             None => println!("  {:<12} {}", "Version:", self.source.purl.version),
         };
