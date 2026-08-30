@@ -3,7 +3,8 @@ use std::fs;
 use crate::{
     consts, error,
     operations::{
-        model::DeleteFlags,
+        markers::Selection,
+        model::{DeleteFlags, UpdateRegistryArgs},
         util::{Action, OperationResult, PackageSelection},
     },
     paths,
@@ -13,6 +14,7 @@ use crate::{
 use regex::Regex;
 
 mod logic;
+mod markers;
 pub mod model;
 mod prelude;
 pub mod util;
@@ -27,15 +29,9 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
 }
 
 pub fn remove(args: model::RemoveArgs) -> OperationResult {
-    if !args.all && args.pkgs.is_empty() {
+    let Some(selection) = args.to_package_selection() else {
         error!("Specify '-a' / '--all' or one or more package names to remove.");
         return OperationResult::Failure;
-    }
-
-    let selection = if args.all {
-        PackageSelection::All
-    } else {
-        PackageSelection::Specific(args.pkgs)
     };
 
     util::run_action(selection, args.yes, Action::Remove, logic::remove_pkg)
@@ -99,4 +95,20 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
         flags.yes,
         |p| fs::remove_dir_all(p),
     )
+}
+
+pub fn update_registry(args: UpdateRegistryArgs) -> OperationResult {
+    let (registry, _, state, _lock) = prelude::prelude();
+    let (_, missing) = util::filter_registry(registry, &args.pkgs);
+
+    if !missing.is_empty() {
+        for m in missing {
+            error!("Package '{m}' doesn't exist.");
+        }
+
+        return OperationResult::Failure;
+    }
+
+    let selection = args.to_package_selection(); // not mandatory to specify packages
+    todo!()
 }

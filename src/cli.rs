@@ -3,7 +3,8 @@ use crate::{
     operations::{
         self,
         model::{
-            DeleteArgs, DeleteSubcommand, InfoArgs, InstallArgs, ListArgs, RemoveArgs, SearchArgs,
+            DeleteArgs, DeleteSubcommand, InfoArgs, InstallArgs, ListArgs, RegistrySubcommand,
+            RemoveArgs, SearchArgs,
         },
         util::OperationResult,
     },
@@ -43,8 +44,13 @@ enum Command {
     Info(InfoArgs),
 
     /// Deletion-related utilities
-    #[command(visible_alias = "d")]
+    #[command(visible_alias = "d", visible_alias = "del")]
     Delete(DeleteArgs),
+
+    /// Interact with the registry
+    #[command(subcommand)]
+    #[command(visible_alias = "reg")]
+    Registry(RegistrySubcommand),
 }
 
 pub fn cli() -> OperationResult {
@@ -58,6 +64,10 @@ pub fn cli() -> OperationResult {
         Command::Delete(DeleteArgs { command, flags }) => match command {
             DeleteSubcommand::Lockfile => operations::delete_lockfile(flags),
             DeleteSubcommand::All => operations::delete_all(flags),
+        },
+
+        Command::Registry(subcommand) => match subcommand {
+            RegistrySubcommand::Update(args) => operations::update_registry(args),
         },
     }
 }

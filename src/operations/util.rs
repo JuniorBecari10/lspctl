@@ -13,7 +13,7 @@ use crate::{
     end, error, header,
     log::Fatal,
     note,
-    operations::prelude,
+    operations::{markers::Selection, prelude},
     registry::model::{Entry, Platform, Registry},
     state::{InstalledPackage, State},
     step,
@@ -320,6 +320,7 @@ fn print_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>) {
         .max()
         .unwrap_or(0)
         .max(15);
+
     let version_width = entries
         .iter()
         .map(|e| e.source.purl.version.len())
@@ -335,6 +336,7 @@ fn print_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>) {
         name_width = name_width,
         version_width = version_width,
     );
+
     println!("{}", "─".repeat(name_width + version_width + 10).dimmed());
 
     for entry in entries {

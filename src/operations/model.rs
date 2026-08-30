@@ -83,3 +83,29 @@ pub struct DeleteFlags {
     #[arg(short, long)]
     pub yes: bool,
 }
+
+#[derive(Subcommand, Debug)]
+pub enum RegistrySubcommand {
+    /// Update the registry with optional package syncing
+    #[command(visible_alias = "u")]
+    Update(UpdateRegistryArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct UpdateRegistryArgs {
+    /// List of packages to sync with the new registry
+    #[arg(conflicts_with = "all")]
+    pub pkgs: Vec<String>,
+
+    /// Sync all installed packages
+    #[arg(short, long)]
+    pub all: bool,
+
+    /// Sync without confirmation prompts
+    #[arg(short, long)]
+    pub yes: bool,
+
+    /// Version specification of the new registry
+    #[arg(short, long)]
+    pub version: String,
+}
