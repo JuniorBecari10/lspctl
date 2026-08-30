@@ -70,7 +70,11 @@ pub struct DeleteArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum DeleteSubcommand {
+    /// Delete the lockfile in case of a deadlock
     Lockfile,
+
+    /// Delete every data related to lspctl
+    All,
 }
 
 #[derive(Args, Debug)]

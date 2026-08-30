@@ -1,16 +1,13 @@
 use std::fs;
 
 use crate::{
-    end, error,
-    log::Fatal,
-    note,
+    consts, error,
     operations::{
         model::DeleteFlags,
         util::{Action, OperationResult, PackageSelection},
     },
     paths,
     registry::model::Entry,
-    step,
 };
 
 use regex::Regex;
@@ -90,23 +87,23 @@ pub fn info(args: model::InfoArgs) -> OperationResult {
 }
 
 pub fn delete_lockfile(flags: DeleteFlags) -> OperationResult {
-    if !flags.yes {
-        step!("Proceed with lockfile deletion?");
-        note!(
-            "This should only be used when the program is in a deadlock and no other instances are running."
-        );
-    }
+    util::delete_action(
+        &paths::lock_file(),
+        "Lockfile is already not present.",
+        "This should only be used when the program is in a deadlock and no other instances are running.",
+        "Could not delete lockfile.",
+        flags.yes,
+        |p| fs::remove_file(p),
+    )
+}
 
-    if !util::confirm_action("Proceed?", flags.yes) {
-        return OperationResult::Success;
-    }
-
-    // if an error occurs here, it should be caught by the remove_file call.
-    if let Ok(false) = fs::exists(paths::lock_file()) {
-        end!("Lockfile is already not present.");
-        return OperationResult::Success;
-    }
-
-    fs::remove_file(paths::lock_file()).fatal("Could not delete lockfile.");
-    OperationResult::Success
+pub fn delete_all(flags: DeleteFlags) -> OperationResult {
+    util::delete_action(
+        &paths::root_dir(),
+        "All data is already not present.",
+        &format!("This will delete all data related to {}.", consts::APP_NAME),
+        "Could not delete root directory.",
+        flags.yes,
+        |p| fs::remove_dir_all(p),
+    )
 }

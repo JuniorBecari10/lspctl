@@ -57,6 +57,7 @@ pub fn cli() -> OperationResult {
 
         Command::Delete(DeleteArgs { command, flags }) => match command {
             DeleteSubcommand::Lockfile => operations::delete_lockfile(flags),
+            DeleteSubcommand::All => operations::delete_all(flags),
         },
     }
 }

@@ -1,5 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
+    fs,
+    path::Path,
     process::ExitCode,
 };
 
@@ -9,6 +11,8 @@ use regex::Regex;
 
 use crate::{
     end, error, header,
+    log::Fatal,
+    note,
     operations::prelude,
     registry::model::{Entry, Platform, Registry},
     state::{InstalledPackage, State},
@@ -344,4 +348,30 @@ fn print_entries(entries: &[Entry], installed_version: impl Fn(&Entry) -> Option
             version_width = version_width,
         );
     }
+}
+
+pub fn delete_action(
+    path: &Path,
+    already_absent_msg: &str,
+    warning: &str,
+    fatal_msg: &str,
+    yes: bool,
+    delete: impl FnOnce(&Path) -> std::io::Result<()>,
+) -> OperationResult {
+    if let Ok(false) = fs::exists(path) {
+        end!("{already_absent_msg}");
+        return OperationResult::Success;
+    }
+
+    if !yes {
+        step!("Proceed with deletion?");
+        note!("{warning}");
+    }
+
+    if !confirm_action("Proceed?", yes) {
+        return OperationResult::Success;
+    }
+
+    delete(path).fatal(fatal_msg);
+    OperationResult::Success
 }

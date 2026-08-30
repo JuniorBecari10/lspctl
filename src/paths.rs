@@ -11,7 +11,7 @@ def_consts!(
     LOCK_FILE = "lspctl.lock",
 );
 
-fn root_dir() -> PathBuf {
+pub fn root_dir() -> PathBuf {
     dirs::data_local_dir()
         .fatal("Could not determine home directory.")
         .join(consts::APP_NAME)
