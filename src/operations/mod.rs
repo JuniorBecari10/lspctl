@@ -98,7 +98,7 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
 }
 
 pub fn update_registry(args: UpdateRegistryArgs) -> OperationResult {
-    let (registry, _, _state, _lock) = prelude::prelude();
+    let (registry, _, state, _lock) = prelude::prelude();
     let (_, missing) = util::filter_registry(registry, &args.pkgs);
 
     if !missing.is_empty() {
@@ -109,6 +109,6 @@ pub fn update_registry(args: UpdateRegistryArgs) -> OperationResult {
         return OperationResult::Failure;
     }
 
-    let _selection = args.to_package_selection(); // not mandatory to specify packages
+    let selection = args.to_package_selection(); // not mandatory to specify packages
     todo!()
 }

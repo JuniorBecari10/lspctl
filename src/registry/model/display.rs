@@ -6,7 +6,7 @@ use colored::Colorize;
 impl Entry {
     pub fn print_detailed(&self, installed_version: Option<String>) {
         const SHORT_WIDTH: usize = 12;
-        const LONG_WIDTH: usize = 19; // fits "Installed Version:"
+        const LONG_WIDTH: usize = 19;
 
         let needs_two_versions = installed_version
             .as_ref()
