@@ -351,7 +351,7 @@ fn print_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>) {
             .unwrap_or_default();
 
         println!(
-            "{name}{}  {:<version_width$}  {:<6}{label}",
+            "{name}{}  {:<version_width$}  {:<8}{label}",
             " ".repeat(name_width.saturating_sub(entry.name.len())),
             entry.source.purl.version.cyan(),
             entry.source.purl.kind.to_string().dimmed(),

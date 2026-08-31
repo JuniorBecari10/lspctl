@@ -5,6 +5,19 @@ use colored::Colorize;
 
 impl Entry {
     pub fn print_detailed(&self, installed_version: Option<String>) {
+        const SHORT_WIDTH: usize = 12;
+        const LONG_WIDTH: usize = 19; // fits "Installed Version:"
+
+        let needs_two_versions = installed_version
+            .as_ref()
+            .is_some_and(|ver| *ver != self.source.purl.version);
+
+        let label_width = if needs_two_versions {
+            LONG_WIDTH
+        } else {
+            SHORT_WIDTH
+        };
+
         if self.deprecation.is_some() {
             println!("{}", self.name.bold().strikethrough());
         } else {
@@ -30,28 +43,54 @@ impl Entry {
             println!();
         }
 
-        println!("  {:<12} {}", "Homepage:", self.homepage.blue().underline());
+        println!(
+            "  {:<label_width$} {}",
+            "Homepage:",
+            self.homepage.blue().underline()
+        );
 
         match installed_version {
-            Some(ver) if self.source.purl.version != ver => {
-                println!("  {:<12} {}", "Registry Version:", self.source.purl.version);
-                println!("  {:<12} {}", "Installed Version:", ver);
+            Some(ver) if needs_two_versions => {
+                println!(
+                    "  {:<label_width$} {}",
+                    "Registry Version:", self.source.purl.version
+                );
+
+                println!("  {:<label_width$} {}", "Installed Version:", ver);
             }
 
             Some(_) => println!(
-                "  {:<12} {}  {}",
+                "  {:<label_width$} {}  {}",
                 "Version:",
                 self.source.purl.version,
                 "(matches registry)".green()
             ),
 
-            None => println!("  {:<12} {}", "Version:", self.source.purl.version),
+            None => println!(
+                "  {:<label_width$} {}",
+                "Version:", self.source.purl.version
+            ),
         };
 
-        println!("  {:<12} {}", "Source:", self.source.purl.kind);
-        println!("  {:<12} {}", "Licenses:", self.licenses.join(", "));
-        println!("  {:<12} {}", "Languages:", self.languages.join(", "));
-        println!("  {:<12} {}", "Categories:", self.categories.join(", "));
+        println!("  {:<label_width$} {}", "Source:", self.source.purl.kind);
+
+        println!(
+            "  {:<label_width$} {}",
+            "Licenses:",
+            self.licenses.join(", ")
+        );
+
+        println!(
+            "  {:<label_width$} {}",
+            "Languages:",
+            self.languages.join(", ")
+        );
+
+        println!(
+            "  {:<label_width$} {}",
+            "Categories:",
+            self.categories.join(", ")
+        );
 
         if let Some(dep) = &self.deprecation {
             println!();
@@ -62,6 +101,7 @@ impl Entry {
                 dep.message
             );
         }
+
         println!();
     }
 }
