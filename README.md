@@ -1,7 +1,7 @@
 # lspctl
 
-A standalone, cross-platform package manager for LSP servers, DAP adapters,
-linters, and formatters. Installs from the [Mason](https://github.com/mason-org/mason-registry)
+A standalone, cross-platform package manager for LSP servers, DAP servers,
+linters, and formatters. It installs from the [Mason](https://github.com/mason-org/mason-registry)
 registry without depending on Neovim or any specific editor.
 
 Version: **Beta 1.0**.
@@ -10,20 +10,20 @@ Version: **Beta 1.0**.
 
 A long time ago I primarily used Neovim for coding, and I used Mason for installing the tools I needed.
 Now, I use [Helix](https://helix-editor.com/), and now I am unable to use Mason again for installing those tools.
-From this friction, `lspctl` was born, with the aim to provide a single and standardized way for installing
-LSP servers, DAP adapters, linters and formatters for _any editor_, by exposing a single binary for each
+From this pain, `lspctl` was born, with the goal of providing a single and standardized way for installing
+LSP servers, DAP servers, linters and formatters for _any editor_, by exposing a single binary for each
 installed tool to be used by your editor.
 
 ## Why this name?
 
 `lspctl` was chosen to mirror the name of [systemd](https://systemd.io/)'s command `systemctl`,
-which controls the running services, but now for LSPs and more.
+which controls the running services, but now for LSP servers and more.
 
 ## Status
 
 `lspctl` is under active development, with core operations such as _install_, _remove_, _list_ and _search_
-working reliably, by having been tested across several packages from the registry. Most of the packages are
-already supported; see the table below for the current state of the implementation:
+working reliably, with them having been tested across several packages from the registry, across many different situations.
+Most of the packages are already supported; see the table below for the current state of the implementation:
 
 ### Current state
 
@@ -113,8 +113,8 @@ cargo build --release
 
 ## Supported platforms
 
-Linux, macOS and Windows. It does platform-specific behavior for each one of them, so that the installed tool runs flawlessly.
-All of them should be supported, though all the testing so far has been done on Linux.
+Linux (or any Unix-like OS), macOS and Windows. It does platform-specific behavior for each one of them,
+so that the installed tool runs flawlessly. All of them should be supported, though all the testing so far has been done on Linux.
 
 ## Contributing
 
