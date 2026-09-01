@@ -118,6 +118,7 @@ pub struct Platform {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Asset {
     pub targets: Vec<Platform>,
+    #[serde(rename = "file", with = "one_or_many")]
     pub files: Vec<String>,
     pub bin: Option<OneOrMap>,
     #[serde(flatten)]
@@ -127,7 +128,7 @@ pub struct Asset {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Downloads {
     Simple { file: String },
-    Detailed(Vec<Download>),
+    Detailed(Vec<Download>), // TODO: if necessary, write 'with = "one_or_many"' here
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -146,4 +147,37 @@ pub struct Build {
     pub staged: Option<bool>,
     #[serde(flatten)]
     pub extra: HashMap<String, String>, // erlang_ls / els_dap
+}
+
+mod one_or_many {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S, T>(items: &[T], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+        T: Serialize,
+    {
+        match items {
+            [one] => one.serialize(serializer),
+            many => many.serialize(serializer),
+        }
+    }
+
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Repr<T> {
+        One(T),
+        Many(Vec<T>),
+    }
+
+    pub fn deserialize<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+    where
+        D: Deserializer<'de>,
+        T: Deserialize<'de>,
+    {
+        Ok(match Repr::<T>::deserialize(deserializer)? {
+            Repr::One(t) => vec![t],
+            Repr::Many(v) => v,
+        })
+    }
 }
