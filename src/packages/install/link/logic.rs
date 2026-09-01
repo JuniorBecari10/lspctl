@@ -8,7 +8,7 @@ use std::{
 use crate::{
     packages::install::link::manager,
     paths,
-    registry::model::{Asset, Build, PackageManager, ResolvedDownloads, ResolvedEntry},
+    registry::model::{Build, PackageManager, ResolvedDownloads, ResolvedEntry},
 };
 
 pub fn link_manager(

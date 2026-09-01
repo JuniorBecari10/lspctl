@@ -86,7 +86,7 @@ fn install_manager(
     );
 
     for command in commands {
-        util::run_command(command, tmp_pkg_path);
+        util::run_command(command, tmp_pkg_path)?;
     }
 
     Ok(())
