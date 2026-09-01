@@ -51,6 +51,8 @@ fn make_links(
     pkg_path: &Path,
     tmp_pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
+    note!("Linking binaries..");
+
     match &entry.source.variant {
         ResolvedVariant::PackageManager {
             manager,
