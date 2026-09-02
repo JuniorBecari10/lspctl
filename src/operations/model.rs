@@ -26,6 +26,7 @@ pub struct RemoveArgs {
     pub yes: bool,
 }
 
+// TODO: list bins for each (installed) package
 #[derive(Args, Debug)]
 pub struct ListArgs {
     /// List installed packages instead
