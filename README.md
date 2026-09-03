@@ -17,7 +17,8 @@ installed tool to be used by your editor.
 ## Why this name?
 
 `lspctl` was chosen to mirror the name of [systemd](https://systemd.io/)'s command `systemctl`,
-which controls the running services, but now for LSP servers and more.
+which controls the running services, but it's for controlling the installation of
+LSP servers, DAP servers, linters, and formatters.
 
 ## Status
 
@@ -41,7 +42,8 @@ Most of the packages are already supported; see the table below for the current 
 - [x] Search
 - [x] Info
 - [x] Delete
-- [ ] Update
+- [ ] Registry manipulation
+- [ ] Synchronize packages to registry
 
 #### Install Targets
 
