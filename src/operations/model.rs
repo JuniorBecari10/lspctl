@@ -26,7 +26,7 @@ pub struct RemoveArgs {
     pub yes: bool,
 }
 
-// TODO: list bins for each (installed) package
+// TODO: add flags to only show some properties, like bins, versions..
 #[derive(Args, Debug)]
 pub struct ListArgs {
     /// List installed packages instead
@@ -38,6 +38,7 @@ pub struct ListArgs {
     pub verbose: bool,
 }
 
+// TODO: search by description, license, bins.. or any combination of them
 #[derive(Args, Debug)]
 pub struct SearchArgs {
     /// The regex pattern to search

@@ -92,6 +92,17 @@ impl Entry {
             self.categories.join(", ")
         );
 
+        if let Some(bins) = &self.bin {
+            println!(
+                "  {:<label_width$} {}",
+                "Bins:",
+                bins.keys()
+                    .map(String::as_str)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+        }
+
         if let Some(dep) = &self.deprecation {
             println!();
             println!(
