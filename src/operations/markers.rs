@@ -27,7 +27,7 @@ impl Selection for model::RemoveArgs {
     }
 }
 
-impl Selection for model::UpdateRegistryArgs {
+impl Selection for model::SetVersionRegistryArgs {
     fn pkgs(&self) -> &[String] {
         &self.pkgs
     }

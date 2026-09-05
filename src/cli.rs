@@ -67,7 +67,8 @@ pub fn cli() -> OperationResult {
         },
 
         Command::Registry(subcommand) => match subcommand {
-            RegistrySubcommand::Update(args) => operations::update_registry(args),
+            RegistrySubcommand::SetVersion(args) => operations::version_registry(args),
+            RegistrySubcommand::Sync(args) => todo!(),
         },
     }
 }

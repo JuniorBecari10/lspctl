@@ -4,7 +4,7 @@ use crate::{
     consts, error,
     operations::{
         markers::Selection,
-        model::{DeleteFlags, UpdateRegistryArgs},
+        model::{DeleteFlags, SetVersionRegistryArgs},
         util::{Action, OperationResult, PackageSelection},
     },
     paths,
@@ -97,7 +97,7 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
     )
 }
 
-pub fn update_registry(args: UpdateRegistryArgs) -> OperationResult {
+pub fn version_registry(args: SetVersionRegistryArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
     let (_, missing) = util::filter_registry(registry, &args.pkgs);
 

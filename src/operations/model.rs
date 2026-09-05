@@ -1,5 +1,6 @@
 use clap::{Args, Subcommand};
 
+// TODO: add '--all' here?
 #[derive(Args, Debug)]
 pub struct InstallArgs {
     /// List of packages to install
@@ -88,13 +89,43 @@ pub struct DeleteFlags {
 
 #[derive(Subcommand, Debug)]
 pub enum RegistrySubcommand {
-    /// Update the registry with optional package syncing
-    #[command(visible_alias = "u")]
-    Update(UpdateRegistryArgs),
+    /// Set the registry version with optional package syncing
+    #[command(visible_alias = "sv")]
+    SetVersion(SetVersionRegistryArgs),
+
+    /// Sync packages to registry
+    #[command(visible_alias = "s")]
+    Sync(SyncRegistryArgs),
 }
 
 #[derive(Args, Debug)]
-pub struct UpdateRegistryArgs {
+pub struct SetVersionRegistryArgs {
+    /// Version to set the registry to
+    #[arg(short, long)]
+    pub version: String,
+
+    #[command(flatten)]
+    pub selection: PackageSelection,
+
+    /// Perform action without confirmation prompts
+    #[arg(short, long)]
+    pub yes: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct SyncRegistryArgs {
+    #[command(flatten)]
+    pub selection: PackageSelection,
+
+    /// Sync without confirmation prompts
+    #[arg(short, long)]
+    pub yes: bool,
+}
+
+// ---
+
+#[derive(Args, Debug)]
+pub struct PackageSelection {
     /// List of packages to sync with the new registry
     #[arg(conflicts_with = "all")]
     pub pkgs: Vec<String>,
@@ -102,12 +133,4 @@ pub struct UpdateRegistryArgs {
     /// Sync all installed packages
     #[arg(short, long)]
     pub all: bool,
-
-    /// Sync without confirmation prompts
-    #[arg(short, long)]
-    pub yes: bool,
-
-    /// Version specification of the new registry
-    #[arg(short, long)]
-    pub version: String,
 }
