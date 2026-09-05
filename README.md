@@ -36,12 +36,12 @@ Most of the packages are already supported; see the table below for the current 
 
 #### CLI
 
-- [x] Install
-- [x] Remove
-- [x] List
-- [x] Search
-- [x] Info
-- [x] Delete
+- [x] Install packages
+- [x] Remove packages
+- [x] List packages
+- [x] Search packages
+- [x] Info about packages
+- [x] Delete data
 - [ ] Registry manipulation
 - [ ] Synchronize packages to registry
 

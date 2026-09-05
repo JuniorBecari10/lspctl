@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::{disk, paths, registry};
+use crate::{disk, error, paths, registry};
 
 pub fn setup_root() -> anyhow::Result<()> {
     ensure_root_items()?;
@@ -14,9 +14,9 @@ pub fn setup_root() -> anyhow::Result<()> {
 }
 
 // TODO: delete all folders in packages that isn't in registry.
-// basically the recover command. maybe make this a manual operation.
+// basically the recover/clean command. make this a manual operation.
 fn ensure_root_items() -> anyhow::Result<()> {
-    // clean tmp dir. it's created below
+    // clean tmp dir, which also deletes the directory. but it's created again below
     clean_tmp();
 
     fs::create_dir_all(paths::bin_dir())?;
@@ -27,9 +27,20 @@ fn ensure_root_items() -> anyhow::Result<()> {
     Ok(())
 }
 
-// this ignores errors because if it doesn't exist, there's nothing to clean.
-// it may ignore other errors as well.
+// this only prints errors, and doesn't block the command's job
 fn clean_tmp() {
-    let _ = disk::make_writable_recursive(&paths::tmp_dir());
-    let _ = fs::remove_dir_all(paths::tmp_dir());
+    let dir = paths::tmp_dir();
+
+    if !dir.exists() {
+        return; // nothing to clean
+    }
+
+    if let Err(e) = disk::make_writable_recursive(&dir) {
+        error!("Failed to prepare tmp directory for cleanup: {e}");
+        return;
+    }
+
+    if let Err(e) = fs::remove_dir_all(&dir) {
+        error!("Failed to clean tmp directory: {e}");
+    }
 }
