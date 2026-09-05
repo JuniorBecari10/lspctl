@@ -5,6 +5,7 @@ use std::{
 };
 
 use anyhow::Context;
+use indicatif::{ProgressBar, ProgressStyle};
 use tempfile::NamedTempFile;
 use ureq::BodyReader;
 use zip::ZipArchive;
@@ -138,22 +139,31 @@ pub fn make_writable_recursive(dir: &Path) -> anyhow::Result<()> {
 }
 
 pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
-    let mut reader = perform_request(url)?;
-    io::copy(&mut reader, dest)?;
+    let (mut reader, total) = perform_request(url)?;
+    let pb = ProgressBar::new(total);
+
+    pb.set_style(
+        ProgressStyle::with_template("     [{bar:40.cyan/blue}] {bytes}/{total_bytes} {eta}")?
+            .progress_chars("=>-"),
+    );
+
+    io::copy(&mut pb.wrap_read(&mut reader), dest)?;
+    pb.finish_and_clear();
 
     Ok(())
 }
 
-pub fn perform_request(url: &str) -> anyhow::Result<BodyReader<'static>> {
+pub fn perform_request(url: &str) -> anyhow::Result<(BodyReader<'static>, u64)> {
     if !url.starts_with("https://") {
         anyhow::bail!("This only performs 'https' requests. URL: '{url}'.");
     }
 
-    Ok(ureq::get(url)
+    let response = ureq::get(url)
         .header("User-Agent", consts::APP_NAME)
-        .call()?
-        .into_body()
-        .into_reader())
+        .call()?;
+
+    let len = response.body().content_length().unwrap_or(0);
+    Ok((response.into_body().into_reader(), len))
 }
 
 pub fn extract_to_memory(zip: &File, entry_name: &str) -> anyhow::Result<Vec<u8>> {

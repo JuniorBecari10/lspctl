@@ -4,7 +4,7 @@ use crate::{
     consts, error,
     operations::{
         markers::Selection,
-        model::{DeleteFlags, SetVersionRegistryArgs},
+        model::{DeleteFlags, RegistrySetVersionArgs, RegistrySyncArgs},
         util::{Action, OperationResult, PackageSelection},
     },
     paths,
@@ -97,9 +97,9 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
     )
 }
 
-pub fn version_registry(args: SetVersionRegistryArgs) -> OperationResult {
+pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
-    let (_, missing) = util::filter_registry(registry, &args.pkgs);
+    let (_, missing) = util::filter_registry(registry, &args.selection.pkgs);
 
     if !missing.is_empty() {
         for m in missing {
@@ -109,6 +109,22 @@ pub fn version_registry(args: SetVersionRegistryArgs) -> OperationResult {
         return OperationResult::Failure;
     }
 
-    let selection = args.to_package_selection(); // not mandatory to specify packages
+    let selection = args.selection.to_package_selection(); // not mandatory to specify packages
+    todo!()
+}
+
+pub fn registry_sync(args: RegistrySyncArgs) -> OperationResult {
+    let (registry, _, state, _lock) = prelude::prelude();
+    let (_, missing) = util::filter_registry(registry, &args.selection.pkgs);
+
+    if !missing.is_empty() {
+        for m in missing {
+            error!("Package '{m}' doesn't exist.");
+        }
+
+        return OperationResult::Failure;
+    }
+
+    let selection = args.selection.to_package_selection(); // not mandatory to specify packages
     todo!()
 }

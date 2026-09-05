@@ -29,7 +29,7 @@ enum Command {
     Install(InstallArgs),
 
     /// Remove packages
-    #[command(visible_alias = "r")]
+    #[command(visible_alias = "r", visible_alias = "rm")]
     Remove(RemoveArgs),
 
     /// List all packages or installed ones
@@ -67,8 +67,8 @@ pub fn cli() -> OperationResult {
         },
 
         Command::Registry(subcommand) => match subcommand {
-            RegistrySubcommand::SetVersion(args) => operations::version_registry(args),
-            RegistrySubcommand::Sync(args) => todo!(),
+            RegistrySubcommand::SetVersion(args) => operations::registry_set_version(args),
+            RegistrySubcommand::Sync(args) => operations::registry_sync(args),
         },
     }
 }

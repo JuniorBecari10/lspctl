@@ -91,21 +91,21 @@ pub struct DeleteFlags {
 pub enum RegistrySubcommand {
     /// Set the registry version with optional package syncing
     #[command(visible_alias = "sv")]
-    SetVersion(SetVersionRegistryArgs),
+    SetVersion(RegistrySetVersionArgs),
 
     /// Sync packages to registry
     #[command(visible_alias = "s")]
-    Sync(SyncRegistryArgs),
+    Sync(RegistrySyncArgs),
 }
 
 #[derive(Args, Debug)]
-pub struct SetVersionRegistryArgs {
+pub struct RegistrySetVersionArgs {
     /// Version to set the registry to
     #[arg(short, long)]
     pub version: String,
 
     #[command(flatten)]
-    pub selection: PackageSelection,
+    pub selection: PackageSelectionArgs,
 
     /// Perform action without confirmation prompts
     #[arg(short, long)]
@@ -113,9 +113,9 @@ pub struct SetVersionRegistryArgs {
 }
 
 #[derive(Args, Debug)]
-pub struct SyncRegistryArgs {
+pub struct RegistrySyncArgs {
     #[command(flatten)]
-    pub selection: PackageSelection,
+    pub selection: PackageSelectionArgs,
 
     /// Sync without confirmation prompts
     #[arg(short, long)]
@@ -125,7 +125,7 @@ pub struct SyncRegistryArgs {
 // ---
 
 #[derive(Args, Debug)]
-pub struct PackageSelection {
+pub struct PackageSelectionArgs {
     /// List of packages to sync with the new registry
     #[arg(conflicts_with = "all")]
     pub pkgs: Vec<String>,

@@ -16,7 +16,10 @@ const MASON_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/r
 
 fn get_latest_release() -> anyhow::Result<()> {
     let mut raw_data = Vec::new();
-    disk::perform_request(MASON_URL)?.read_to_end(&mut raw_data)?;
+
+    disk::perform_request(MASON_URL)?
+        .0
+        .read_to_end(&mut raw_data)?;
 
     let data = parse_release(&raw_data)?;
     let asset = find_registry_asset(&data)?;
