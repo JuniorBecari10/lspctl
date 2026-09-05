@@ -328,6 +328,13 @@ fn print_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>) {
         .unwrap_or(0)
         .max(15);
 
+    let source_width = entries
+        .iter()
+        .map(|e| e.source.purl.kind.to_string().len())
+        .max()
+        .unwrap_or(0)
+        .max(6);
+
     println!(
         "{:<name_width$}  {:<version_width$}  {}",
         "Name".bold(),
@@ -337,7 +344,12 @@ fn print_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>) {
         version_width = version_width,
     );
 
-    println!("{}", "─".repeat(name_width + version_width + 10).dimmed());
+    println!(
+        "{}",
+        "─"
+            .repeat(name_width + version_width + source_width + 4)
+            .dimmed()
+    );
 
     for entry in entries {
         let name = if entry.deprecation.is_some() {
@@ -351,11 +363,12 @@ fn print_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>) {
             .unwrap_or_default();
 
         println!(
-            "{name}{}  {:<version_width$}  {:<8}{label}",
+            "{name}{}  {:<version_width$}  {:<source_width$}{label}",
             " ".repeat(name_width.saturating_sub(entry.name.len())),
             entry.source.purl.version.cyan(),
             entry.source.purl.kind.to_string().dimmed(),
             version_width = version_width,
+            source_width = source_width,
         );
     }
 }
