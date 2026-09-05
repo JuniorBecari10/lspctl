@@ -14,7 +14,7 @@ pub fn setup_root() -> anyhow::Result<()> {
 }
 
 // TODO: delete all folders in packages that isn't in registry.
-// basically the recover/clean command. make this a manual operation.
+// basically the recover/clean command. maybe make this a manual operation.
 fn ensure_root_items() -> anyhow::Result<()> {
     // clean tmp dir, which also deletes the directory. but it's created again below
     clean_tmp();
@@ -31,8 +31,14 @@ fn ensure_root_items() -> anyhow::Result<()> {
 fn clean_tmp() {
     let dir = paths::tmp_dir();
 
-    if !dir.exists() {
-        return; // nothing to clean
+    match dir.try_exists() {
+        Ok(true) => {}       // exists. let's clean it.
+        Ok(false) => return, // doesn't exist. nothing to clean.
+
+        Err(e) => {
+            error!("Failed to check existence of tmp: {e}");
+            return;
+        }
     }
 
     if let Err(e) = disk::make_writable_recursive(&dir) {

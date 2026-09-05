@@ -22,6 +22,7 @@ struct Cli {
     command: Command,
 }
 
+// TODO: add clean and recover commands
 #[derive(Subcommand)]
 enum Command {
     /// Install packages
