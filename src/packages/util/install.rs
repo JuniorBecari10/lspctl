@@ -6,9 +6,9 @@ use std::{
     process::{Command, Stdio},
 };
 
-use maplit::hashmap;
-
 use anyhow::Context;
+use colored::Colorize;
+use maplit::hashmap;
 
 use crate::{note, paths, registry::model::PackageManager};
 
@@ -20,7 +20,7 @@ pub struct InstallCommand {
 
 impl Display for InstallCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}", self.binary, self.args.join(" "))
+        write!(f, "{} {}", self.binary.cyan(), self.args.join(" "))
     }
 }
 
@@ -65,7 +65,14 @@ pub fn get_install_commands(
 
 pub fn run_command(command: InstallCommand, dir: &Path) -> anyhow::Result<()> {
     let command_str = command.to_string();
-    note!("Running: '{command_str}'..");
+
+    let quote = "'".dimmed();
+    note!(
+        "{} {}{command_str}{}",
+        "Running".green().bold(),
+        quote,
+        quote
+    );
 
     let mut cmd = Command::new(command.binary.clone());
     cmd.args(command.args)
@@ -88,7 +95,6 @@ pub fn run_command(command: InstallCommand, dir: &Path) -> anyhow::Result<()> {
         );
     }
 
-    note!("Command executed successfully.");
     Ok(())
 }
 
