@@ -117,6 +117,7 @@ pub struct Platform {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Asset {
+    #[serde(rename = "target")]
     pub targets: Vec<Platform>,
     #[serde(rename = "file", with = "one_or_many")]
     pub files: Vec<String>,
