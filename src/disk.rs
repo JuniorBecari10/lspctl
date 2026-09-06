@@ -143,8 +143,10 @@ pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
     let pb = ProgressBar::new(total);
 
     pb.set_style(
-        ProgressStyle::with_template("     [{bar:40.cyan/blue}] {bytes}/{total_bytes} {eta}")?
-            .progress_chars("=>-"),
+        ProgressStyle::with_template(
+            "     Downloading [{bar:40.cyan/blue}] {bytes}/{total_bytes} {eta}",
+        )?
+        .progress_chars("=>-"),
     );
 
     io::copy(&mut pb.wrap_read(&mut reader), dest)?;

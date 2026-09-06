@@ -4,6 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use indicatif::{ProgressBar, ProgressBarIter, ProgressStyle};
+
 enum ArchiveKind {
     TarGz,
     TarXz,
@@ -30,8 +32,7 @@ pub fn place_or_extract(
     match detect_archive_kind(source_name) {
         ArchiveKind::TarGz => {
             let target_dir = resolve_target_dir(dest, tmp_pkg_path)?;
-            let file = File::open(downloaded)?;
-            let gz = flate2::read::GzDecoder::new(file);
+            let gz = flate2::read::GzDecoder::new(wrapped_file(downloaded)?);
 
             tar::Archive::new(gz).unpack(target_dir)?;
             Ok(())
@@ -39,8 +40,7 @@ pub fn place_or_extract(
 
         ArchiveKind::TarXz => {
             let target_dir = resolve_target_dir(dest, tmp_pkg_path)?;
-            let file = File::open(downloaded)?;
-            let xz = xz2::read::XzDecoder::new(file);
+            let xz = xz2::read::XzDecoder::new(wrapped_file(downloaded)?);
 
             tar::Archive::new(xz).unpack(target_dir)?;
             Ok(())
@@ -48,8 +48,7 @@ pub fn place_or_extract(
 
         ArchiveKind::TarZstd => {
             let target_dir = resolve_target_dir(dest, tmp_pkg_path)?;
-            let file = File::open(downloaded)?;
-            let zstd = zstd::stream::read::Decoder::new(file)?;
+            let zstd = zstd::stream::read::Decoder::new(wrapped_file(downloaded)?)?;
 
             tar::Archive::new(zstd).unpack(target_dir)?;
             Ok(())
@@ -57,8 +56,7 @@ pub fn place_or_extract(
 
         ArchiveKind::TarBz2 => {
             let target_dir = resolve_target_dir(dest, tmp_pkg_path)?;
-            let file = File::open(downloaded)?;
-            let bz2 = bzip2::read::BzDecoder::new(file);
+            let bz2 = bzip2::read::BzDecoder::new(wrapped_file(downloaded)?);
 
             tar::Archive::new(bz2).unpack(target_dir)?;
             Ok(())
@@ -66,9 +64,8 @@ pub fn place_or_extract(
 
         ArchiveKind::Zip => {
             let target_dir = resolve_target_dir(dest, tmp_pkg_path)?;
-            let file = File::open(downloaded)?;
+            zip::ZipArchive::new(wrapped_file(downloaded)?)?.extract(target_dir)?;
 
-            zip::ZipArchive::new(file)?.extract(target_dir)?;
             Ok(())
         }
 
@@ -128,8 +125,7 @@ fn extract_gzip(
         }
     };
 
-    let input = File::open(downloaded)?;
-    let mut decoder = flate2::read::GzDecoder::new(input);
+    let mut decoder = flate2::read::GzDecoder::new(wrapped_file(downloaded)?);
 
     let mut output = File::create(&target)?;
     io::copy(&mut decoder, &mut output)?;
@@ -202,4 +198,21 @@ fn make_executable(path: &Path) -> anyhow::Result<()> {
 #[cfg(windows)]
 fn make_executable(_path: &Path) -> anyhow::Result<()> {
     Ok(())
+}
+
+// ---
+
+fn wrapped_file(path: &Path) -> anyhow::Result<ProgressBarIter<File>> {
+    let file = File::open(path)?;
+    let len = file.metadata()?.len();
+
+    let pb = ProgressBar::new(len);
+    pb.set_style(
+        ProgressStyle::with_template(
+            "     Extracting [{bar:40.cyan/blue}] {bytes}/{total_bytes} {eta}",
+        )?
+        .progress_chars("=>-"),
+    );
+
+    Ok(pb.wrap_read(file))
 }

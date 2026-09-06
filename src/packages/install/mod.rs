@@ -1,5 +1,125 @@
+#![allow(unused)]
+
 mod link;
-pub mod logic;
 mod util;
 
-pub use logic::*;
+use std::{
+    collections::HashMap,
+    fs,
+    path::{Path, PathBuf},
+};
+
+use crate::{
+    disk, note, packages, paths,
+    registry::model::{
+        Asset, Build, PackageManager, ResolvedDownloads, ResolvedEntry, ResolvedVariant,
+    },
+    state::State,
+};
+
+// TODO: revert all steps done here if something goes wrong, including removing symlinks
+// and the move into the definitive folder
+pub fn install(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
+    let tmp_pkg_path = paths::tmp_package_dir(&entry.name);
+    fs::create_dir_all(&tmp_pkg_path)?;
+
+    // install in tmp and move it to the definitive folder
+    install_by_variant(entry, &tmp_pkg_path)?;
+    packages::util::move_package(&entry.name)?;
+
+    // make links in bin and add the entry to state
+    let bins = make_links(entry, &paths::package_dir(&entry.name), &tmp_pkg_path)?;
+
+    state.add_entry(entry, bins);
+    Ok(())
+}
+
+fn install_by_variant(entry: &ResolvedEntry, tmp_pkg_path: &Path) -> anyhow::Result<()> {
+    match &entry.source.variant {
+        ResolvedVariant::PackageManager {
+            manager,
+            extra_packages,
+        } => install_manager(entry, *manager, extra_packages, tmp_pkg_path),
+
+        ResolvedVariant::Asset(asset) => install_asset(entry, asset, tmp_pkg_path),
+        ResolvedVariant::Download(downloads) => install_download(entry, downloads, tmp_pkg_path),
+        ResolvedVariant::Build(build) => install_build(entry, build, tmp_pkg_path),
+    }
+}
+
+fn make_links(
+    entry: &ResolvedEntry,
+    pkg_path: &Path,
+    tmp_pkg_path: &Path,
+) -> anyhow::Result<HashMap<String, PathBuf>> {
+    note!("Linking binaries..");
+
+    match &entry.source.variant {
+        ResolvedVariant::PackageManager {
+            manager,
+            extra_packages: _,
+        } => link::link_manager(entry, *manager, pkg_path, tmp_pkg_path),
+
+        ResolvedVariant::Asset(_) => link::link_asset(entry, pkg_path),
+        ResolvedVariant::Download(downloads) => link::link_download(entry, downloads, pkg_path),
+        ResolvedVariant::Build(build) => link::link_build(entry, build, pkg_path),
+    }
+}
+
+// ---
+
+// the job of these functions is to perform the work to
+// make the package sit in the tmp folder in the correct folder hierarchy: name / version / data.
+// the rest (make links, move to definitive folder and update state) is handled by the functions above.
+
+fn install_manager(
+    entry: &ResolvedEntry,
+    manager: PackageManager,
+    extra_packages: &[String],
+    tmp_pkg_path: &Path,
+) -> anyhow::Result<()> {
+    let commands = packages::util::get_install_commands(
+        manager,
+        &entry.source.purl.qualified_package_name(),
+        &entry.source.purl.version,
+        extra_packages,
+        tmp_pkg_path,
+    );
+
+    for command in commands {
+        packages::util::run_command(command, tmp_pkg_path)?;
+    }
+
+    Ok(())
+}
+
+fn install_asset(entry: &ResolvedEntry, asset: &Asset, tmp_pkg_path: &Path) -> anyhow::Result<()> {
+    fs::create_dir_all(tmp_pkg_path)?;
+
+    for file_spec in &asset.files {
+        let (source, dest) = util::parse_file_spec(file_spec);
+
+        note!("Downloading '{source}'..");
+        let mut scratch = disk::new_temp()?;
+        disk::download_file(
+            &link::asset::github_url(&entry.source, source),
+            scratch.as_file_mut(),
+        )?;
+
+        util::place_or_extract(scratch.path(), source, dest, tmp_pkg_path)?;
+    }
+
+    Ok(())
+}
+
+fn install_download(
+    entry: &ResolvedEntry,
+    downloads: &ResolvedDownloads,
+    tmp_pkg_path: &Path,
+) -> anyhow::Result<()> {
+    anyhow::bail!("todo")
+}
+
+fn install_build(entry: &ResolvedEntry, build: &Build, tmp_pkg_path: &Path) -> anyhow::Result<()> {
+    anyhow::bail!("todo")
+}
