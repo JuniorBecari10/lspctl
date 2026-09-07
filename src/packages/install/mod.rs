@@ -9,8 +9,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use colored::Colorize;
+
 use crate::{
-    disk, note, packages, paths,
+    disk, log, note, packages, paths,
     registry::model::{
         Asset, Build, PackageManager, ResolvedDownloads, ResolvedEntry, ResolvedVariant,
     },
@@ -52,8 +54,6 @@ fn make_links(
     pkg_path: &Path,
     tmp_pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
-    note!("Linking binaries..");
-
     match &entry.source.variant {
         ResolvedVariant::PackageManager {
             manager,
@@ -99,7 +99,7 @@ fn install_asset(entry: &ResolvedEntry, asset: &Asset, tmp_pkg_path: &Path) -> a
     for file_spec in &asset.files {
         let (source, dest) = util::parse_file_spec(file_spec);
 
-        note!("File: '{source}'");
+        note!("File: {}", log::format_quote(source));
         let mut scratch = disk::new_temp()?;
         disk::download_file(
             &link::asset::github_url(&entry.source, source),

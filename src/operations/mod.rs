@@ -99,6 +99,7 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
     )
 }
 
+// TODO: when these functions are ready, remove the code duplication
 pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
     let (_, missing) = util::filter_registry(registry, &args.selection.pkgs);

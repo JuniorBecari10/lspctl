@@ -11,7 +11,7 @@ use regex::Regex;
 
 use crate::{
     end, error, header,
-    log::Fatal,
+    log::{self, Fatal},
     note,
     operations::prelude,
     registry::model::{Entry, Platform, Registry},
@@ -184,7 +184,11 @@ pub fn run_action(
         }
 
         let name = pkg.name.clone();
-        step!("{} package '{name}'..", action.gerund());
+        step!(
+            "{} package {}..",
+            action.gerund(),
+            log::format_quote(&pkg.name)
+        );
 
         match op(pkg, &platform, &mut state) {
             Ok(()) => {

@@ -10,7 +10,7 @@ use anyhow::Context;
 use colored::Colorize;
 use maplit::hashmap;
 
-use crate::{note, paths, registry::model::PackageManager};
+use crate::{log, note, paths, registry::model::PackageManager};
 
 pub struct InstallCommand {
     binary: String,
@@ -20,7 +20,7 @@ pub struct InstallCommand {
 
 impl Display for InstallCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}", self.binary.cyan(), self.args.join(" "))
+        write!(f, "{} {}", self.binary.green(), self.args.join(" "))
     }
 }
 
@@ -66,12 +66,10 @@ pub fn get_install_commands(
 pub fn run_command(command: InstallCommand, dir: &Path) -> anyhow::Result<()> {
     let command_str = command.to_string();
 
-    let quote = "'".dimmed();
     note!(
-        "{} {}{command_str}{}",
-        "Running".green().bold(),
-        quote,
-        quote
+        "{} {}",
+        log::format_verb("Running"),
+        log::format_quote(&command_str)
     );
 
     let mut cmd = Command::new(command.binary.clone());

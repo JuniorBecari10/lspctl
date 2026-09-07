@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use colored::{ColoredString, Colorize};
+
 /// `--> message`: major step marker. writes a '\n' before it.
 #[macro_export]
 macro_rules! step {
@@ -99,4 +101,15 @@ impl<T> LogPretty<T> for Option<T> {
     {
         self.map_or_else(f, |t| t.to_string())
     }
+}
+
+// --- Utility ---
+
+pub fn format_verb(s: &str) -> ColoredString {
+    s.cyan().bold()
+}
+
+pub fn format_quote(s: &str) -> ColoredString {
+    let quote = "'".dimmed();
+    format!("{quote}{}{quote}", s.italic()).into()
 }

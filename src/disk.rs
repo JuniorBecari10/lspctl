@@ -5,12 +5,13 @@ use std::{
 };
 
 use anyhow::Context;
+use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 use tempfile::NamedTempFile;
 use ureq::BodyReader;
 use zip::ZipArchive;
 
-use crate::{consts, paths};
+use crate::{consts, log, paths};
 
 /// creates a new temporary file in lspctl/tmp.
 /// requires tmp to exist. error if not.
@@ -143,9 +144,10 @@ pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
     let pb = ProgressBar::new(total);
 
     pb.set_style(
-        ProgressStyle::with_template(
-            "     Downloading [{bar:40.cyan/blue}] {bytes}/{total_bytes} {eta}",
-        )?
+        ProgressStyle::with_template(&format!(
+            "     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} {{eta}}",
+            log::format_verb("Downloading")
+        ))?
         .progress_chars("=>-"),
     );
 

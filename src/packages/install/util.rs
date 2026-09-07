@@ -4,6 +4,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::log;
+use colored::Colorize;
 use indicatif::{ProgressBar, ProgressBarIter, ProgressStyle};
 
 enum ArchiveKind {
@@ -208,9 +210,10 @@ fn wrapped_file(path: &Path) -> anyhow::Result<ProgressBarIter<File>> {
 
     let pb = ProgressBar::new(len);
     pb.set_style(
-        ProgressStyle::with_template(
-            "     Extracting [{bar:40.cyan/blue}] {bytes}/{total_bytes} {eta}",
-        )?
+        ProgressStyle::with_template(&format!(
+            "     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} {{eta}}",
+            log::format_verb("Extracting")
+        ))?
         .progress_chars("=>-"),
     );
 
