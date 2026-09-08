@@ -61,6 +61,7 @@ pub fn link_files(from: &Path, to: &Path) -> anyhow::Result<()> {
         })?;
     }
 
+    // 'write_shim' works for both Unix and Windows.
     #[cfg(unix)]
     std::os::unix::fs::symlink(&real_target, to).with_context(|| {
         format!(
@@ -71,11 +72,11 @@ pub fn link_files(from: &Path, to: &Path) -> anyhow::Result<()> {
     })?;
 
     #[cfg(windows)]
-    fs::copy(&real_target, to).with_context(|| {
+    packages::link::asset::write_shim(to, "", &[], &real_target, &[]).with_context(|| {
         format!(
-            "failed to copy {} -> {}",
-            real_target.display().quote(),
-            link_path.display().quote()
+            "failed to write shim {} -> {}",
+            to.display().quote(),
+            real_target.display().quote()
         )
     })?;
 
@@ -148,7 +149,7 @@ pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
 
     pb.set_style(
         ProgressStyle::with_template(&format!(
-            "\n     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} {{eta}}",
+            "     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} {{eta}}",
             "Downloading".verb()
         ))?
         .progress_chars("=>-"),

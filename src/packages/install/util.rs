@@ -211,7 +211,7 @@ fn wrapped_file(path: &Path) -> anyhow::Result<ProgressBarIter<File>> {
     let pb = ProgressBar::new(len);
     pb.set_style(
         ProgressStyle::with_template(&format!(
-            "\n     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} {{eta}}",
+            "     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} {{eta}}",
             "Extracting".verb()
         ))?
         .progress_chars("=>-"),

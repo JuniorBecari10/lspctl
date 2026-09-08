@@ -1,4 +1,4 @@
-mod install;
+pub mod install;
 mod remove;
 mod util;
 

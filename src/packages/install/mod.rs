@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-mod link;
+pub mod link;
 mod util;
 
 use std::{
