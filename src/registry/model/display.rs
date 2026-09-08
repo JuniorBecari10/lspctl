@@ -45,7 +45,7 @@ impl Entry {
 
         println!(
             "  {:<label_width$} {}",
-            "Homepage:",
+            "Homepage:".dimmed(),
             self.homepage.blue().underline()
         );
 
@@ -53,7 +53,8 @@ impl Entry {
             Some(ver) if needs_two_versions => {
                 println!(
                     "  {:<label_width$} {}",
-                    "Registry Version:", self.source.purl.version
+                    "Registry Version:".dimmed(),
+                    self.source.purl.version
                 );
 
                 println!("  {:<label_width$} {}", "Installed Version:", ver);
@@ -61,41 +62,46 @@ impl Entry {
 
             Some(_) => println!(
                 "  {:<label_width$} {}  {}",
-                "Version:",
+                "Version:".dimmed(),
                 self.source.purl.version,
                 "(matches registry)".green()
             ),
 
             None => println!(
                 "  {:<label_width$} {}",
-                "Version:", self.source.purl.version
+                "Version:".dimmed(),
+                self.source.purl.version
             ),
         };
 
-        println!("  {:<label_width$} {}", "Source:", self.source.purl.kind);
+        println!(
+            "  {:<label_width$} {}",
+            "Source:".dimmed(),
+            self.source.purl.kind
+        );
 
         println!(
             "  {:<label_width$} {}",
-            "Licenses:",
+            "Licenses:".dimmed(),
             self.licenses.join(", ")
         );
 
         println!(
             "  {:<label_width$} {}",
-            "Languages:",
+            "Languages:".dimmed(),
             self.languages.join(", ")
         );
 
         println!(
             "  {:<label_width$} {}",
-            "Categories:",
+            "Categories:".dimmed(),
             self.categories.join(", ")
         );
 
         if let Some(bins) = &self.bin {
             println!(
                 "  {:<label_width$} {}",
-                "Bins:",
+                "Bins:".dimmed(),
                 bins.keys()
                     .map(String::as_str)
                     .collect::<Vec<_>>()
@@ -106,8 +112,9 @@ impl Entry {
         if let Some(dep) = &self.deprecation {
             println!();
             println!(
-                "  {} Deprecated since {}: {}",
+                "  {} {} {}: {}",
                 "[!]".yellow().bold(),
+                "Deprecated since".yellow(),
                 dep.since,
                 dep.message
             );

@@ -20,7 +20,7 @@ pub struct InstallCommand {
 
 impl Display for InstallCommand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}", self.binary.green(), self.args.join(" "))
+        write!(f, "{} {}", self.binary, self.args.join(" "))
     }
 }
 
