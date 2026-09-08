@@ -34,6 +34,7 @@ fn get_wrapper(wrapper: &str) -> Option<(&str, &[&str])> {
         "python" => Some(("python3", &[])),
         "java-jar" => Some(("java", &["-jar"])),
         "dotnet" => Some((wrapper, &[])),
+        "exec" => Some(("", &[])),
         _ => None,
     }
 }

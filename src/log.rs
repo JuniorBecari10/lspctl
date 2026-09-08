@@ -110,6 +110,5 @@ pub fn format_verb(s: &str) -> ColoredString {
 }
 
 pub fn format_quote(s: &str) -> ColoredString {
-    let quote = "'".dimmed();
-    format!("{quote}{}{quote}", s.italic()).into()
+    format!("'{}'", s.italic()).dimmed()
 }
