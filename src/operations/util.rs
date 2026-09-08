@@ -158,13 +158,9 @@ pub fn run_action(
         return OperationResult::Success;
     }
 
-    let (entries, missing) = filter_registry(registry, &pkgs);
-    if !missing.is_empty() {
-        for m in missing {
-            error!("Package {} doesn't exist.", m.quote());
-        }
+    let Ok(entries) = filter_print(registry, &pkgs) else {
         return OperationResult::Failure;
-    }
+    };
 
     if !accepted_action(&entries, yes, &action, &state) {
         return OperationResult::Success;
@@ -215,7 +211,7 @@ pub fn run_action(
     }
 }
 
-pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str>) {
+fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str>) {
     let wanted: HashSet<&str> = pkgs.iter().map(String::as_str).collect();
 
     let found: Vec<Entry> = registry
@@ -233,6 +229,20 @@ pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<
         .collect();
 
     (found, missing)
+}
+
+pub fn filter_print(registry: Registry, pkgs: &[String]) -> Result<Vec<Entry>, ()> {
+    let (entries, missing) = filter_registry(registry, pkgs);
+
+    if missing.is_empty() {
+        Ok(entries)
+    } else {
+        for m in missing {
+            end_error!("Package {} doesn't exist.", m.quote());
+        }
+
+        Err(())
+    }
 }
 
 const fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a str {
@@ -267,14 +277,10 @@ pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) ->
 
     let entries: Vec<Entry> = if installed {
         let keys = state.installed.keys().cloned().collect::<Vec<_>>();
-        let (found, missing) = filter_registry(registry, keys.as_slice());
 
-        if !missing.is_empty() {
-            for m in missing {
-                error!("Package {} doesn't exist.", m.quote());
-            }
+        let Ok(found) = filter_print(registry, keys.as_slice()) else {
             return OperationResult::Failure;
-        }
+        };
 
         found
     } else {

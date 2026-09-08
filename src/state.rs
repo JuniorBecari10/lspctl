@@ -3,7 +3,9 @@ use std::{collections::HashMap, fs::File, io::Read, path::PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    disk, global, paths,
+    disk, global,
+    log::Format,
+    paths,
     registry::model::{InstallKind, ResolvedEntry},
 };
 
@@ -43,7 +45,9 @@ impl State {
         match state.schema_version {
             SCHEMA_VERSION => Ok(state),
             older => anyhow::bail!(
-                "State file has an schema version 'v{older}', which is older than the current 'v{SCHEMA_VERSION}' version."
+                "State file has an schema version {}, which is older than the current {} version.",
+                format!("v{older}").quote(),
+                format!("v{SCHEMA_VERSION}").quote()
             ),
         }
     }

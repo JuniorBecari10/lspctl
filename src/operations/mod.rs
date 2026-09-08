@@ -3,7 +3,7 @@
 use std::fs;
 
 use crate::{
-    consts, error,
+    consts, end_error, error,
     log::Format,
     operations::{
         markers::Selection,
@@ -33,7 +33,12 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
 
 pub fn remove(args: model::RemoveArgs) -> OperationResult {
     let Some(selection) = args.to_package_selection() else {
-        error!("Specify '-a' / '--all' or one or more package names to remove.");
+        end_error!(
+            "Specify {} / {} or one or more package names to remove.",
+            "-a".quote(),
+            "--all".quote()
+        );
+
         return OperationResult::Failure;
     };
 
@@ -59,15 +64,10 @@ pub fn search(args: model::SearchArgs) -> OperationResult {
 
 pub fn info(args: model::InfoArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
-    let (entries, missing) = util::filter_registry(registry, &args.pkgs);
 
-    if !missing.is_empty() {
-        for m in missing {
-            error!("Package {} doesn't exist.", m.quote());
-        }
-
+    let Ok(entries) = util::filter_print(registry, &args.pkgs) else {
         return OperationResult::Failure;
-    }
+    };
 
     let installed_version = |e: &Entry| state.installed.get(&e.name).map(|pkg| pkg.version.clone());
 
@@ -103,15 +103,11 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
 // TODO: when these functions are ready, remove the code duplication
 pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
-    let (_, missing) = util::filter_registry(registry, &args.selection.pkgs);
 
-    if !missing.is_empty() {
-        for m in missing {
-            error!("Package {} doesn't exist.", m.quote());
-        }
-
+    // just to filter out packages that don't exist
+    let Ok(_) = util::filter_print(registry, &args.selection.pkgs) else {
         return OperationResult::Failure;
-    }
+    };
 
     let selection = args.selection.to_package_selection(); // not mandatory to specify packages
     todo!()
@@ -119,15 +115,11 @@ pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
 
 pub fn registry_sync(args: RegistrySyncArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
-    let (_, missing) = util::filter_registry(registry, &args.selection.pkgs);
 
-    if !missing.is_empty() {
-        for m in missing {
-            error!("Package {} doesn't exist.", m.quote());
-        }
-
+    // just to filter out packages that don't exist
+    let Ok(_) = util::filter_print(registry, &args.selection.pkgs) else {
         return OperationResult::Failure;
-    }
+    };
 
     let selection = args.selection.to_package_selection(); // not mandatory to specify packages
     todo!()

@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fs, path::PathBuf};
 
-use crate::{disk, error, paths, registry, state::State};
+use crate::{disk, error, log::Format, paths, registry, state::State};
 
 pub fn setup_root() -> anyhow::Result<()> {
     ensure_root_items()?;
@@ -58,6 +58,7 @@ pub fn clean_orphans(state: &State) {
 fn clean_orphan_packages(state: &State) {
     let entries = match fs::read_dir(paths::packages_dir()) {
         Ok(e) => e,
+
         Err(e) => {
             error!("Failed to read packages directory: {e}");
             return;
@@ -75,14 +76,15 @@ fn clean_orphan_packages(state: &State) {
 
         let path = entry.path();
         if !path.is_dir() {
-            continue; // packages/ should only ever hold package directories
+            continue; // 'packages/' should only ever hold package directories
         }
 
         let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
             error!(
-                "Skipping package directory with invalid name: '{}'",
-                path.display()
+                "Skipping package directory with invalid name: {}",
+                path.display().quote()
             );
+
             continue;
         };
 
@@ -91,11 +93,18 @@ fn clean_orphan_packages(state: &State) {
         }
 
         if let Err(e) = disk::make_writable_recursive(&path) {
-            error!("Failed to prepare orphaned package '{name}' for cleanup: {e}");
+            error!(
+                "Failed to prepare orphaned package {} for cleanup: {e}",
+                name.quote()
+            );
             continue;
         }
+
         if let Err(e) = fs::remove_dir_all(&path) {
-            error!("Failed to remove orphaned package directory '{name}': {e}");
+            error!(
+                "Failed to remove orphaned package directory {}: {e}",
+                name.quote()
+            );
         }
     }
 }
@@ -130,7 +139,10 @@ fn clean_orphan_shims(state: &State) {
         }
 
         if let Err(e) = fs::remove_file(&path) {
-            error!("Failed to remove orphaned shim '{}': {e}", path.display());
+            error!(
+                "Failed to remove orphaned shim {}: {e}",
+                path.display().quote()
+            );
         }
     }
 }
