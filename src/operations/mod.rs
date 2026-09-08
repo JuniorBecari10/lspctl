@@ -4,6 +4,7 @@ use std::fs;
 
 use crate::{
     consts, error,
+    log::Format,
     operations::{
         markers::Selection,
         model::{DeleteFlags, RegistrySetVersionArgs, RegistrySyncArgs},
@@ -48,7 +49,7 @@ pub fn search(args: model::SearchArgs) -> OperationResult {
         Ok(re) => re,
 
         Err(e) => {
-            error!("Invalid pattern '{}': {e}", args.pattern);
+            error!("Invalid pattern {}: {e}", args.pattern.quote());
             return OperationResult::Failure;
         }
     };
@@ -62,7 +63,7 @@ pub fn info(args: model::InfoArgs) -> OperationResult {
 
     if !missing.is_empty() {
         for m in missing {
-            error!("Package '{m}' doesn't exist.");
+            error!("Package {} doesn't exist.", m.quote());
         }
 
         return OperationResult::Failure;
@@ -106,7 +107,7 @@ pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
 
     if !missing.is_empty() {
         for m in missing {
-            error!("Package '{m}' doesn't exist.");
+            error!("Package {} doesn't exist.", m.quote());
         }
 
         return OperationResult::Failure;
@@ -122,7 +123,7 @@ pub fn registry_sync(args: RegistrySyncArgs) -> OperationResult {
 
     if !missing.is_empty() {
         for m in missing {
-            error!("Package '{m}' doesn't exist.");
+            error!("Package {} doesn't exist.", m.quote());
         }
 
         return OperationResult::Failure;

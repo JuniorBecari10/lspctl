@@ -1,3 +1,5 @@
+use crate::log::Format;
+
 pub enum Segment<'a> {
     Text(&'a str),
     Expr(&'a str), // slice inside the braces
@@ -21,9 +23,13 @@ pub fn split_segments(input: &str) -> anyhow::Result<Vec<Segment<'_>>> {
             after = &after[1..];
         }
 
-        let close = after
-            .find("}}")
-            .ok_or_else(|| anyhow::anyhow!("Unterminated {{{{ in template: '{input}'"))?;
+        let close = after.find("}}").ok_or_else(|| {
+            anyhow::anyhow!(
+                "Unterminated {} in template: {}",
+                "{{{{".quote(),
+                input.quote()
+            )
+        })?;
 
         segments.push(Segment::Expr(after[..close].trim()));
         rest = &after[close + 2..];

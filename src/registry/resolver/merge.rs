@@ -67,8 +67,8 @@ fn select_owned<T: Targets>(items: Vec<T>, host: &Platform, label: &str) -> T {
         .map(|(i, _)| i)
         .unwrap_or_else(|| {
             fatal!(
-                "No {label} entry matches platform '{host}'. \
-                 'build_context' should have already caught this."
+                "No {label} entry matches platform {host}. \
+                 function 'build_context' should have already caught this."
             )
         });
 

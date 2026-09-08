@@ -1,4 +1,7 @@
-use crate::registry::parser::template::ast::{Expr, Filter};
+use crate::{
+    log::Format,
+    registry::parser::template::ast::{Expr, Filter},
+};
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -10,13 +13,13 @@ impl Value {
     pub fn into_str(self) -> anyhow::Result<String> {
         match self {
             Value::Str(s) => Ok(s),
-            Value::Bool(b) => anyhow::bail!("Expected string, got bool '{b}'"),
+            Value::Bool(b) => anyhow::bail!("Expected string, got bool {}", b.to_string().quote()),
         }
     }
 
     fn as_bool(&self) -> anyhow::Result<bool> {
         match self {
-            Value::Str(s) => anyhow::bail!("Expected bool, got string '{s}'"),
+            Value::Str(s) => anyhow::bail!("Expected bool, got string {}", s.to_string().quote()),
             Value::Bool(b) => Ok(*b),
         }
     }
@@ -57,7 +60,7 @@ fn resolve_path(segs: &[String], ctx_json: &serde_json::Value) -> anyhow::Result
     // TODO: if needed, treat Null here as "" as well
     match cur {
         serde_json::Value::String(s) => Ok(s.clone()),
-        other => anyhow::bail!("Path '{}' is not a string: {other}", segs.join(".")),
+        other => anyhow::bail!("Path {} is not a string: {other}", segs.join(".").quote()),
     }
 }
 
@@ -65,24 +68,29 @@ fn call_builtin(name: &str, args: &[Expr], ctx_json: &serde_json::Value) -> anyh
     match name {
         "is_platform" => {
             let want = eval(
-                args.first()
-                    .ok_or_else(|| anyhow::anyhow!("'is_platform()' needs 1 argument"))?,
+                args.first().ok_or_else(|| {
+                    anyhow::anyhow!("{} needs 1 argument", "is_platform()".quote())
+                })?,
                 ctx_json,
             )?
             .into_str()?;
+
             Ok(Value::Bool(current_platform_matches(&want)))
         }
 
         "take_if_not" => {
             let cond = eval(
-                args.first()
-                    .ok_or_else(|| anyhow::anyhow!("'take_if_not()' needs a condition argument"))?,
+                args.first().ok_or_else(|| {
+                    anyhow::anyhow!("{} needs a condition argument", "take_if_not()".quote())
+                })?,
                 ctx_json,
             )?
             .as_bool()?;
-            let value = args
-                .get(1)
-                .ok_or_else(|| anyhow::anyhow!("'take_if_not()' needs a value argument"))?;
+
+            let value = args.get(1).ok_or_else(|| {
+                anyhow::anyhow!("{} needs a value argument", "take_if_not()".quote())
+            })?;
+
             if cond {
                 Ok(Value::Str(String::new()))
             } else {
@@ -90,7 +98,7 @@ fn call_builtin(name: &str, args: &[Expr], ctx_json: &serde_json::Value) -> anyh
             }
         }
 
-        other => anyhow::bail!("Unknown function '{other}'"),
+        other => anyhow::bail!("Unknown function {}", other.quote()),
     }
 }
 
@@ -98,9 +106,9 @@ fn apply_filter(f: &Filter, input: Value, ctx_json: &serde_json::Value) -> anyho
     match f.name.as_str() {
         "strip_prefix" => {
             let prefix = eval(
-                f.args
-                    .first()
-                    .ok_or_else(|| anyhow::anyhow!("'strip_prefix' requires 1 argument"))?,
+                f.args.first().ok_or_else(|| {
+                    anyhow::anyhow!("{} requires 1 argument", "strip_prefix".quote())
+                })?,
                 ctx_json,
             )?
             .into_str()?;
@@ -112,11 +120,11 @@ fn apply_filter(f: &Filter, input: Value, ctx_json: &serde_json::Value) -> anyho
         }
 
         // filter form: ''yq.1' | take_if_not(is_platform('win'))': piped
-        // value *is* the "value" arg, only condition is passed explicitly
+        // value is the "value" arg, only condition is passed explicitly
         "take_if_not" => {
             let cond = eval(
                 f.args.first().ok_or_else(|| {
-                    anyhow::anyhow!("'take_if_not()' requires a condition argument")
+                    anyhow::anyhow!("{} requires a condition argument", "take_if_not()".quote())
                 })?,
                 ctx_json,
             )?
@@ -129,7 +137,7 @@ fn apply_filter(f: &Filter, input: Value, ctx_json: &serde_json::Value) -> anyho
             }
         }
 
-        other => anyhow::bail!("Unknown filter '{other}'"),
+        other => anyhow::bail!("Unknown filter {}", other.quote()),
     }
 }
 

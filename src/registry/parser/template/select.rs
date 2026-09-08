@@ -1,4 +1,7 @@
-use crate::registry::model::{Asset, Build, Download, Downloads, Platform, Variant};
+use crate::{
+    log::Format,
+    registry::model::{Asset, Build, Download, Downloads, Platform, Variant},
+};
 
 pub trait Targets {
     fn targets(&self) -> &[Platform];
@@ -59,7 +62,10 @@ fn select_matching<'a, T: Targets>(
 
 pub fn select_asset<'a>(variant: &'a Variant, host: &Platform) -> anyhow::Result<&'a Asset> {
     let Variant::Asset(assets) = variant else {
-        anyhow::bail!("Source has no asset variant (got '{variant}')");
+        anyhow::bail!(
+            "Source has no asset variant (got {})",
+            variant.to_string().quote()
+        );
     };
 
     select_matching(assets, host, "asset")
@@ -67,7 +73,10 @@ pub fn select_asset<'a>(variant: &'a Variant, host: &Platform) -> anyhow::Result
 
 pub fn select_download(variant: &Variant, host: &Platform) -> anyhow::Result<serde_json::Value> {
     let Variant::Download(downloads) = variant else {
-        anyhow::bail!("Source has no download variant (got '{variant}')");
+        anyhow::bail!(
+            "Source has no download variant (got {})",
+            variant.to_string().quote()
+        );
     };
 
     match downloads {
@@ -82,7 +91,10 @@ pub fn select_download(variant: &Variant, host: &Platform) -> anyhow::Result<ser
 
 pub fn select_build<'a>(variant: &'a Variant, host: &Platform) -> anyhow::Result<&'a Build> {
     let Variant::Build(builds) = variant else {
-        anyhow::bail!("Source has no build variant (got '{variant}')");
+        anyhow::bail!(
+            "Source has no build variant (got {})",
+            variant.to_string().quote()
+        );
     };
 
     select_matching(builds, host, "build")

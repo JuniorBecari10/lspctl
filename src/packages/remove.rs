@@ -2,12 +2,12 @@ use std::fs;
 
 use anyhow::Context;
 
-use crate::{disk, paths, registry::model::ResolvedEntry, state::State};
+use crate::{disk, log::Format, paths, registry::model::ResolvedEntry, state::State};
 
 pub fn remove(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
     let state_entry = state
         .get_entry(&entry.name)
-        .ok_or_else(|| anyhow::anyhow!("Package '{}' is not installed", entry.name))?;
+        .ok_or_else(|| anyhow::anyhow!("Package {} is not installed", entry.name.quote()))?;
 
     for file in state_entry.bin.values() {
         match fs::remove_file(file) {
@@ -16,7 +16,7 @@ pub fn remove(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
 
             Err(e) => {
                 return Err(e)
-                    .with_context(|| format!("Failed to remove link '{}'", file.display()));
+                    .with_context(|| format!("Failed to remove link {}", file.display().quote()));
             }
         }
     }

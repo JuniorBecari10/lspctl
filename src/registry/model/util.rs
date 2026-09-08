@@ -1,8 +1,11 @@
 use anyhow::anyhow;
 use packageurl::PackageUrl;
 
-use crate::registry::model::{
-    AssetVars, InstallKind, OneOrMany, OneOrMap, PackageManager, Platform, Purl,
+use crate::{
+    log::Format,
+    registry::model::{
+        AssetVars, InstallKind, OneOrMany, OneOrMap, PackageManager, Platform, Purl,
+    },
 };
 
 impl<T> From<OneOrMany<T>> for Vec<T> {
@@ -22,7 +25,7 @@ impl<'a> TryFrom<PackageUrl<'a>> for Purl {
     fn try_from(purl: PackageUrl<'a>) -> Result<Self, Self::Error> {
         Ok(Self {
             kind: get_install_kind(purl.ty())
-                .ok_or_else(|| anyhow!("Invalid install kind: '{}'", purl.ty()))?,
+                .ok_or_else(|| anyhow!("Invalid install kind: {}", purl.ty().quote()))?,
 
             namespace: purl.namespace().map(Into::into),
             name: sanitize_path_component(purl.name()),
@@ -60,9 +63,12 @@ impl TryFrom<InstallKind> for PackageManager {
             InstallKind::LuaRocks => Ok(PackageManager::LuaRocks),
             InstallKind::Opam => Ok(PackageManager::Opam),
             InstallKind::NuGet => Ok(PackageManager::NuGet),
-            InstallKind::GitHub | InstallKind::Generic | InstallKind::OpenVSX => Err(
-                anyhow::anyhow!("'{kind}' is not a package-manager install kind"),
-            ),
+            InstallKind::GitHub | InstallKind::Generic | InstallKind::OpenVSX => {
+                Err(anyhow::anyhow!(
+                    "{} is not a package-manager install kind",
+                    kind.to_string().quote()
+                ))
+            }
         }
     }
 }

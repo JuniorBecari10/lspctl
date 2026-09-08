@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, path};
 
 use colored::{ColoredString, Colorize};
 
@@ -105,10 +105,27 @@ impl<T> LogPretty<T> for Option<T> {
 
 // --- Utility ---
 
-pub fn format_verb(s: &str) -> ColoredString {
-    s.cyan().bold()
+pub trait Format {
+    fn verb(&self) -> ColoredString;
+    fn quote(&self) -> ColoredString;
 }
 
-pub fn format_quote(s: &str) -> ColoredString {
-    format!("'{}'", s.italic()).dimmed()
+impl Format for str {
+    fn verb(&self) -> ColoredString {
+        self.cyan().bold()
+    }
+
+    fn quote(&self) -> ColoredString {
+        format!("'{}'", self.italic()).dimmed()
+    }
+}
+
+impl<'a> Format for path::Display<'a> {
+    fn verb(&self) -> ColoredString {
+        self.to_string().verb()
+    }
+
+    fn quote(&self) -> ColoredString {
+        self.to_string().quote()
+    }
 }

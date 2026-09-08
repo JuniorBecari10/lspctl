@@ -5,6 +5,7 @@ use std::{
 
 use crate::{
     disk,
+    log::Format,
     registry::model::{Purl, ResolvedSource},
 };
 
@@ -47,8 +48,9 @@ pub fn get_target(name: &str, value: &str, bin: &Path, pkg_path: &Path) -> anyho
             let target = pkg_path.join(value);
             if !target.exists() {
                 anyhow::bail!(
-                    "Expected binary '{name}' at '{}' but it doesn't exist after extraction",
-                    target.display()
+                    "Expected binary {} at {} but it doesn't exist after extraction",
+                    name.quote(),
+                    target.display().quote()
                 );
             }
 
@@ -59,7 +61,11 @@ pub fn get_target(name: &str, value: &str, bin: &Path, pkg_path: &Path) -> anyho
         Some((wrapper, path)) => {
             let target = pkg_path.join(path);
             let (interpreter, args) = get_wrapper(wrapper).ok_or_else(|| {
-                anyhow::anyhow!("Unsupported wrapper '{wrapper}' for '{name}' in Asset entry")
+                anyhow::anyhow!(
+                    "Unsupported wrapper {} for {} in Asset entry",
+                    wrapper.quote(),
+                    name.quote()
+                )
             })?;
 
             write_shim(bin, interpreter, args, &target, &[])
@@ -75,7 +81,7 @@ pub fn write_shim(
     env: &[(&str, &str)],
 ) -> anyhow::Result<PathBuf> {
     if !target.exists() {
-        anyhow::bail!("Shim target doesn't exist: '{}'", target.display());
+        anyhow::bail!("Shim target doesn't exist: {}", target.display().quote());
     }
 
     #[cfg(unix)]

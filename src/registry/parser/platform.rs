@@ -1,4 +1,7 @@
-use crate::registry::model::{Arch, Libc, Os, Platform};
+use crate::{
+    log::Format,
+    registry::model::{Arch, Libc, Os, Platform},
+};
 
 pub fn get_platform(s: &str) -> anyhow::Result<Vec<Platform>> {
     if s == "unix" {
@@ -22,7 +25,7 @@ pub fn get_platform(s: &str) -> anyhow::Result<Vec<Platform>> {
         "darwin" => Os::Darwin,
         "linux" => Os::Linux,
         "win" => Os::Windows,
-        other => anyhow::bail!("Unknown OS '{other}' in target '{s}'"),
+        other => anyhow::bail!("Unknown OS {} in target {}", other.quote(), s.quote()),
     };
 
     if parts.len() == 1 {
@@ -40,7 +43,7 @@ pub fn get_platform(s: &str) -> anyhow::Result<Vec<Platform>> {
         "arm" => Arch::Arm,
         "armv6l" => Arch::Armv6l,
         "armv7l" | "armv7" => Arch::Armv7l,
-        other => anyhow::bail!("unknown arch '{other}' in target '{s}'"),
+        other => anyhow::bail!("unknown arch {} in target {}", other.quote(), s.quote()),
     };
 
     let libc = match parts.get(2) {
@@ -48,7 +51,11 @@ pub fn get_platform(s: &str) -> anyhow::Result<Vec<Platform>> {
         Some(&"gnu") => Some(Libc::Gnu),
         Some(&"musl") => Some(Libc::Musl),
         Some(&"openbsd") => Some(Libc::OpenBSD),
-        Some(other) => anyhow::bail!("unknown libc/variant '{other}' in target '{s}'"),
+        Some(other) => anyhow::bail!(
+            "unknown libc/variant {} in target {}",
+            other.quote(),
+            s.quote()
+        ),
     };
 
     Ok(vec![Platform {

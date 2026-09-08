@@ -2,7 +2,7 @@ use std::{fs::File, io::Read};
 
 use anyhow::anyhow;
 
-use crate::{disk, note, paths, registry::model::RawRegistry, step};
+use crate::{disk, log::Format, note, paths, registry::model::RawRegistry, step};
 
 pub mod model;
 pub mod parser;
@@ -41,7 +41,12 @@ fn find_registry_asset(release: &model::Release) -> anyhow::Result<&model::Relea
         .assets
         .iter()
         .find(|a| a.name == util::REGISTRY_ZIP) // TODO: fetch 'checksums.txt' as well
-        .ok_or_else(|| anyhow!("'{}' not found in release assets.", util::REGISTRY_ZIP))
+        .ok_or_else(|| {
+            anyhow!(
+                "{} not found in release assets.",
+                util::REGISTRY_ZIP.quote()
+            )
+        })
 }
 
 fn parse_release(raw_json: &[u8]) -> anyhow::Result<model::Release> {

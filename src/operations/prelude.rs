@@ -2,7 +2,7 @@ use std::fs::{File, OpenOptions, TryLockError};
 
 use crate::{
     consts, error, fatal, global,
-    log::Fatal,
+    log::{Fatal, Format},
     note, paths,
     registry::{
         self,
@@ -72,8 +72,8 @@ pub fn acquire_lock() -> ProcessLock {
             );
 
             note!(
-                "If this is an error, you can run '{} delete lockfile'",
-                consts::APP_NAME
+                "If this is an error, you can run {}",
+                format!("{} delete lockfile", consts::APP_NAME).quote()
             );
 
             note!("to delete the lockfile if no other instances are running.");

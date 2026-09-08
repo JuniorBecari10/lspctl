@@ -11,7 +11,7 @@ use regex::Regex;
 
 use crate::{
     end, error, header,
-    log::{self, Fatal},
+    log::{self, Fatal, Format},
     note,
     operations::prelude,
     registry::model::{Entry, Platform, Registry},
@@ -161,7 +161,7 @@ pub fn run_action(
     let (entries, missing) = filter_registry(registry, &pkgs);
     if !missing.is_empty() {
         for m in missing {
-            error!("Package '{m}' doesn't exist.");
+            error!("Package {} doesn't exist.", m.quote());
         }
         return OperationResult::Failure;
     }
@@ -175,8 +175,8 @@ pub fn run_action(
     for pkg in entries {
         if action.should_skip(&state, &pkg.name) {
             step!(
-                "Package '{}' {}. Skipping..",
-                pkg.name,
+                "Package {} {}. Skipping...",
+                pkg.name.quote(),
                 action.skip_reason()
             );
             skip_count += 1;
@@ -184,11 +184,7 @@ pub fn run_action(
         }
 
         let name = pkg.name.clone();
-        step!(
-            "{} package {}..",
-            action.gerund(),
-            log::format_quote(&pkg.name)
-        );
+        step!("{} package {}...", action.gerund(), pkg.name.quote());
 
         match op(pkg, &platform, &mut state) {
             Ok(()) => {
@@ -196,7 +192,7 @@ pub fn run_action(
                 ok_count += 1;
             }
             Err(e) => {
-                error!("Failed to {} '{name}': {e}", action.verb_base());
+                error!("Failed to {} {}: {e}", action.verb_base(), name.quote());
                 err_count += 1;
             }
         }
@@ -274,7 +270,7 @@ pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) ->
 
         if !missing.is_empty() {
             for m in missing {
-                error!("Package '{m}' doesn't exist.");
+                error!("Package {} doesn't exist.", m.quote());
             }
             return OperationResult::Failure;
         }
@@ -294,9 +290,9 @@ pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) ->
 
     if entries.is_empty() {
         let msg = match (installed, pattern) {
-            (true, Some(p)) => format!("No installed packages match '{}'.", p.as_str()),
+            (true, Some(p)) => format!("No installed packages match {}.", p.as_str().quote()),
             (true, None) => "There are no packages installed.".to_string(),
-            (false, Some(p)) => format!("No packages match '{}'.", p.as_str()),
+            (false, Some(p)) => format!("No packages match {}.", p.as_str().quote()),
             (false, None) => "No packages found.".to_string(),
         };
 

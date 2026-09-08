@@ -10,7 +10,7 @@ use anyhow::Context;
 use colored::Colorize;
 use maplit::hashmap;
 
-use crate::{log, note, paths, registry::model::PackageManager};
+use crate::{log::Format, note, paths, registry::model::PackageManager};
 
 pub struct InstallCommand {
     binary: String,
@@ -66,11 +66,7 @@ pub fn get_install_commands(
 pub fn run_command(command: InstallCommand, dir: &Path) -> anyhow::Result<()> {
     let command_str = command.to_string();
 
-    note!(
-        "{} {}",
-        log::format_verb("Running"),
-        log::format_quote(&command_str)
-    );
+    note!("{} {}", "Running".verb(), command_str.quote());
 
     let mut cmd = Command::new(command.binary.clone());
     cmd.args(command.args)
@@ -79,17 +75,22 @@ pub fn run_command(command: InstallCommand, dir: &Path) -> anyhow::Result<()> {
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit());
 
-    let status = cmd
-        .status()
-        .with_context(|| format!("Failed to launch '{}'. Is it on PATH?", command.binary))?;
+    let status = cmd.status().with_context(|| {
+        format!(
+            "Failed to launch {}. Is it on PATH?",
+            command.binary.quote()
+        )
+    })?;
 
     if !status.success() {
         anyhow::bail!(
-            "'{command_str}' exited with exit code {}",
+            "{} exited with exit code {}",
+            command_str.quote(),
             status
                 .code()
                 .map(|c| c.to_string())
                 .unwrap_or_else(|| "<unknown>".into())
+                .red()
         );
     }
 

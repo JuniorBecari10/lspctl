@@ -10,7 +10,7 @@ use tempfile::NamedTempFile;
 use ureq::BodyReader;
 use zip::ZipArchive;
 
-use crate::{consts, log, paths};
+use crate::{consts, log::Format, paths};
 
 /// creates a new temporary file in lspctl/tmp.
 /// requires tmp to exist. error if not.
@@ -42,39 +42,40 @@ pub fn write_file_atomic_contents(p: &Path, contents: &[u8], replace: bool) -> a
 
 pub fn link_files(from: &Path, to: &Path) -> anyhow::Result<()> {
     if !from.exists() {
-        anyhow::bail!("link target does not exist: '{}'", from.display());
+        anyhow::bail!("link target does not exist: {}", from.display().quote());
     }
 
     let real_target = fs::canonicalize(from)
-        .with_context(|| format!("failed to resolve real path of '{}'", from.display()))?;
+        .with_context(|| format!("failed to resolve real path of {}", from.display().quote()))?;
 
     if !real_target.is_file() {
         anyhow::bail!(
-            "resolved link target is not a regular file: '{}'",
-            real_target.display()
+            "resolved link target is not a regular file: {}",
+            real_target.display().quote()
         );
     }
 
     if to.exists() || to.is_symlink() {
-        fs::remove_file(to)
-            .with_context(|| format!("failed to remove existing link at '{}'", to.display()))?;
+        fs::remove_file(to).with_context(|| {
+            format!("failed to remove existing link at {}", to.display().quote())
+        })?;
     }
 
     #[cfg(unix)]
     std::os::unix::fs::symlink(&real_target, to).with_context(|| {
         format!(
-            "failed to symlink '{}' -> '{}'",
-            to.display(),
-            real_target.display()
+            "failed to symlink {} -> {}",
+            to.display().quote(),
+            real_target.display().quote()
         )
     })?;
 
     #[cfg(windows)]
     fs::copy(&real_target, to).with_context(|| {
         format!(
-            "failed to copy '{}' -> '{}'",
-            real_target.display(),
-            link_path.display()
+            "failed to copy {} -> {}",
+            real_target.display().quote(),
+            link_path.display().quote()
         )
     })?;
 
@@ -106,7 +107,7 @@ fn make_writable(path: &Path) -> anyhow::Result<()> {
         if mode & 0o200 == 0 {
             perms.set_mode(mode | 0o200);
             fs::set_permissions(path, perms)
-                .with_context(|| format!("Failed to chmod {}", path.display()))?;
+                .with_context(|| format!("Failed to chmod {}", path.display().quote()))?;
         }
     }
 
@@ -117,7 +118,10 @@ fn make_writable(path: &Path) -> anyhow::Result<()> {
         if perms.readonly() {
             perms.set_readonly(false);
             fs::set_permissions(path, perms).with_context(|| {
-                format!("Failed to clear read-only attribute on {}", path.display())
+                format!(
+                    "Failed to clear read-only attribute on {}",
+                    path.display().quote()
+                )
             })?;
         }
     }
@@ -145,7 +149,7 @@ pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
     pb.set_style(
         ProgressStyle::with_template(&format!(
             "     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} {{eta}}",
-            log::format_verb("Downloading")
+            "Downloading".verb()
         ))?
         .progress_chars("=>-"),
     );
@@ -158,7 +162,7 @@ pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
 
 pub fn perform_request(url: &str) -> anyhow::Result<(BodyReader<'static>, u64)> {
     if !url.starts_with("https://") {
-        anyhow::bail!("This only performs 'https' requests. URL: '{url}'.");
+        anyhow::bail!("This only performs 'https' requests. URL: {}.", url.quote());
     }
 
     let response = ureq::get(url)

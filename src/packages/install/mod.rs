@@ -12,7 +12,9 @@ use std::{
 use colored::Colorize;
 
 use crate::{
-    disk, log, note, packages, paths,
+    disk,
+    log::{self, Format},
+    note, packages, paths,
     registry::model::{
         Asset, Build, PackageManager, ResolvedDownloads, ResolvedEntry, ResolvedVariant,
     },
@@ -99,7 +101,7 @@ fn install_asset(entry: &ResolvedEntry, asset: &Asset, tmp_pkg_path: &Path) -> a
     for file_spec in &asset.files {
         let (source, dest) = util::parse_file_spec(file_spec);
 
-        note!("File: {}", log::format_quote(source));
+        note!("File: {}", source.quote());
         let mut scratch = disk::new_temp()?;
         disk::download_file(
             &link::asset::github_url(&entry.source, source),

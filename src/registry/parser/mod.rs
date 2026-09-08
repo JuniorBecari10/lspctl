@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use packageurl::PackageUrl;
 
-use crate::registry::model::*;
+use crate::{log::Format, registry::model::*};
 
 pub fn parse_registry(raw: RawRegistry) -> anyhow::Result<Registry> {
     Ok(Registry(
@@ -46,12 +46,10 @@ fn parse_variant(raw: Option<RawSourceVariant>, kind: InstallKind) -> anyhow::Re
     let manager: Result<PackageManager, _> = kind.try_into();
 
     match raw {
-        Some(RawSourceVariant::ExtraPackages { extra_packages }) => {
-            Ok(Variant::PackageManager {
-                manager: manager?,
-                extra_packages,
-            })
-        }
+        Some(RawSourceVariant::ExtraPackages { extra_packages }) => Ok(Variant::PackageManager {
+            manager: manager?,
+            extra_packages,
+        }),
 
         Some(RawSourceVariant::Asset { asset }) => Ok(Variant::Asset(
             Into::<Vec<_>>::into(asset)
@@ -73,11 +71,16 @@ fn parse_variant(raw: Option<RawSourceVariant>, kind: InstallKind) -> anyhow::Re
 
         // edge case where 'extra_packages' is not present but 'kind' is a package manager
         None => manager
-            .map(|m| Variant::PackageManager { manager: m, extra_packages: vec![] })
-            .map_err(|_| anyhow::anyhow!(
-                "Package has no source variant and purl kind '{kind}' has no known package manager"
-            )
-        ),
+            .map(|m| Variant::PackageManager {
+                manager: m,
+                extra_packages: vec![],
+            })
+            .map_err(|_| {
+                anyhow::anyhow!(
+                    "Package has no source variant and purl kind {} has no known package manager",
+                    kind.to_string().quote()
+                )
+            }),
     }
 }
 

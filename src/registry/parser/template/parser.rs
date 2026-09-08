@@ -1,7 +1,7 @@
 use logos::Logos;
 
 use crate::{
-    log::LogPretty,
+    log::{Format, LogPretty},
     registry::parser::template::{
         ast::{Expr, Filter},
         token::Token,
@@ -17,7 +17,7 @@ impl<'a> Parser<'a> {
     pub fn new(inner: &'a str) -> anyhow::Result<Self> {
         let tokens = Token::lexer(inner)
             .collect::<Result<_, _>>()
-            .map_err(|_| anyhow::anyhow!("Failed to lex expression: '{inner}'"))?;
+            .map_err(|_| anyhow::anyhow!("Failed to lex expression: {}", inner.quote()))?;
 
         Ok(Self { tokens, pos: 0 })
     }
@@ -84,7 +84,11 @@ impl<'a> Parser<'a> {
 
         match self.bump() {
             Some(Token::RParen) => Ok(args),
-            other => anyhow::bail!("Expected `)`, got '{}'", other.log(|| "<unknown>".into())),
+            other => anyhow::bail!(
+                "Expected {}, got {}",
+                ")".quote(),
+                other.log(|| "<unknown>".quote().to_string())
+            ),
         }
     }
 
@@ -109,7 +113,10 @@ impl<'a> Parser<'a> {
                 Ok(Expr::Path(segs))
             }
 
-            other => anyhow::bail!("Unexpected token: '{}'", other.log(|| "<unknown>".into())),
+            other => anyhow::bail!(
+                "Unexpected token: {}",
+                other.log(|| "<unknown>".quote().to_string())
+            ),
         }
     }
 

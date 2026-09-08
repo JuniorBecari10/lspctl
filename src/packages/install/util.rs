@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::log;
+use crate::log::{self, Format};
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressBarIter, ProgressStyle};
 
@@ -147,7 +147,7 @@ fn resolve_target_dir(dest: Option<&str>, tmp_pkg_path: &Path) -> anyhow::Result
         }
 
         Some(d) => {
-            anyhow::bail!("Archive has non-directory destination '{d}'")
+            anyhow::bail!("Archive has non-directory destination: {}", d.quote())
         }
 
         None => Ok(tmp_pkg_path.to_path_buf()),
@@ -212,7 +212,7 @@ fn wrapped_file(path: &Path) -> anyhow::Result<ProgressBarIter<File>> {
     pb.set_style(
         ProgressStyle::with_template(&format!(
             "     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} {{eta}}",
-            log::format_verb("Extracting")
+            "Extracting".verb()
         ))?
         .progress_chars("=>-"),
     );
