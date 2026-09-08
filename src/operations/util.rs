@@ -10,7 +10,7 @@ use dialoguer::Confirm;
 use regex::Regex;
 
 use crate::{
-    end, error, header,
+    end, end_error, error, header,
     log::{self, Fatal, Format},
     note,
     operations::prelude,
@@ -191,8 +191,9 @@ pub fn run_action(
                 end!("Package {} successfully.", action.past_participle());
                 ok_count += 1;
             }
+
             Err(e) => {
-                error!("Failed to {} {}: {e}", action.verb_base(), name.quote());
+                end_error!("Failed to {} {}: {e}", action.verb_base(), name.quote());
                 err_count += 1;
             }
         }

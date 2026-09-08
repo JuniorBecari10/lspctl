@@ -22,14 +22,13 @@ type Prelude = (Registry, Platform, State, ProcessLock);
 // do NOT ignore the lock file. bind it to something like '_lock'
 // for it to exist throughout the entire function
 pub fn prelude() -> Prelude {
+    let lock = acquire_lock();
     setup_root();
 
-    (
-        read_registry(),
-        get_platform(),
-        load_state(),
-        acquire_lock(),
-    )
+    let state = load_state();
+    root::clean_orphans(&state);
+
+    (read_registry(), get_platform(), state, lock)
 }
 
 // ---

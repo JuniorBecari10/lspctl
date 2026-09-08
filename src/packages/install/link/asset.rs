@@ -62,7 +62,7 @@ pub fn get_target(name: &str, value: &str, bin: &Path, pkg_path: &Path) -> anyho
             let target = pkg_path.join(path);
             let (interpreter, args) = get_wrapper(wrapper).ok_or_else(|| {
                 anyhow::anyhow!(
-                    "Unsupported wrapper {} for {} in Asset entry",
+                    "Unsupported wrapper {} for {} in asset entry",
                     wrapper.quote(),
                     name.quote()
                 )

@@ -34,6 +34,18 @@ macro_rules! end {
     };
 }
 
+/// `--> message`: end marker for a step that didn't end well.
+#[macro_export]
+macro_rules! end_error {
+    ($($arg:tt)*) => {
+        eprintln!(
+            " {} {}",
+            colored::Colorize::bold(colored::Colorize::red("-->")),
+            format!($($arg)*)
+        )
+    };
+}
+
 /// `error: message`: always to stderr, red + bold prefix.
 #[macro_export]
 macro_rules! error {

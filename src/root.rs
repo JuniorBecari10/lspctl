@@ -1,6 +1,6 @@
-use std::fs;
+use std::{collections::HashSet, fs, path::PathBuf};
 
-use crate::{disk, error, paths, registry};
+use crate::{disk, error, paths, registry, state::State};
 
 pub fn setup_root() -> anyhow::Result<()> {
     ensure_root_items()?;
@@ -13,10 +13,7 @@ pub fn setup_root() -> anyhow::Result<()> {
     }
 }
 
-// TODO: delete all folders in packages that isn't in registry.
-// basically the recover/clean command. maybe make this a manual operation.
 fn ensure_root_items() -> anyhow::Result<()> {
-    // clean tmp dir, which also deletes the directory. but it's created again below
     clean_tmp();
 
     fs::create_dir_all(paths::bin_dir())?;
@@ -26,6 +23,8 @@ fn ensure_root_items() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+// ---
 
 // this only prints errors, and doesn't block the command's job
 fn clean_tmp() {
@@ -48,5 +47,90 @@ fn clean_tmp() {
 
     if let Err(e) = fs::remove_dir_all(&dir) {
         error!("Failed to clean tmp directory: {e}");
+    }
+}
+
+pub fn clean_orphans(state: &State) {
+    clean_orphan_packages(state);
+    clean_orphan_shims(state);
+}
+
+fn clean_orphan_packages(state: &State) {
+    let entries = match fs::read_dir(paths::packages_dir()) {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Failed to read packages directory: {e}");
+            return;
+        }
+    };
+
+    for entry in entries {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(e) => {
+                error!("Failed to read a packages directory entry: {e}");
+                continue;
+            }
+        };
+
+        let path = entry.path();
+        if !path.is_dir() {
+            continue; // packages/ should only ever hold package directories
+        }
+
+        let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+            error!(
+                "Skipping package directory with invalid name: '{}'",
+                path.display()
+            );
+            continue;
+        };
+
+        if state.installed.contains_key(name) {
+            continue; // still a real, tracked package
+        }
+
+        if let Err(e) = disk::make_writable_recursive(&path) {
+            error!("Failed to prepare orphaned package '{name}' for cleanup: {e}");
+            continue;
+        }
+        if let Err(e) = fs::remove_dir_all(&path) {
+            error!("Failed to remove orphaned package directory '{name}': {e}");
+        }
+    }
+}
+
+fn clean_orphan_shims(state: &State) {
+    let valid: HashSet<PathBuf> = state
+        .installed
+        .values()
+        .flat_map(|pkg| pkg.bin.values().cloned())
+        .collect();
+
+    let entries = match fs::read_dir(paths::bin_dir()) {
+        Ok(e) => e,
+        Err(e) => {
+            error!("Failed to read bin directory: {e}");
+            return;
+        }
+    };
+
+    for entry in entries {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(e) => {
+                error!("Failed to read a bin directory entry: {e}");
+                continue;
+            }
+        };
+
+        let path = entry.path();
+        if valid.contains(&path) {
+            continue;
+        }
+
+        if let Err(e) = fs::remove_file(&path) {
+            error!("Failed to remove orphaned shim '{}': {e}", path.display());
+        }
     }
 }

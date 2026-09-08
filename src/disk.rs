@@ -148,7 +148,7 @@ pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
 
     pb.set_style(
         ProgressStyle::with_template(&format!(
-            "     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} {{eta}}",
+            "\n     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} {{eta}}",
             "Downloading".verb()
         ))?
         .progress_chars("=>-"),
