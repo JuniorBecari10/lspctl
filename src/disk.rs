@@ -5,7 +5,6 @@ use std::{
 };
 
 use anyhow::Context;
-use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 use tempfile::NamedTempFile;
 use ureq::BodyReader;
