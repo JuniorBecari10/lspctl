@@ -69,7 +69,7 @@ fn make_links(
 // ---
 
 // the job of these functions is to perform the work to
-// make the package sit in the tmp folder in the correct folder hierarchy: name / version / data.
+// make the package sit in the tmp folder in the correct folder structure: name / data.
 // the rest (make links, move to definitive folder and update state) is handled by the functions above.
 
 fn install_manager(
