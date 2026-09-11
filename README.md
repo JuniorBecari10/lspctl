@@ -57,7 +57,7 @@ Most of the packages are already supported; see the table below for the current 
 - [ ] Composer
 - [ ] Opam
 - [x] GitHub Assets
-- [ ] Download
+- [x] Download
 - [ ] Build
 
 ## Usage

@@ -129,7 +129,7 @@ pub struct Asset {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Downloads {
     Simple { file: String },
-    Detailed(Vec<Download>), // TODO: if necessary, write 'with = "one_or_many"' here
+    Detailed(Vec<Download>), // if necessary, write 'with = "one_or_many"' here
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

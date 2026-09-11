@@ -101,6 +101,7 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
 }
 
 // TODO: when these functions are ready, remove the code duplication
+// also, allow 'latest' in version spec, to get the latest version available
 pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
 

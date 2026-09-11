@@ -33,7 +33,7 @@ pub fn link_manager(
     }
 }
 
-pub fn link_asset(
+pub fn link_asset_and_download(
     entry: &ResolvedEntry,
     pkg_path: &Path,
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
@@ -47,14 +47,6 @@ pub fn link_asset(
     }
 
     Ok(map)
-}
-
-pub fn link_download(
-    entry: &ResolvedEntry,
-    downloads: &ResolvedDownloads,
-    pkg_path: &Path,
-) -> anyhow::Result<HashMap<String, PathBuf>> {
-    anyhow::bail!("todo")
 }
 
 pub fn link_build(

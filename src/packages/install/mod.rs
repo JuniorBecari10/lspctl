@@ -14,22 +14,20 @@ use colored::Colorize;
 use crate::{
     disk,
     log::{self, Format},
-    note, packages, paths,
+    note, paths,
     registry::model::{
         Asset, Build, PackageManager, ResolvedDownloads, ResolvedEntry, ResolvedVariant,
     },
     state::State,
 };
 
-// TODO: revert all steps done here if something goes wrong, including removing symlinks
-// and the move into the definitive folder
 pub fn install(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
     let tmp_pkg_path = paths::tmp_package_dir(&entry.name);
     fs::create_dir_all(&tmp_pkg_path)?;
 
     // install in tmp and move it to the definitive folder
     install_by_variant(entry, &tmp_pkg_path)?;
-    packages::util::move_package(&entry.name)?;
+    util::move_package(&entry.name)?;
 
     // make links in bin and add the entry to state
     let bins = make_links(entry, &paths::package_dir(&entry.name), &tmp_pkg_path)?;
@@ -62,8 +60,8 @@ fn make_links(
             extra_packages: _,
         } => link::link_manager(entry, *manager, pkg_path, tmp_pkg_path),
 
-        ResolvedVariant::Asset(_) => link::link_asset(entry, pkg_path),
-        ResolvedVariant::Download(downloads) => link::link_download(entry, downloads, pkg_path),
+        ResolvedVariant::Asset(_) => link::link_asset_and_download(entry, pkg_path),
+        ResolvedVariant::Download(_) => link::link_asset_and_download(entry, pkg_path),
         ResolvedVariant::Build(build) => link::link_build(entry, build, pkg_path),
     }
 }
@@ -80,7 +78,7 @@ fn install_manager(
     extra_packages: &[String],
     tmp_pkg_path: &Path,
 ) -> anyhow::Result<()> {
-    let commands = packages::util::get_install_commands(
+    let commands = util::get_install_commands(
         manager,
         &entry.source.purl.qualified_package_name(),
         &entry.source.purl.version,
@@ -89,7 +87,7 @@ fn install_manager(
     );
 
     for command in commands {
-        packages::util::run_command(command, tmp_pkg_path)?;
+        util::run_command(command, tmp_pkg_path)?;
     }
 
     Ok(())
@@ -119,7 +117,21 @@ fn install_download(
     downloads: &ResolvedDownloads,
     tmp_pkg_path: &Path,
 ) -> anyhow::Result<()> {
-    anyhow::bail!("todo")
+    match downloads {
+        // All OpenVSX-related packages
+        ResolvedDownloads::Simple { file } => {
+            util::install_openvsx(file, &entry.source.purl, tmp_pkg_path)
+        }
+
+        // Generic ones
+        ResolvedDownloads::Detailed(download) => {
+            for (local_name, url) in &download.files {
+                util::download_and_place(url, local_name, tmp_pkg_path)?;
+            }
+
+            Ok(())
+        }
+    }
 }
 
 fn install_build(entry: &ResolvedEntry, build: &Build, tmp_pkg_path: &Path) -> anyhow::Result<()> {
