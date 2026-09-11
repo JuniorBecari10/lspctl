@@ -1,6 +1,7 @@
 use std::{fmt::Display, path};
 
 use colored::{ColoredString, Colorize};
+use indicatif::ProgressStyle;
 
 /// `--> message`: major step marker. writes a '\n' before it.
 #[macro_export]
@@ -78,6 +79,8 @@ macro_rules! header {
     };
 }
 
+// ---
+
 pub trait Fatal<T> {
     fn fatal(self, message: &str) -> T;
 }
@@ -140,4 +143,14 @@ impl<'a> Format for path::Display<'a> {
     fn quote(&self) -> ColoredString {
         self.to_string().quote()
     }
+}
+
+// ---
+
+pub fn get_progress_bar(verb: &str) -> anyhow::Result<ProgressStyle> {
+    Ok(ProgressStyle::with_template(&format!(
+        "     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} ({{eta}})",
+        verb.verb()
+    ))?
+    .progress_chars("=>-"))
 }

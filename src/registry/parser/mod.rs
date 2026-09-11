@@ -1,5 +1,6 @@
 mod platform;
 pub mod template;
+mod util;
 
 use std::str::FromStr;
 
@@ -31,7 +32,11 @@ fn parse_entry(raw: RawEntry) -> anyhow::Result<Entry> {
 }
 
 fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
-    let purl: Purl = PackageUrl::from_str(&raw.id)?.try_into()?;
+    let parsed_purl: Purl = PackageUrl::from_str(&raw.id)?.try_into()?;
+    let purl = Purl {
+        version: util::extract_version(&raw.id)?,
+        ..parsed_purl
+    };
 
     Ok(Source {
         variant: parse_variant(raw.variant, purl.kind)?,

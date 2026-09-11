@@ -689,6 +689,7 @@ dependencies = [
  "logos",
  "maplit",
  "packageurl",
+ "percent-encoding",
  "regex",
  "serde",
  "serde_json",
