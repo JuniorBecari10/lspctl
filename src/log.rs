@@ -118,7 +118,7 @@ impl<T> LogPretty<T> for Option<T> {
     }
 }
 
-// --- Utility ---
+// ---
 
 pub trait Format {
     fn verb(&self) -> ColoredString;
@@ -147,6 +147,7 @@ impl<'a> Format for path::Display<'a> {
 
 // ---
 
+// TODO: make ETA green
 pub fn get_progress_bar(verb: &str) -> anyhow::Result<ProgressStyle> {
     Ok(ProgressStyle::with_template(&format!(
         "     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} ({{eta}})",
