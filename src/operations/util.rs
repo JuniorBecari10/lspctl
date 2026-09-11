@@ -231,6 +231,8 @@ fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str
     (found, missing)
 }
 
+// TODO: show similar names. be aware of checking in installed ones or the entire registry,
+// depending on the action.
 pub fn filter_print(registry: Registry, pkgs: &[String]) -> Result<Vec<Entry>, ()> {
     let (entries, missing) = filter_registry(registry, pkgs);
 

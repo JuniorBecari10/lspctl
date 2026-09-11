@@ -48,7 +48,7 @@ pub fn parse_file_spec(spec: &str) -> (&str, Option<&str>) {
     }
 }
 
-pub fn place_or_extract(
+pub fn move_or_extract(
     downloaded: &Path,
     source_name: &str,
     dest: Option<&str>,
@@ -413,19 +413,17 @@ pub fn install_openvsx(file: &str, purl: &Purl, tmp_pkg_path: &Path) -> anyhow::
         .context("OpenVSX purl missing namespace")?;
 
     let url = openvsx_url(file, purl, namespace);
-    download_and_place(&url, file, tmp_pkg_path)
+    download_and_move(&url, file, tmp_pkg_path)
 }
 
-pub fn download_and_place(url: &str, local_name: &str, tmp_pkg_path: &Path) -> anyhow::Result<()> {
+pub fn download_and_move(url: &str, source_name: &str, tmp_pkg_path: &Path) -> anyhow::Result<()> {
     note!("URL: {}", url.quote());
 
-    let scratch = tmp_pkg_path.join(format!(".download-{local_name}"));
-    let mut f = File::create(&scratch)?;
+    let tmp = tmp_pkg_path.join(format!(".download-{source_name}"));
+    let mut f = File::create(&tmp)?;
 
     disk::download_file(url, &mut f)?;
-    drop(f);
-
-    place_or_extract(&scratch, local_name, None, tmp_pkg_path)
+    move_or_extract(&tmp, source_name, None, tmp_pkg_path)
 }
 
 // ---

@@ -106,7 +106,7 @@ fn install_asset(entry: &ResolvedEntry, asset: &Asset, tmp_pkg_path: &Path) -> a
             scratch.as_file_mut(),
         )?;
 
-        util::place_or_extract(scratch.path(), source, dest, tmp_pkg_path)?;
+        util::move_or_extract(scratch.path(), source, dest, tmp_pkg_path)?;
     }
 
     Ok(())
@@ -126,7 +126,7 @@ fn install_download(
         // Generic ones
         ResolvedDownloads::Detailed(download) => {
             for (local_name, url) in &download.files {
-                util::download_and_place(url, local_name, tmp_pkg_path)?;
+                util::download_and_move(url, local_name, tmp_pkg_path)?;
             }
 
             Ok(())
