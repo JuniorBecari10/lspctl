@@ -299,8 +299,7 @@ pub fn run_command(command: InstallCommand, dir: &Path) -> anyhow::Result<()> {
 
     if !status.success() {
         anyhow::bail!(
-            "{} exited with exit code {}",
-            command_str.quote(),
+            "installer exited with exit code {}.",
             status
                 .code()
                 .map(|c| c.to_string())
