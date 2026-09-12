@@ -14,6 +14,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(
     name = consts::APP_NAME,
+    before_help = consts::BANNER,
     version = consts::APP_VERSION,
     about = consts::APP_DESC,
 )]
