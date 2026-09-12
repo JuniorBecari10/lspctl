@@ -99,6 +99,10 @@ pub fn link_luarocks(
     link(&bins, &bin_dir)
 }
 
+pub fn link_composer(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
+    link(&bins, &pkg_path.join("vendor").join("bin"))
+}
+
 // ---
 
 fn rewrite_embedded_paths(dir: &Path, old_prefix: &Path, new_prefix: &Path) -> anyhow::Result<()> {

@@ -239,7 +239,7 @@ fn wrapped_file(path: &Path) -> anyhow::Result<ProgressBarIter<File>> {
 
 pub fn get_install_commands(
     manager: PackageManager,
-    name: &str,
+    qualified_name: &str,
     version: &str,
     extra_packages: &[String],
     tmp_pkg_path: &Path,
@@ -260,7 +260,7 @@ pub fn get_install_commands(
                 },
                 InstallCommand {
                     binary: venv_pip.to_string_lossy().into_owned(),
-                    args: vec!["install".into(), format!("{name}=={version}")],
+                    args: vec!["install".into(), format!("{qualified_name}=={version}")],
                     env: hashmap! {},
                 },
             ]
@@ -268,7 +268,13 @@ pub fn get_install_commands(
 
         _ => {
             let binary = manager.get_command();
-            let args = get_install_args(manager, name, version, extra_packages, tmp_pkg_path);
+            let args = get_install_args(
+                manager,
+                qualified_name,
+                version,
+                extra_packages,
+                tmp_pkg_path,
+            );
             let env = get_install_env(manager, tmp_pkg_path);
 
             vec![InstallCommand { binary, args, env }]
@@ -314,7 +320,7 @@ pub fn run_command(command: InstallCommand, dir: &Path) -> anyhow::Result<()> {
 
 fn get_install_args(
     manager: PackageManager,
-    name: &str,
+    qualified_name: &str,
     version: &str,
     extra_packages: &[String],
     pkg_dir: &Path,
@@ -324,7 +330,7 @@ fn get_install_args(
             "install".into(),
             "--prefix".into(),
             ".".into(),
-            format!("{name}@{version}"),
+            format!("{qualified_name}@{version}"),
         ]
         .into_iter()
         .chain(extra_packages.iter().cloned())
@@ -334,7 +340,7 @@ fn get_install_args(
             "install".into(),
             "--root".into(),
             pkg_dir.to_string_lossy().into_owned(),
-            name.into(),
+            qualified_name.into(),
         ],
 
         PackageManager::Gem => vec![
@@ -343,18 +349,18 @@ fn get_install_args(
             "--install-dir".into(),
             ".".into(),
             "--no-format-executable".into(),
-            name.into(),
+            qualified_name.into(),
             "--version".into(),
             version.into(),
         ],
 
-        PackageManager::Go => vec!["install".into(), format!("{name}@{version}")],
+        PackageManager::Go => vec!["install".into(), format!("{qualified_name}@{version}")],
 
         PackageManager::LuaRocks => vec![
             "install".into(),
             "--tree".into(),
             ".".into(),
-            name.into(),
+            qualified_name.into(),
             version.into(),
         ],
 
@@ -363,15 +369,16 @@ fn get_install_args(
             "install".into(),
             "--tool-path".into(),
             ".".into(),
-            name.into(),
+            qualified_name.into(),
             "--version".into(),
             version.into(),
         ],
 
+        PackageManager::Composer => vec!["require".into(), qualified_name.into(), "--dev".into()],
+
         // handled elsewhere
         PackageManager::PyPI => unreachable!(),
 
-        PackageManager::Composer => todo!(),
         PackageManager::Opam => todo!(),
     }
 }
@@ -382,7 +389,8 @@ fn get_install_env(manager: PackageManager, pkg_dir: &Path) -> HashMap<String, S
         | PackageManager::Cargo
         | PackageManager::Gem
         | PackageManager::LuaRocks
-        | PackageManager::NuGet => hashmap! {},
+        | PackageManager::NuGet
+        | PackageManager::Composer => hashmap! {},
 
         PackageManager::Go => hashmap! {
             "GOBIN".to_string() => pkg_dir.join("bin").to_string_lossy().into_owned(),
@@ -392,7 +400,6 @@ fn get_install_env(manager: PackageManager, pkg_dir: &Path) -> HashMap<String, S
         // handled elsewhere
         PackageManager::PyPI => unreachable!(),
 
-        PackageManager::Composer => todo!(),
         PackageManager::Opam => todo!(),
     }
 }
