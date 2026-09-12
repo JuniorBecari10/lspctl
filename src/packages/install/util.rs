@@ -196,11 +196,7 @@ fn detect_archive_kind(filename: &str) -> ArchiveKind {
         ArchiveKind::TarZstd
     } else if lower.ends_with(".tar.bz2") || lower.ends_with(".tbz2") {
         ArchiveKind::TarBz2
-    } else if lower.ends_with(".zip")
-        || lower.ends_with(".vsix")
-        || lower.ends_with(".jar")
-        || lower.ends_with(".phar")
-    {
+    } else if lower.ends_with(".zip") || lower.ends_with(".vsix") || lower.ends_with(".phar") {
         ArchiveKind::Zip
     } else if lower.ends_with(".gz") {
         ArchiveKind::Gzip
