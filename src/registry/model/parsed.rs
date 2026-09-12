@@ -141,7 +141,9 @@ pub struct Download {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Build {
+    #[serde(rename = "run")]
     pub command: String,
+    #[serde(rename = "target")]
     pub targets: Vec<Platform>,
     pub bin: Option<OneOrMap>,
     pub env: Option<HashMap<String, String>>,
