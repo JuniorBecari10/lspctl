@@ -110,6 +110,12 @@ impl Entry {
                     .collect::<Vec<_>>()
                     .join(", ")
             );
+        } else {
+            println!(
+                "  {:<label_width$} {}",
+                "Bins:".dimmed(),
+                "No bins".red().bold()
+            );
         }
 
         if let Some(dep) = &self.deprecation {
