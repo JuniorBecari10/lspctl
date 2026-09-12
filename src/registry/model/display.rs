@@ -1,6 +1,9 @@
 use std::fmt::Display;
 
-use crate::registry::model::{Arch, Entry, InstallKind, Libc, Os, Platform, Variant};
+use crate::{
+    log::Format,
+    registry::model::{Arch, Entry, InstallKind, Libc, Os, Platform, Variant},
+};
 use colored::Colorize;
 
 impl Entry {
@@ -46,7 +49,7 @@ impl Entry {
         println!(
             "  {:<label_width$} {}",
             "Homepage:".dimmed(),
-            self.homepage.blue().underline()
+            self.homepage.url()
         );
 
         match installed_version {

@@ -123,6 +123,7 @@ impl<T> LogPretty<T> for Option<T> {
 pub trait Format {
     fn verb(&self) -> ColoredString;
     fn quote(&self) -> ColoredString;
+    fn url(&self) -> ColoredString;
 }
 
 impl Format for str {
@@ -133,6 +134,10 @@ impl Format for str {
     fn quote(&self) -> ColoredString {
         format!("'{}'", self.italic()).dimmed()
     }
+
+    fn url(&self) -> ColoredString {
+        self.blue().underline()
+    }
 }
 
 impl<'a> Format for path::Display<'a> {
@@ -142,6 +147,10 @@ impl<'a> Format for path::Display<'a> {
 
     fn quote(&self) -> ColoredString {
         self.to_string().quote()
+    }
+
+    fn url(&self) -> ColoredString {
+        self.to_string().url()
     }
 }
 

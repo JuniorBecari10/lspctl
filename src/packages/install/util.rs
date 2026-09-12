@@ -417,7 +417,7 @@ pub fn install_openvsx(file: &str, purl: &Purl, tmp_pkg_path: &Path) -> anyhow::
 }
 
 pub fn download_and_move(url: &str, source_name: &str, tmp_pkg_path: &Path) -> anyhow::Result<()> {
-    note!("URL: {}", url.quote());
+    note!("URL: {}", url.url());
 
     let tmp = tmp_pkg_path.join(format!(".download-{source_name}"));
     let mut f = File::create(&tmp)?;
