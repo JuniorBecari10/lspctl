@@ -156,11 +156,11 @@ impl<'a> Format for path::Display<'a> {
 
 // ---
 
-// TODO: make ETA green, and add percentage
 pub fn get_progress_bar(verb: &str) -> anyhow::Result<ProgressStyle> {
     Ok(ProgressStyle::with_template(&format!(
-        "     {} [{{bar:40.cyan/blue}}] {{bytes}}/{{total_bytes}} ({{eta}})",
-        verb.verb()
+        "     {} [{{bar:40.cyan/blue}}] {{percent:.cyan}}{} ({{bytes}}/{{total_bytes}}) {{eta:.green}}",
+        verb.verb(),
+        "%".cyan()
     ))?
-    .progress_chars("=>-"))
+    .progress_chars("━━—"))
 }
