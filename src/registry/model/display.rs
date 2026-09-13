@@ -121,10 +121,9 @@ impl Entry {
         if let Some(dep) = &self.deprecation {
             println!();
             println!(
-                "  {} {} {}: {}",
+                "  {} Deprecated since {}: {}",
                 "[!]".yellow().bold(),
-                "Deprecated since".yellow(),
-                dep.since,
+                dep.since.cyan(),
                 dep.message
             );
         }
