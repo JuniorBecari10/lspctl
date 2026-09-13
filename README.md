@@ -11,14 +11,14 @@ Version: **Beta 1.0**.
 A long time ago I primarily used Neovim for coding, and I used Mason for installing the tools I needed.
 Now, I use [Helix](https://helix-editor.com/), and now I am unable to use Mason again for installing those tools.
 From this pain, `lspctl` was born, with the goal of providing a single and standardized way for installing
-LSP servers, DAP servers, linters and formatters for _any editor_, by exposing a single binary for each
+LSP and DAP servers, linters and formatters for _any editor_, by exposing a single binary for each
 installed tool to be used by your editor.
 
 ## Why this name?
 
 `lspctl` was chosen to mirror the name of [systemd](https://systemd.io/)'s command `systemctl`,
 which controls the running services, but it's for controlling the installation of
-LSP servers, DAP servers, linters, and formatters.
+LSP and DAP servers, linters, and formatters.
 
 ## Status
 
