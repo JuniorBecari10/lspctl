@@ -1,5 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
+    fmt::Display,
     fs,
     path::Path,
     process::ExitCode,
@@ -13,7 +14,10 @@ use crate::{
     end, end_error, error, header,
     log::{self, Fatal, Format},
     note,
-    operations::prelude,
+    operations::{
+        model::{self, SearchFilter},
+        prelude,
+    },
     registry::model::{Entry, Platform, Registry},
     state::{InstalledPackage, State},
     step,
@@ -112,6 +116,46 @@ impl Marker {
             Marker::Installed => "(installed)".green(),
             Marker::NotInstalled => "(not installed)".yellow(),
         }
+    }
+}
+
+impl Display for SearchFilter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use SearchFilter::*;
+        match self {
+            Name => write!(f, "name"),
+            Version => write!(f, "version"),
+            Description => write!(f, "description"),
+            License => write!(f, "license"),
+            Language => write!(f, "language"),
+            Category => write!(f, "category"),
+            Source => write!(f, "source"),
+        }
+    }
+}
+
+pub struct SearchQuery {
+    pub pattern: Regex,
+    pub filters: Vec<SearchFilter>,
+}
+
+impl SearchQuery {
+    fn matches(&self, entry: &Entry) -> bool {
+        let active: &[SearchFilter] = if self.filters.is_empty() {
+            &[SearchFilter::Name] // only names; default behavior
+        } else {
+            &self.filters
+        };
+
+        active.iter().any(|f| match f {
+            SearchFilter::Name => self.pattern.is_match(&entry.name),
+            SearchFilter::Version => self.pattern.is_match(&entry.source.purl.version),
+            SearchFilter::Description => self.pattern.is_match(&entry.description),
+            SearchFilter::License => entry.licenses.iter().any(|l| self.pattern.is_match(l)),
+            SearchFilter::Language => entry.languages.iter().any(|l| self.pattern.is_match(l)),
+            SearchFilter::Category => entry.categories.iter().any(|c| self.pattern.is_match(c)),
+            SearchFilter::Source => self.pattern.is_match(&entry.source.purl.kind.to_string()),
+        })
     }
 }
 
@@ -274,7 +318,11 @@ pub fn write_entries(
     }
 }
 
-pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) -> OperationResult {
+pub fn list_packages(
+    installed: bool,
+    verbose: bool,
+    query: Option<SearchQuery>,
+) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
 
     let entries: Vec<Entry> = if installed {
@@ -289,19 +337,42 @@ pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) ->
         registry.0
     };
 
-    let entries: Vec<Entry> = match pattern {
-        Some(re) => entries
-            .into_iter()
-            .filter(|e| re.is_match(&e.name))
-            .collect(),
+    let entries: Vec<Entry> = match query {
+        Some(ref q) => entries.into_iter().filter(|e| q.matches(e)).collect(),
         None => entries,
     };
 
     if entries.is_empty() {
-        let msg = match (installed, pattern) {
-            (true, Some(p)) => format!("No installed packages match {}.", p.as_str().quote()),
+        let field_suffix = query
+            .as_ref()
+            .and_then(|q| {
+                if q.filters.is_empty() {
+                    None
+                } else {
+                    Some(
+                        q.filters
+                            .iter()
+                            .map(ToString::to_string)
+                            .collect::<Vec<_>>()
+                            .join(", "),
+                    )
+                }
+            })
+            .map(|f| format!(" in {f}"))
+            .unwrap_or_default();
+
+        let msg = match (installed, query) {
+            (true, Some(q)) => format!(
+                "No installed packages match '{}'{field_suffix}.",
+                q.pattern.as_str()
+            ),
             (true, None) => "There are no packages installed.".to_string(),
-            (false, Some(p)) => format!("No packages match {}.", p.as_str().quote()),
+            (false, Some(q)) => {
+                format!(
+                    "No packages match {}{field_suffix}.",
+                    q.pattern.as_str().quote()
+                )
+            }
             (false, None) => "No packages found.".to_string(),
         };
 
@@ -309,7 +380,7 @@ pub fn list_packages(installed: bool, verbose: bool, pattern: Option<&Regex>) ->
         return OperationResult::Success;
     }
 
-    let header_text = match (installed, pattern.is_some()) {
+    let header_text = match (installed, query.is_some()) {
         (true, true) => "All matching installed packages:\n",
         (true, false) => "Installed packages:\n",
         (false, true) => "All matching packages:\n",

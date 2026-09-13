@@ -1,4 +1,4 @@
-use clap::{Args, Subcommand};
+use clap::{Args, Subcommand, ValueEnum};
 
 // TODO: add '--all' here?
 #[derive(Args, Debug)]
@@ -39,12 +39,27 @@ pub struct ListArgs {
     pub verbose: bool,
 }
 
-// TODO: search by description, license, bins.. or any combination of them
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SearchFilter {
+    Name,
+    Version,
+    Description,
+    License,
+    Language,
+    Category,
+    Source,
+}
+
 #[derive(Args, Debug)]
 pub struct SearchArgs {
     /// The regex pattern to search
     #[arg(required = true)]
     pub pattern: String,
+
+    /// Fields to search; matches if the pattern matches any of the given fields.
+    /// Defaults to name only if omitted.
+    #[arg(short, long, value_enum, num_args = 1..)]
+    pub filters: Vec<SearchFilter>,
 
     /// List installed packages instead
     #[arg(short, long)]
@@ -54,7 +69,6 @@ pub struct SearchArgs {
     #[arg(short, long)]
     pub verbose: bool,
 }
-
 #[derive(Args, Debug)]
 pub struct InfoArgs {
     /// List of packages to list information about

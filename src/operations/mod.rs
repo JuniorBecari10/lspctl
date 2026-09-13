@@ -8,7 +8,7 @@ use crate::{
     operations::{
         markers::Selection,
         model::{DeleteFlags, RegistrySetVersionArgs, RegistrySyncArgs},
-        util::{Action, OperationResult, PackageSelection},
+        util::{Action, OperationResult, PackageSelection, SearchQuery},
     },
     paths,
     registry::model::Entry,
@@ -59,7 +59,14 @@ pub fn search(args: model::SearchArgs) -> OperationResult {
         }
     };
 
-    util::list_packages(args.installed, args.verbose, Some(&pattern))
+    util::list_packages(
+        args.installed,
+        args.verbose,
+        Some(SearchQuery {
+            pattern,
+            filters: args.filters,
+        }),
+    )
 }
 
 pub fn info(args: model::InfoArgs) -> OperationResult {
