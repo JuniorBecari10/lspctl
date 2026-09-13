@@ -43,8 +43,10 @@ pub struct ListArgs {
 pub enum SearchFilter {
     Name,
     Version,
+    #[value(alias = "desc")]
     Description,
     License,
+    #[value(alias = "lang")]
     Language,
     Category,
     Source,
