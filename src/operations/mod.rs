@@ -72,7 +72,8 @@ pub fn search(args: model::SearchArgs) -> OperationResult {
 pub fn info(args: model::InfoArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
 
-    let Ok(entries) = util::filter_print(registry, &args.pkgs) else {
+    let pool: Vec<_> = registry.0.iter().map(|e| e.name.clone()).collect();
+    let Ok(entries) = util::filter_print(registry, &args.pkgs, &pool) else {
         return OperationResult::Failure;
     };
 
@@ -109,11 +110,13 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
 
 // TODO: when these functions are ready, remove the code duplication
 // also, allow 'latest' in version spec, to get the latest version available
+// if the registry is already the latest version, show a message about that,
+// if the spec is 'latest' or matches the latest one available.
 pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
 
     // just to filter out packages that don't exist
-    let Ok(_) = util::filter_print(registry, &args.selection.pkgs) else {
+    let Ok(_) = util::filter_print(registry, &args.selection.pkgs, &[]) else {
         return OperationResult::Failure;
     };
 
@@ -122,13 +125,15 @@ pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
 }
 
 pub fn registry_sync(args: RegistrySyncArgs) -> OperationResult {
-    let (registry, _, state, _lock) = prelude::prelude();
+    let Some(selection) = args.selection.to_package_selection() else {
+        end_error!(
+            "Specify {} / {} or one or more package names to sync.",
+            "-a".quote(),
+            "--all".quote()
+        );
 
-    // just to filter out packages that don't exist
-    let Ok(_) = util::filter_print(registry, &args.selection.pkgs) else {
         return OperationResult::Failure;
     };
 
-    let selection = args.selection.to_package_selection(); // not mandatory to specify packages
-    todo!()
+    util::sync_packages(selection, args.yes)
 }

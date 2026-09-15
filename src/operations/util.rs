@@ -9,12 +9,14 @@ use std::{
 use colored::Colorize;
 use dialoguer::Confirm;
 use regex::Regex;
+use strsim::jaro_winkler;
 
 use crate::{
     end, end_error, error, header,
     log::{self, Fatal, Format},
     note,
     operations::{
+        logic,
         model::{self, SearchFilter},
         prelude,
     },
@@ -108,6 +110,7 @@ impl Action {
 enum Marker {
     Installed,
     NotInstalled,
+    Matches,
 }
 
 impl Marker {
@@ -115,6 +118,7 @@ impl Marker {
         match self {
             Marker::Installed => "(installed)".green(),
             Marker::NotInstalled => "(not installed)".yellow(),
+            Marker::Matches => "(matches registry)".green(),
         }
     }
 }
@@ -157,6 +161,23 @@ impl SearchQuery {
             SearchFilter::Source => self.pattern.is_match(&entry.source.purl.kind.to_string()),
         })
     }
+}
+
+const SUGGESTION_THRESHOLD: f64 = 0.7;
+const MAX_SUGGESTIONS: usize = 3;
+
+fn suggest_similar<'a>(name: &str, pool: impl Iterator<Item = &'a str>) -> Vec<&'a str> {
+    let mut scored: Vec<(f64, &str)> = pool
+        .map(|candidate| (jaro_winkler(name, candidate), candidate))
+        .filter(|(score, _)| *score >= SUGGESTION_THRESHOLD)
+        .collect();
+
+    scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+    scored
+        .into_iter()
+        .take(MAX_SUGGESTIONS)
+        .map(|(_, n)| n)
+        .collect()
 }
 
 fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State) -> bool {
@@ -202,7 +223,12 @@ pub fn run_action(
         return OperationResult::Success;
     }
 
-    let Ok(entries) = filter_print(registry, &pkgs) else {
+    let installed_pool: Vec<_> = match action {
+        Action::Install => registry.0.iter().map(|e| e.name.clone()).collect(),
+        Action::Remove => state.installed.keys().cloned().collect(),
+    };
+
+    let Ok(entries) = filter_print(registry, &pkgs, &installed_pool) else {
         return OperationResult::Failure;
     };
 
@@ -275,20 +301,32 @@ fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str
     (found, missing)
 }
 
-// TODO: show similar names. be aware of checking in installed ones or the entire registry,
-// depending on the action.
-pub fn filter_print(registry: Registry, pkgs: &[String]) -> Result<Vec<Entry>, ()> {
+pub fn filter_print(
+    registry: Registry,
+    pkgs: &[String],
+    suggest_pool: &[String],
+) -> Result<Vec<Entry>, ()> {
     let (entries, missing) = filter_registry(registry, pkgs);
 
     if missing.is_empty() {
-        Ok(entries)
-    } else {
-        for m in missing {
-            end_error!("Package {} doesn't exist.", m.quote());
-        }
-
-        Err(())
+        return Ok(entries);
     }
+
+    for m in missing {
+        let suggestions = suggest_similar(m, suggest_pool.iter().map(String::as_str));
+        if suggestions.is_empty() {
+            end_error!("Package {} doesn't exist.", m.quote());
+        } else {
+            let list = suggestions
+                .iter()
+                .map(|s| s.quote().to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            end_error!("Package {} doesn't exist. Did you mean: {list}?", m.quote());
+        }
+    }
+    Err(())
 }
 
 const fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a str {
@@ -327,8 +365,9 @@ pub fn list_packages(
 
     let entries: Vec<Entry> = if installed {
         let keys = state.installed.keys().cloned().collect::<Vec<_>>();
+        let pool: Vec<_> = registry.0.iter().map(|e| e.name.clone()).collect();
 
-        let Ok(found) = filter_print(registry, keys.as_slice()) else {
+        let Ok(found) = filter_print(registry, keys.as_slice(), &pool) else {
             return OperationResult::Failure;
         };
 
@@ -391,6 +430,81 @@ pub fn list_packages(
 
     write_entries(&entries, verbose, &state.installed, !installed);
     OperationResult::Success
+}
+
+pub fn sync_packages(selection: PackageSelection, yes: bool) -> OperationResult {
+    let (registry, platform, mut state, _lock) = prelude::prelude();
+
+    let pkgs = match selection {
+        PackageSelection::Specific(items) => items,
+        PackageSelection::All => state.installed.keys().cloned().collect(),
+    };
+
+    if pkgs.is_empty() {
+        end!("There are no packages to sync.");
+        return OperationResult::Success;
+    }
+
+    let Ok(entries) = filter_print(registry, &pkgs, &pkgs) else {
+        return OperationResult::Failure;
+    };
+
+    header!("List of packages to sync ({}):", entries.len());
+
+    print_entries(&entries, |e| {
+        let outdated = state
+            .installed
+            .get(&e.name)
+            .is_some_and(|installed| installed.version == e.source.purl.version);
+        outdated.then_some(Marker::Matches)
+    });
+
+    if !confirm_action("Proceed with sync?", yes) {
+        return OperationResult::Success;
+    }
+
+    let (mut ok_count, mut err_count, mut skip_count) = (0, 0, 0);
+
+    for entry in entries {
+        let name = entry.name.clone();
+        let up_to_date = state
+            .installed
+            .get(&name)
+            .is_some_and(|installed| installed.version == entry.source.purl.version);
+
+        if up_to_date {
+            step!(
+                "Package {} is already up to date. Skipping...",
+                name.quote()
+            );
+
+            skip_count += 1;
+            continue;
+        }
+
+        step!("Syncing package {}...", name.quote());
+        match logic::install_pkg(entry, &platform, &mut state) {
+            Ok(()) => {
+                end!("Package synced successfully.");
+                ok_count += 1;
+            }
+            Err(e) => {
+                error!("Failed to sync {}: {e}", name.quote());
+                err_count += 1;
+            }
+        }
+    }
+
+    let ok_plural = plural(ok_count, "package", "packages");
+    header!(
+        "Successfully synced {ok_count} {ok_plural}. {err_count} had errors. {skip_count} already up to date."
+    );
+
+    if err_count == 0 {
+        OperationResult::Success
+    } else {
+        OperationResult::Failure
+    }
 }
 
 fn print_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>) {

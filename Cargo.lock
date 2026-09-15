@@ -693,6 +693,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "strsim",
  "tar",
  "tempfile",
  "time",
