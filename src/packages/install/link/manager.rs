@@ -1,6 +1,11 @@
 use anyhow::Context;
 
-use crate::{disk, log::Format, packages::install::link::asset::write_shim, paths};
+use crate::{
+    disk,
+    log::Format,
+    packages::{install::link::asset::write_shim, link::util},
+    paths,
+};
 use std::{
     collections::HashMap,
     fs,
@@ -95,30 +100,10 @@ pub fn link_luarocks(
 ) -> anyhow::Result<HashMap<String, PathBuf>> {
     let bin_dir = pkg_path.join("bin");
 
-    rewrite_embedded_paths(&bin_dir, staging_path, pkg_path)?;
+    util::rewrite_embedded_paths(&bin_dir, staging_path, pkg_path)?;
     link(&bins, &bin_dir)
 }
 
 pub fn link_composer(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
     link(&bins, &pkg_path.join("vendor").join("bin"))
-}
-
-// ---
-
-fn rewrite_embedded_paths(dir: &Path, old_prefix: &Path, new_prefix: &Path) -> anyhow::Result<()> {
-    let old = old_prefix.to_string_lossy();
-    let new = new_prefix.to_string_lossy();
-
-    for file in disk::list_files(dir)? {
-        let contents = fs::read_to_string(&file)
-            .with_context(|| format!("Failed to read {}", file.display().quote()))?;
-
-        if contents.contains(old.as_ref()) {
-            let fixed = contents.replace(old.as_ref(), new.as_ref());
-            fs::write(&file, fixed)
-                .with_context(|| format!("Failed to rewrite {}", file.display().quote()))?;
-        }
-    }
-
-    Ok(())
 }

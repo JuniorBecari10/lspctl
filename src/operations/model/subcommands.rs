@@ -63,6 +63,7 @@ impl Action {
         }
     }
 
+    // TODO: also check version
     pub fn should_skip(&self, state: &State, entry: &Entry) -> bool {
         match self {
             Action::Install => state.package_exists(&entry.name),

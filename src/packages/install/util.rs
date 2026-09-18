@@ -435,6 +435,23 @@ pub fn move_package(name: &str) -> anyhow::Result<()> {
     let from = paths::tmp_dir().join(name);
     let to = paths::packages_dir().join(name);
 
-    fs::rename(from, to)?;
+    commit_package(&from, &to)?;
+    Ok(())
+}
+
+fn commit_package(staging: &Path, final_dir: &Path) -> anyhow::Result<()> {
+    if final_dir.exists() {
+        let old = final_dir.with_extension("old");
+
+        if old.exists() {
+            fs::remove_dir_all(&old)?; // stale leftover from an earlier interrupted commit
+        }
+
+        fs::rename(final_dir, &old)?; // whatever version is currently there, moved aside
+        fs::rename(staging, final_dir)?; // the newly-fetched version moved in. target is now empty
+        fs::remove_dir_all(&old)?; // old version cleaned up
+    } else {
+        fs::rename(staging, final_dir)?; // first-ever install of this package; nothing to overwrite
+    }
     Ok(())
 }

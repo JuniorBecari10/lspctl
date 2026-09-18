@@ -2,6 +2,7 @@
 
 pub mod asset;
 mod manager;
+mod util;
 
 use std::{
     collections::HashMap,
