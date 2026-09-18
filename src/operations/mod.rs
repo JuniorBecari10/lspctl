@@ -7,8 +7,8 @@ use crate::{
     log::Format,
     operations::{
         markers::Selection,
+        model::{Action, OperationResult, PackageSelection, SearchQuery},
         model::{DeleteFlags, RegistrySetVersionArgs, RegistrySyncArgs},
-        util::{Action, OperationResult, PackageSelection, SearchQuery},
     },
     paths,
     registry::model::Entry,
@@ -20,10 +20,11 @@ mod logic;
 mod markers;
 pub mod model;
 mod prelude;
+mod subcommands;
 pub mod util;
 
 pub fn install(args: model::InstallArgs) -> OperationResult {
-    util::run_action(
+    subcommands::run_action(
         PackageSelection::Specific(args.pkgs),
         args.yes,
         Action::Install,
@@ -42,11 +43,11 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
         return OperationResult::Failure;
     };
 
-    util::run_action(selection, args.yes, Action::Remove, logic::remove_pkg)
+    subcommands::run_action(selection, args.yes, Action::Remove, logic::remove_pkg)
 }
 
 pub fn list(args: model::ListArgs) -> OperationResult {
-    util::list_packages(args.installed, args.verbose, None)
+    subcommands::list_packages(args.installed, args.verbose, None)
 }
 
 pub fn search(args: model::SearchArgs) -> OperationResult {
@@ -59,7 +60,7 @@ pub fn search(args: model::SearchArgs) -> OperationResult {
         }
     };
 
-    util::list_packages(
+    subcommands::list_packages(
         args.installed,
         args.verbose,
         Some(SearchQuery {
@@ -73,7 +74,7 @@ pub fn info(args: model::InfoArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
 
     let pool: Vec<_> = registry.0.iter().map(|e| e.name.clone()).collect();
-    let Ok(entries) = util::filter_print(registry, &args.pkgs, &pool) else {
+    let Ok(entries) = util::filter_registry_print(registry, &args.pkgs, &pool) else {
         return OperationResult::Failure;
     };
 
@@ -87,7 +88,7 @@ pub fn info(args: model::InfoArgs) -> OperationResult {
 }
 
 pub fn delete_lockfile(flags: DeleteFlags) -> OperationResult {
-    util::delete_action(
+    subcommands::delete_action(
         &paths::lock_file(),
         "Lockfile is already not present.",
         "This should only be used when the program is in a deadlock and no other instances are running.",
@@ -98,7 +99,7 @@ pub fn delete_lockfile(flags: DeleteFlags) -> OperationResult {
 }
 
 pub fn delete_all(flags: DeleteFlags) -> OperationResult {
-    util::delete_action(
+    subcommands::delete_action(
         &paths::root_dir(),
         "All data is already not present.",
         &format!("This will delete all data related to {}.", consts::APP_NAME),
@@ -116,7 +117,7 @@ pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
 
     // just to filter out packages that don't exist
-    let Ok(_) = util::filter_print(registry, &args.selection.pkgs, &[]) else {
+    let Ok(_) = util::filter_registry_print(registry, &args.selection.pkgs, &[]) else {
         return OperationResult::Failure;
     };
 
@@ -135,5 +136,5 @@ pub fn registry_sync(args: RegistrySyncArgs) -> OperationResult {
         return OperationResult::Failure;
     };
 
-    util::sync_packages(selection, args.yes)
+    subcommands::sync_packages(selection, args.yes)
 }

@@ -1,4 +1,4 @@
-use crate::operations::{model, util::PackageSelection};
+use crate::operations::model::{self, PackageSelection};
 
 pub trait Selection {
     fn pkgs(&self) -> &[String];

@@ -2,11 +2,11 @@ use crate::{
     consts,
     operations::{
         self,
+        model::OperationResult,
         model::{
             DeleteArgs, DeleteSubcommand, InfoArgs, InstallArgs, ListArgs, RegistrySubcommand,
             RemoveArgs, SearchArgs,
         },
-        util::OperationResult,
     },
 };
 use clap::{Parser, Subcommand};
