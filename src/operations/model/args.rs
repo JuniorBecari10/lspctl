@@ -103,6 +103,7 @@ pub struct DeleteFlags {
     pub yes: bool,
 }
 
+// TODO: add 'update' to set the registry version to latest and sync packages (sv latest --all)
 #[derive(Subcommand, Debug)]
 pub enum RegistrySubcommand {
     /// Set the registry version with optional package syncing

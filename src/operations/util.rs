@@ -49,7 +49,7 @@ pub fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State
     );
 
     list_entries(pkgs, |e| {
-        action.should_skip(state, &e.name).then(|| action.marker())
+        action.should_skip(state, e).then(|| action.marker())
     });
 
     confirm_action(&format!("Proceed with {}?", action.noun()), yes)

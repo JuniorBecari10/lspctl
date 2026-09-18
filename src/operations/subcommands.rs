@@ -34,7 +34,7 @@ pub fn run_action(
 
     let installed_pool: Vec<_> = match action {
         Action::Install => registry.0.iter().map(|e| e.name.clone()).collect(),
-        Action::Remove => state.installed.keys().cloned().collect(),
+        Action::Remove | Action::Sync => state.installed.keys().cloned().collect(),
     };
 
     let Ok(entries) = util::filter_registry_print(registry, &pkgs, &installed_pool) else {
@@ -48,7 +48,7 @@ pub fn run_action(
     let (mut ok_count, mut err_count, mut skip_count) = (0, 0, 0);
 
     for pkg in entries {
-        if action.should_skip(&state, &pkg.name) {
+        if action.should_skip(&state, &pkg) {
             step!(
                 "Package {} {}. Skipping...",
                 pkg.name.quote(),
@@ -165,80 +165,11 @@ pub fn list_packages(
     util::write_entries(&entries, verbose, &state.installed, !installed);
     OperationResult::Success
 }
+
 pub fn sync_packages(selection: PackageSelection, yes: bool) -> OperationResult {
-    let (registry, platform, mut state, _lock) = prelude::prelude();
-
-    let pkgs = match selection {
-        PackageSelection::Specific(items) => items,
-        PackageSelection::All => state.installed.keys().cloned().collect(),
-    };
-
-    if pkgs.is_empty() {
-        end!("There are no packages to sync.");
-        return OperationResult::Success;
-    }
-
-    let Ok(entries) = util::filter_registry_print(registry, &pkgs, &pkgs) else {
-        return OperationResult::Failure;
-    };
-
-    header!("List of packages to sync ({}):", entries.len());
-
-    util::list_entries(&entries, |e| {
-        let outdated = state
-            .installed
-            .get(&e.name)
-            .is_some_and(|installed| installed.version == e.source.purl.version);
-        outdated.then_some(Marker::Matches)
-    });
-
-    if !util::confirm_action("Proceed with sync?", yes) {
-        return OperationResult::Success;
-    }
-
-    let (mut ok_count, mut err_count, mut skip_count) = (0, 0, 0);
-
-    for entry in entries {
-        let name = entry.name.clone();
-        let up_to_date = state
-            .installed
-            .get(&name)
-            .is_some_and(|installed| installed.version == entry.source.purl.version);
-
-        if up_to_date {
-            step!(
-                "Package {} is already up to date. Skipping...",
-                name.quote()
-            );
-
-            skip_count += 1;
-            continue;
-        }
-
-        step!("Syncing package {}...", name.quote());
-        match logic::install_pkg(entry, &platform, &mut state) {
-            Ok(()) => {
-                end!("Package synced successfully.");
-                ok_count += 1;
-            }
-            Err(e) => {
-                error!("Failed to sync {}: {e}", name.quote());
-                err_count += 1;
-            }
-        }
-    }
-
-    let ok_plural = util::plural(ok_count, "package", "packages");
-    header!(
-        "Successfully synced {ok_count} {ok_plural}. {err_count} had errors. {skip_count} already up to date."
-    );
-
-    if err_count == 0 {
-        OperationResult::Success
-    } else {
-        OperationResult::Failure
-    }
+    run_action(selection, yes, Action::Sync, logic::install_pkg)
 }
+
 pub fn delete_action(
     path: &Path,
     already_absent_msg: &str,

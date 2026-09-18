@@ -27,6 +27,7 @@ impl From<OperationResult> for ExitCode {
 pub enum Action {
     Install,
     Remove,
+    Sync,
 }
 
 impl Action {
@@ -34,6 +35,7 @@ impl Action {
         match self {
             Action::Install => "install",
             Action::Remove => "remove",
+            Action::Sync => "sync",
         }
     }
 
@@ -41,6 +43,7 @@ impl Action {
         match self {
             Action::Install => "Installing",
             Action::Remove => "Removing",
+            Action::Sync => "Syncing",
         }
     }
 
@@ -48,6 +51,7 @@ impl Action {
         match self {
             Action::Install => "installed",
             Action::Remove => "removed",
+            Action::Sync => "synced",
         }
     }
 
@@ -55,13 +59,18 @@ impl Action {
         match self {
             Action::Install => "installation",
             Action::Remove => "removal",
+            Action::Sync => "sync",
         }
     }
 
-    pub fn should_skip(&self, state: &State, name: &str) -> bool {
+    pub fn should_skip(&self, state: &State, entry: &Entry) -> bool {
         match self {
-            Action::Install => state.package_exists(name),
-            Action::Remove => !state.package_exists(name),
+            Action::Install => state.package_exists(&entry.name),
+            Action::Remove => !state.package_exists(&entry.name),
+            Action::Sync => state
+                .installed
+                .get(&entry.name)
+                .is_some_and(|installed| installed.version == entry.source.purl.version),
         }
     }
 
@@ -69,6 +78,7 @@ impl Action {
         match self {
             Action::Install => "is already installed",
             Action::Remove => "is already not installed",
+            Action::Sync => "is already synced",
         }
     }
 
@@ -76,6 +86,7 @@ impl Action {
         match self {
             Action::Install => "already installed",
             Action::Remove => "already not installed",
+            Action::Sync => "already synced",
         }
     }
 
@@ -83,6 +94,7 @@ impl Action {
         match self {
             Action::Install => Marker::Installed,
             Action::Remove => Marker::NotInstalled,
+            Action::Sync => Marker::Matches,
         }
     }
 }
@@ -98,7 +110,7 @@ impl Marker {
         match self {
             Marker::Installed => "(installed)".green(),
             Marker::NotInstalled => "(not installed)".yellow(),
-            Marker::Matches => "(matches registry)".green(),
+            Marker::Matches => "(synced)".green(),
         }
     }
 }
