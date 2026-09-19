@@ -48,9 +48,10 @@ pub fn run_action(
     }
 
     let (mut ok_count, mut err_count, mut skip_count) = (0, 0, 0);
+    let not_forced = matches!(action, Action::Install) && !force; // only applies to install
 
     for pkg in entries {
-        if !force && action.should_skip(&state, &pkg) {
+        if not_forced && action.should_skip(&state, &pkg) {
             step!(
                 "Package {} {}. Skipping...",
                 pkg.name.quote(),
