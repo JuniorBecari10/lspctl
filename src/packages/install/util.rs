@@ -443,8 +443,10 @@ pub fn commit_package(name: &str, previous: Option<&InstalledPackage>) -> anyhow
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
 
                 Err(e) => {
-                    return Err(e)
-                        .context(format!("failed to remove old shim {}", shim_path.display()));
+                    return Err(e).context(format!(
+                        "failed to remove old shim {}",
+                        shim_path.display().quote()
+                    ));
                 }
             }
         }

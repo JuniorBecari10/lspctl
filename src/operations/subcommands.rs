@@ -14,6 +14,7 @@ use crate::{
     step,
 };
 
+// TODO: make the force flag visual in installer
 pub fn run_action(
     selection: PackageSelection,
     yes: bool,
