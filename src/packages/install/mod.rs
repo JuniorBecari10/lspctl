@@ -27,7 +27,7 @@ pub fn install(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
 
     // install in tmp and move it to the definitive folder
     install_by_variant(entry, &tmp_pkg_path)?;
-    util::move_package(&entry.name)?;
+    util::commit_package(&entry.name, state.get_entry(&entry.name))?;
 
     // make links in bin and add the entry to state
     let bins = make_links(entry, &paths::package_dir(&entry.name), &tmp_pkg_path)?;

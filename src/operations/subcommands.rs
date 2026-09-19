@@ -17,6 +17,7 @@ use crate::{
 pub fn run_action(
     selection: PackageSelection,
     yes: bool,
+    force: bool,
     action: Action,
     op: fn(Entry, &Platform, &mut State) -> anyhow::Result<()>,
 ) -> OperationResult {
@@ -48,7 +49,7 @@ pub fn run_action(
     let (mut ok_count, mut err_count, mut skip_count) = (0, 0, 0);
 
     for pkg in entries {
-        if action.should_skip(&state, &pkg) {
+        if !force && action.should_skip(&state, &pkg) {
             step!(
                 "Package {} {}. Skipping...",
                 pkg.name.quote(),
@@ -90,6 +91,7 @@ pub fn run_action(
     }
 }
 
+// TODO: get data from installed packages only when listing or fetching data locally
 pub fn list_packages(
     installed: bool,
     verbose: bool,
@@ -167,7 +169,7 @@ pub fn list_packages(
 }
 
 pub fn sync_packages(selection: PackageSelection, yes: bool) -> OperationResult {
-    run_action(selection, yes, Action::Sync, logic::install_pkg)
+    run_action(selection, yes, true, Action::Sync, logic::install_pkg)
 }
 
 pub fn delete_action(

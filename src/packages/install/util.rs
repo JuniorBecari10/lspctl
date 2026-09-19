@@ -17,6 +17,7 @@ use crate::{
     log::{self, Format},
     note, paths,
     registry::model::{PackageManager, Purl},
+    state::InstalledPackage,
 };
 
 enum ArchiveKind {
@@ -431,10 +432,37 @@ pub fn download_and_move(url: &str, source_name: &str, tmp_pkg_path: &Path) -> a
 // ---
 
 // This MUST be atomic.
-pub fn move_package(name: &str) -> anyhow::Result<()> {
+pub fn commit_package(name: &str, previous: Option<&InstalledPackage>) -> anyhow::Result<()> {
     let from = paths::tmp_dir().join(name);
     let to = paths::packages_dir().join(name);
 
-    fs::rename(from, to)?;
+    if let Some(old) = previous {
+        for shim_path in old.bin.values() {
+            match fs::remove_file(shim_path) {
+                Ok(()) => {}
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+
+                Err(e) => {
+                    return Err(e)
+                        .context(format!("failed to remove old shim {}", shim_path.display()));
+                }
+            }
+        }
+    }
+
+    if to.exists() {
+        let old_dir = to.with_extension("old");
+
+        if old_dir.exists() {
+            fs::remove_dir_all(&old_dir)?; // stale leftover from an earlier interrupted commit
+        }
+
+        fs::rename(&to, &old_dir)?;
+        fs::rename(from, to)?;
+        fs::remove_dir_all(&old_dir)?;
+    } else {
+        fs::rename(from, to)?;
+    }
+
     Ok(())
 }
