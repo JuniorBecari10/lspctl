@@ -14,7 +14,7 @@ use crate::{
     registry::model::Entry,
 };
 
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 
 mod logic;
 mod markers;
@@ -58,7 +58,10 @@ pub fn list(args: model::ListArgs) -> OperationResult {
 }
 
 pub fn search(args: model::SearchArgs) -> OperationResult {
-    let pattern = match Regex::new(&args.pattern) {
+    let pattern = match RegexBuilder::new(&args.pattern)
+        .case_insensitive(true)
+        .build()
+    {
         Ok(re) => re,
 
         Err(e) => {
