@@ -63,7 +63,7 @@ pub struct SearchArgs {
     pub pattern: String,
 
     /// Fields to search; matches if the pattern matches any of the given fields.
-    /// Defaults to name only if omitted.
+    /// Defaults to 'name' if omitted.
     #[arg(short, long, value_enum, num_args = 1..)]
     pub filters: Vec<SearchFilter>,
 
