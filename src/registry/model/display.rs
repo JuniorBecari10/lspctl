@@ -60,7 +60,7 @@ impl Entry {
                     self.source.purl.version
                 );
 
-                println!("  {:<label_width$} {}", "Installed Version:", ver);
+                println!("  {:<label_width$} {}", "Installed Version:".dimmed(), ver);
             }
 
             Some(_) => println!(
