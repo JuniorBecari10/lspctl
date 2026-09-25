@@ -171,6 +171,7 @@ impl Display for Arch {
         }
     }
 }
+
 impl Display for Libc {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
