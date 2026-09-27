@@ -21,6 +21,17 @@ impl Entry {
             SHORT_WIDTH
         };
 
+        let field = |label: &str, value: &str| {
+            println!("  {:<label_width$} {}", format!("{label}:").dimmed(), value);
+        };
+        let list_field = |label: &str, items: &[String], empty_label: &str| {
+            if items.is_empty() {
+                field(label, &empty_label.red().bold().to_string());
+            } else {
+                field(label, &items.join(", "));
+            }
+        };
+
         if self.deprecation.is_some() {
             println!("{}", self.name.bold().strikethrough());
         } else {
@@ -46,76 +57,35 @@ impl Entry {
             println!();
         }
 
-        println!(
-            "  {:<label_width$} {}",
-            "Homepage:".dimmed(),
-            self.homepage.url()
-        );
+        field("Homepage", &self.homepage.url().to_string());
 
         match installed_version {
             Some(ver) if needs_two_versions => {
-                println!(
-                    "  {:<label_width$} {}",
-                    "Registry Version:".dimmed(),
-                    self.source.purl.version
-                );
-
-                println!("  {:<label_width$} {}", "Installed Version:".dimmed(), ver);
+                field("Registry Version", &self.source.purl.version);
+                field("Installed Version", &ver);
             }
-
-            Some(_) => println!(
-                "  {:<label_width$} {}  {}",
-                "Version:".dimmed(),
-                self.source.purl.version,
-                "(matches registry)".green()
+            Some(_) => field(
+                "Version",
+                &format!(
+                    "{}  {}",
+                    self.source.purl.version,
+                    "(matches registry)".green()
+                ),
             ),
-
-            None => println!(
-                "  {:<label_width$} {}",
-                "Version:".dimmed(),
-                self.source.purl.version
-            ),
+            None => field("Version", &self.source.purl.version),
         };
 
-        println!(
-            "  {:<label_width$} {}",
-            "Source:".dimmed(),
-            self.source.purl.kind
-        );
+        field("Source", &self.source.purl.kind.to_string());
+        list_field("Licenses", &self.licenses, "No licenses");
+        list_field("Languages", &self.languages, "No languages");
+        list_field("Categories", &self.categories, "No categories");
 
-        println!(
-            "  {:<label_width$} {}",
-            "Licenses:".dimmed(),
-            self.licenses.join(", ")
-        );
-
-        println!(
-            "  {:<label_width$} {}",
-            "Languages:".dimmed(),
-            self.languages.join(", ")
-        );
-
-        println!(
-            "  {:<label_width$} {}",
-            "Categories:".dimmed(),
-            self.categories.join(", ")
-        );
-
-        if let Some(bins) = &self.bin {
-            println!(
-                "  {:<label_width$} {}",
-                "Bins:".dimmed(),
-                bins.keys()
-                    .map(String::as_str)
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            );
-        } else {
-            println!(
-                "  {:<label_width$} {}",
-                "Bins:".dimmed(),
-                "No bins".red().bold()
-            );
+        match &self.bin {
+            Some(bins) => {
+                let names: Vec<String> = bins.keys().cloned().collect();
+                list_field("Bins", &names, "No bins");
+            }
+            None => field("Bins", &"No bins".red().bold().to_string()),
         }
 
         if let Some(dep) = &self.deprecation {
