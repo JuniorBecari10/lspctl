@@ -1,27 +1,14 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fmt::Display,
-    fs,
-    path::Path,
-    process::ExitCode,
-};
+use std::collections::{HashMap, HashSet};
 
 use colored::Colorize;
 use dialoguer::Confirm;
-use regex::Regex;
 
 use crate::{
-    end, end_error, error, header,
-    log::{self, Fatal, Format},
-    note,
-    operations::{
-        logic,
-        model::{self, Action, Marker, PackageSelection, SearchFilter},
-        prelude,
-    },
-    registry::model::{Entry, Platform, Registry},
+    end_error, header,
+    log::Format,
+    operations::model::{Action, Marker},
+    registry::model::{Entry, Registry},
     state::{InstalledPackage, State},
-    step,
 };
 
 const SUGGESTION_THRESHOLD: f64 = 0.7;
@@ -99,6 +86,7 @@ pub fn filter_registry_print(
 
     for m in missing {
         let suggestions = suggest_similar(m, suggest_pool.iter().map(String::as_str));
+
         if suggestions.is_empty() {
             end_error!("Package {} doesn't exist.", m.quote());
         } else {
@@ -111,6 +99,7 @@ pub fn filter_registry_print(
             end_error!("Package {} doesn't exist. Did you mean: {list}?", m.quote());
         }
     }
+
     Err(())
 }
 

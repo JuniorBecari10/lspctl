@@ -40,9 +40,9 @@ pub fn get_platform(s: &str) -> anyhow::Result<Vec<Platform>> {
         "x64" => Arch::X64,
         "x86" => Arch::X86,
         "arm64" => Arch::Arm64,
-        "arm" => Arch::Arm,
-        "armv6l" => Arch::Armv6l,
+        "armv6l" | "armv6" => Arch::Armv6l,
         "armv7l" | "armv7" => Arch::Armv7l,
+        "arm" => Arch::Arm,
         other => anyhow::bail!("unknown arch {} in target {}", other.quote(), s.quote()),
     };
 

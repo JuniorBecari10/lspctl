@@ -12,12 +12,16 @@ mod util;
 // Export for other packages to use as well
 pub use util::REGISTRY_FILE;
 
-const MASON_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases/latest";
+const REGISTRY_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases";
 
-fn get_latest_release() -> anyhow::Result<()> {
+fn registry_url(version: &str) -> String {
+    format!("{REGISTRY_URL}/{version}")
+}
+
+pub fn get_registry_release(version: &str) -> anyhow::Result<()> {
     let mut raw_data = Vec::new();
 
-    disk::perform_request(MASON_URL)?
+    disk::perform_request(&registry_url(version))?
         .0
         .read_to_end(&mut raw_data)?;
 
@@ -34,6 +38,10 @@ fn get_latest_release() -> anyhow::Result<()> {
     util::write_registry_to_disk(&extracted)?;
 
     Ok(())
+}
+
+fn get_registry_latest_release() -> anyhow::Result<()> {
+    get_registry_release("latest")
 }
 
 fn find_registry_asset(release: &model::Release) -> anyhow::Result<&model::ReleaseAsset> {
@@ -54,8 +62,8 @@ fn parse_release(raw_json: &[u8]) -> anyhow::Result<model::Release> {
 }
 
 pub fn download_registry() -> anyhow::Result<()> {
-    step!("Fetching registry...");
-    get_latest_release()?;
+    step!("Fetching latest registry...");
+    get_registry_latest_release()?;
     note!("Fetching complete.");
 
     Ok(())

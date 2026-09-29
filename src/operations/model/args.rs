@@ -107,7 +107,7 @@ pub struct DeleteFlags {
     pub yes: bool,
 }
 
-// TODO: add 'update' to set the registry version to latest and sync packages (sv latest --all)
+// TODO: add 'update' to set the registry version to latest (if no version is set) and sync packages
 #[derive(Subcommand, Debug)]
 pub enum RegistrySubcommand {
     /// Set the registry version with optional package syncing
@@ -121,12 +121,8 @@ pub enum RegistrySubcommand {
 
 #[derive(Args, Debug)]
 pub struct RegistrySetVersionArgs {
-    /// Version to set the registry to
-    #[arg(short, long)]
+    /// Version to set the registry to (or 'latest')
     pub version: String,
-
-    #[command(flatten)]
-    pub selection: PackageSelectionArgs,
 
     /// Perform action without confirmation prompts
     #[arg(short, long)]

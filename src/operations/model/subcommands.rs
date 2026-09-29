@@ -154,4 +154,11 @@ impl SearchQuery {
             SearchFilter::Source => self.pattern.is_match(&entry.source.purl.kind.to_string()),
         })
     }
+
+    pub fn matches_name(&self, name: &str) -> bool {
+        let name_is_active =
+            self.filters.is_empty() || self.filters.iter().any(|f| matches!(f, SearchFilter::Name));
+
+        name_is_active && self.pattern.is_match(name)
+    }
 }

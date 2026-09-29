@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use std::fs;
 
 use crate::{
@@ -7,14 +5,16 @@ use crate::{
     log::Format,
     operations::{
         markers::Selection,
-        model::{Action, OperationResult, PackageSelection, SearchQuery},
-        model::{DeleteFlags, RegistrySetVersionArgs, RegistrySyncArgs},
+        model::{
+            Action, DeleteFlags, OperationResult, PackageSelection, RegistrySetVersionArgs,
+            RegistrySyncArgs, SearchQuery,
+        },
     },
     paths,
     registry::model::Entry,
 };
 
-use regex::{Regex, RegexBuilder};
+use regex::RegexBuilder;
 
 mod logic;
 mod markers;
@@ -119,20 +119,8 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
     )
 }
 
-// TODO: when these functions are ready, remove the code duplication
-// also, allow 'latest' in version spec, to get the latest version available
-// if the registry is already the latest version, show a message about that,
-// if the spec is 'latest' or matches the latest one available.
 pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
-    let (registry, _, state, _lock) = prelude::prelude();
-
-    // just to filter out packages that don't exist
-    let Ok(_) = util::filter_registry_print(registry, &args.selection.pkgs, &[]) else {
-        return OperationResult::Failure;
-    };
-
-    let selection = args.selection.to_package_selection(); // not mandatory to specify packages
-    todo!()
+    subcommands::set_registry_version(args.version, args.yes)
 }
 
 pub fn registry_sync(args: RegistrySyncArgs) -> OperationResult {

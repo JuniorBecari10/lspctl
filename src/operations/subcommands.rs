@@ -1,15 +1,18 @@
-use std::{fs, path::Path};
+use std::{collections::HashMap, fs, path::Path};
 
 use crate::{
-    end, end_error, error, header,
+    end, end_error, header,
     log::{Fatal, Format},
     note,
     operations::{
         logic,
-        model::{Action, Marker, OperationResult, PackageSelection, SearchQuery},
+        model::{Action, OperationResult, PackageSelection, SearchQuery},
         prelude, util,
     },
-    registry::model::{Entry, Platform},
+    registry::{
+        self,
+        model::{Entry, Platform},
+    },
     state::State,
     step,
 };
@@ -93,7 +96,6 @@ pub fn run_action(
     }
 }
 
-// TODO: get data from installed packages only when listing or fetching data locally
 pub fn list_packages(
     installed: bool,
     verbose: bool,
@@ -101,17 +103,26 @@ pub fn list_packages(
 ) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
 
-    let entries: Vec<Entry> = if installed {
-        let keys = state.installed.keys().cloned().collect::<Vec<_>>();
-        let pool: Vec<_> = registry.0.iter().map(|e| e.name.clone()).collect();
+    let (entries, orphaned): (Vec<Entry>, Vec<String>) = if installed {
+        let mut by_name: HashMap<String, Entry> = registry
+            .0
+            .into_iter()
+            .map(|e| (e.name.clone(), e))
+            .collect();
 
-        let Ok(found) = util::filter_registry_print(registry, keys.as_slice(), &pool) else {
-            return OperationResult::Failure;
-        };
+        let mut entries = Vec::new();
+        let mut orphaned = Vec::new();
 
-        found
+        for name in state.installed.keys() {
+            match by_name.remove(name) {
+                Some(entry) => entries.push(entry),
+                None => orphaned.push(name.clone()),
+            }
+        }
+
+        (entries, orphaned)
     } else {
-        registry.0
+        (registry.0, Vec::new())
     };
 
     let entries: Vec<Entry> = match query {
@@ -119,7 +130,15 @@ pub fn list_packages(
         None => entries,
     };
 
-    if entries.is_empty() {
+    let orphaned: Vec<String> = match query {
+        Some(ref q) => orphaned
+            .into_iter()
+            .filter(|name| q.matches_name(name))
+            .collect(),
+        None => orphaned,
+    };
+
+    if entries.is_empty() && orphaned.is_empty() {
         let field_suffix = query
             .as_ref()
             .and_then(|q| {
@@ -143,13 +162,16 @@ pub fn list_packages(
                 "No installed packages match '{}'{field_suffix}.",
                 q.pattern.as_str()
             ),
+
             (true, None) => "There are no packages installed.".to_string(),
+
             (false, Some(q)) => {
                 format!(
                     "No packages match {}{field_suffix}.",
                     q.pattern.as_str().quote()
                 )
             }
+
             (false, None) => "No packages found.".to_string(),
         };
 
@@ -157,16 +179,45 @@ pub fn list_packages(
         return OperationResult::Success;
     }
 
-    let header_text = match (installed, query.is_some()) {
-        (true, true) => "All matching installed packages:\n",
-        (true, false) => "Installed packages:\n",
-        (false, true) => "All matching packages:\n",
-        (false, false) => "All packages:\n",
-    };
+    if !entries.is_empty() {
+        let header_text = match (installed, query.is_some()) {
+            (true, true) => "All matching installed packages:\n",
+            (true, false) => "Installed packages:\n",
+            (false, true) => "All matching packages:\n",
+            (false, false) => "All packages:\n",
+        };
 
-    header!("{header_text}");
+        header!("{header_text}");
+        util::write_entries(&entries, verbose, &state.installed, !installed);
+    }
 
-    util::write_entries(&entries, verbose, &state.installed, !installed);
+    if !orphaned.is_empty() {
+        header!("Installed but not found in registry:\n");
+        for name in &orphaned {
+            println!("  {name}");
+        }
+    }
+
+    OperationResult::Success
+}
+
+// if the registry has already the version you are gonna install, show a message about that
+// if the spec is 'latest' or matches the latest one available.
+// TODO: add search for registry versions
+pub fn set_registry_version(version: String, yes: bool) -> OperationResult {
+    let _lock = prelude::acquire_lock();
+    let version = version.to_lowercase();
+
+    step!("Version to be set: {}", version.quote());
+    if !util::confirm_action("Confirm action?", yes) {
+        return OperationResult::Success;
+    }
+
+    match registry::get_registry_release(&version) {
+        Ok(()) => end!("Registry version set successfully."),
+        Err(e) => end_error!("Couldn't set version of registry: {e}"),
+    }
+
     OperationResult::Success
 }
 
