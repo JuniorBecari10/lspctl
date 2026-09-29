@@ -10,7 +10,7 @@ pub fn setup_root() -> anyhow::Result<Option<String>> {
         Ok(true) => Ok(None),
 
         // covers Ok(false) and Err(_)
-        _ => registry::download_registry().map(Some),
+        _ => registry::download_latest_registry().map(Some),
     }
 }
 

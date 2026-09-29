@@ -1,12 +1,12 @@
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Release {
     pub tag_name: String,
     pub assets: Vec<ReleaseAsset>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ReleaseAsset {
     pub name: String,
 

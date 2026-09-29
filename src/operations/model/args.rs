@@ -152,7 +152,7 @@ pub struct RegistrySyncArgs {
 #[derive(Args, Debug)]
 pub struct RegistryListArgs {
     /// Page number of the list
-    #[arg(short, long)]
+    #[arg(short, long, default_value_t = 1)]
     pub page: u32,
 }
 

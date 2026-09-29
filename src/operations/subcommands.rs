@@ -229,24 +229,22 @@ pub fn delete_action(
     OperationResult::Success
 }
 
-// if the registry has already the version you are gonna install, show a message about that
-// if the spec is 'latest' or matches the latest one available.
 // TODO: add search for registry versions
 pub fn set_registry_version(version: &str, yes: bool) -> OperationResult {
     let (_, _, mut state, _lock) = prelude::prelude();
-    let version = version.to_lowercase();
+    let lower_version = version.to_lowercase();
 
-    let release_tag = match registry::get_release_data(&version) {
-        Ok(release) => release.tag_name,
+    let release = match registry::fetch_release(&lower_version) {
+        Ok(release) => release,
         Err(e) => {
             end_error!("Couldn't get release: {e}");
             return OperationResult::Failure;
         }
     };
 
-    step!("Version to be set: {}", release_tag.quote());
+    step!("Version to be set: {}", release.tag_name.quote());
 
-    if release_tag == state.registry_tag {
+    if release.tag_name == state.registry_tag {
         note!(
             "{} The already installed registry is the same as the one you are going to install.",
             "[!]".yellow()
@@ -257,10 +255,9 @@ pub fn set_registry_version(version: &str, yes: bool) -> OperationResult {
         return OperationResult::Success;
     }
 
-    // this does the job again of getting a Release
-    match registry::get_registry_release(&version) {
-        Ok(tag) => {
-            state.set_registry_tag(tag);
+    match registry::install_registry_from_release(&release) {
+        Ok(()) => {
+            state.set_registry_tag(release.tag_name);
 
             // TODO: revert the old registry?
             if let Err(e) = state.save() {
@@ -287,19 +284,21 @@ pub fn sync_packages(selection: PackageSelection, yes: bool) -> OperationResult 
 pub fn registry_current() -> OperationResult {
     let (_, _, state, _lock) = prelude::prelude();
 
-    // this time, we can continue even with errors
-    let latest_tag = registry::get_release_data("latest")
-        .map(|rel| rel.tag_name)
-        .unwrap_or_default();
+    // this time, we can continue even with errors.
+    let is_latest = registry::fetch_latest_release()
+        .map(|r| r.tag_name == state.registry_tag)
+        .unwrap_or(false);
+
+    let latest_marker = if is_latest {
+        " (latest)".italic().to_string()
+    } else {
+        String::new()
+    };
 
     step!(
         "Current registry version is {}{}",
         state.registry_tag.quote(),
-        if state.registry_tag == latest_tag {
-            " (latest)".italic()
-        } else {
-            "".into()
-        }
+        latest_marker
     );
 
     OperationResult::Success
@@ -307,14 +306,15 @@ pub fn registry_current() -> OperationResult {
 
 pub fn registry_list(page: u32) -> OperationResult {
     let (_, _, state, _lock) = prelude::prelude();
-    let releases = match registry::get_release_list(page) {
-        Ok(list) => list,
+
+    let release_tags: Vec<_> = match registry::fetch_release_page(page) {
+        Ok(list) => list.into_iter().map(|r| r.tag_name).collect(),
         Err(e) => {
             end_error!("Couldn't fetch release list: {e}");
             return OperationResult::Failure;
         }
     };
 
-    // write releases and mark latest as page = 1 and index = 0, and the current one, if present
+    util::list_release_tags(&release_tags, &state.registry_tag, page);
     OperationResult::Success
 }

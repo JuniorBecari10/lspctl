@@ -2,12 +2,13 @@ use std::{fs::File, io::Read};
 
 use anyhow::anyhow;
 use const_format::formatcp;
+use serde::de::DeserializeOwned;
 
 use crate::{
     disk,
     log::Format,
     note, paths,
-    registry::model::{RawRegistry, Release},
+    registry::model::{RawRegistry, Registry, Release, ReleaseAsset},
     step,
 };
 
@@ -19,50 +20,57 @@ mod util;
 // Export for other packages to use as well
 pub use util::REGISTRY_FILE;
 
-const REGISTRY_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases";
+const RELEASES_API_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases";
 
-const ITEMS_PER_PAGE: u32 = 10;
-const REGISTRY_LIST_URL: &str = formatcp!(
+const ITEMS_PER_PAGE: u32 = 15;
+const RELEASE_PAGE_URL: &str = formatcp!(
     "https://api.github.com/repos/mason-org/mason-registry/releases?per_page={ITEMS_PER_PAGE}&page="
 );
 
-fn registry_url(version: &str) -> String {
-    if version == "latest" {
-        format!("{REGISTRY_URL}/{version}")
-    } else {
-        format!("{REGISTRY_URL}/tags/{version}")
-    }
+fn release_by_tag_url(tag: &str) -> String {
+    format!("{RELEASES_API_URL}/tags/{tag}")
 }
 
-fn release_list_url(page: u32) -> String {
-    format!("{REGISTRY_LIST_URL}{page}")
+fn release_page_url(page: u32) -> String {
+    format!("{RELEASE_PAGE_URL}{page}")
 }
 
 // ---
 
-pub fn get_release_list(page: u32) -> anyhow::Result<Vec<Release>> {
-    let mut raw_data = Vec::new();
-
-    disk::perform_request(&&release_list_url(page))?
-        .0
-        .read_to_end(&mut raw_data)?;
-
-    Ok(serde_json::from_slice(&raw_data)?)
+fn parse_json<T: DeserializeOwned>(raw: &[u8]) -> anyhow::Result<T> {
+    Ok(serde_json::from_slice(raw)?)
 }
 
-pub fn get_release_data(version: &str) -> anyhow::Result<model::Release> {
+fn fetch_json<T: DeserializeOwned>(url: &str) -> anyhow::Result<T> {
     let mut raw_data = Vec::new();
-
-    disk::perform_request(&registry_url(version))?
-        .0
-        .read_to_end(&mut raw_data)?;
-
-    parse_release(&raw_data)
+    disk::perform_request(url)?.0.read_to_end(&mut raw_data)?;
+    parse_json(&raw_data)
 }
 
-pub fn get_registry_release(version: &str) -> anyhow::Result<String> {
-    let data = get_release_data(version)?;
-    let asset = find_registry_asset(&data)?;
+/// Fetches one page of releases from the GitHub API, newest first.
+pub fn fetch_release_page(page: u32) -> anyhow::Result<Vec<Release>> {
+    fetch_json(&release_page_url(page))
+}
+
+pub fn fetch_latest_release() -> anyhow::Result<Release> {
+    fetch_release_page(1)?
+        .into_iter()
+        .next()
+        .ok_or_else(|| anyhow!("Couldn't get latest release"))
+}
+
+/// Fetches a specific release by tag, or the latest release if `version == "latest"`.
+pub fn fetch_release(version: &str) -> anyhow::Result<Release> {
+    if version == "latest" {
+        return fetch_latest_release();
+    }
+
+    fetch_json(&release_by_tag_url(version))
+}
+
+/// Downloads the registry asset from `release`, extracts it, and writes it to disk.
+pub fn install_registry_from_release(release: &Release) -> anyhow::Result<()> {
+    let asset = find_registry_asset(release)?;
 
     let mut zip = disk::new_temp()?;
     let zip_file = zip.as_file_mut();
@@ -73,14 +81,10 @@ pub fn get_registry_release(version: &str) -> anyhow::Result<String> {
     let extracted = disk::extract_to_memory(zip_file, REGISTRY_FILE)?;
     util::write_registry_to_disk(&extracted)?;
 
-    Ok(data.tag_name)
+    Ok(())
 }
 
-fn get_registry_latest_release() -> anyhow::Result<String> {
-    get_registry_release("latest")
-}
-
-fn find_registry_asset(release: &model::Release) -> anyhow::Result<&model::ReleaseAsset> {
+fn find_registry_asset(release: &Release) -> anyhow::Result<&ReleaseAsset> {
     release
         .assets
         .iter()
@@ -93,22 +97,22 @@ fn find_registry_asset(release: &model::Release) -> anyhow::Result<&model::Relea
         })
 }
 
-fn parse_release(raw_json: &[u8]) -> anyhow::Result<model::Release> {
-    Ok(serde_json::from_slice(raw_json)?)
-}
-
-pub fn download_registry() -> anyhow::Result<String> {
+/// Fetches the latest release and installs its registry asset, returning the release's tag.
+pub fn download_latest_registry() -> anyhow::Result<String> {
     step!("Fetching latest registry...");
-    let tag = get_registry_latest_release()?;
+
+    let release = fetch_latest_release()?;
+    install_registry_from_release(&release)?;
+
     note!("Fetching complete.");
 
-    Ok(tag)
+    Ok(release.tag_name)
 }
 
-pub fn read_registry() -> anyhow::Result<model::Registry> {
+pub fn read_registry() -> anyhow::Result<Registry> {
     let mut contents = Vec::new();
     File::open(paths::registry_file())?.read_to_end(&mut contents)?;
 
-    let raw: RawRegistry = serde_json::from_slice(&contents)?;
+    let raw: RawRegistry = parse_json(&contents)?;
     parser::parse_registry(raw)
 }

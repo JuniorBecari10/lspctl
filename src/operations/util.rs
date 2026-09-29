@@ -190,6 +190,30 @@ pub fn list_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>
     }
 }
 
+pub fn list_release_tags(tags: &[String], current: &str, page: u32) {
+    let name_width = tags.iter().map(|t| t.len()).max().unwrap_or(0).max(15);
+
+    println!("{:<name_width$}", "Tag".bold());
+    println!("{}", "─".repeat(name_width).dimmed());
+
+    for (i, tag) in tags.iter().enumerate() {
+        let is_latest = page <= 1 && i == 0;
+        let is_installed = tag == current;
+
+        let markers = match (is_latest, is_installed) {
+            (true, true) => format!("{} {}", "(latest)".cyan(), "(installed)".green()),
+            (true, false) => "(latest)".cyan().to_string(),
+            (false, true) => "(installed)".green().to_string(),
+            (false, false) => String::new(),
+        };
+
+        println!(
+            "{tag}  {}{markers}",
+            " ".repeat(name_width.saturating_sub(tag.len())),
+        );
+    }
+}
+
 pub fn selection_error() -> OperationResult {
     end_error!(
         "Specify {} / {} or one or more package names to remove.",
