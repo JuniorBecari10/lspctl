@@ -23,18 +23,23 @@ type Prelude = (Registry, Platform, State, ProcessLock);
 // for it to exist throughout the entire function
 pub fn prelude() -> Prelude {
     let lock = acquire_lock();
-    setup_root();
+    let maybe_tag = setup_root();
+    let mut state = load_state();
 
-    let state = load_state();
+    if let Some(tag) = maybe_tag {
+        state.set_registry_tag(tag);
+        state.save().fatal("Couldn't save state");
+    }
+
     root::clean_orphans(&state);
-
     (read_registry(), get_platform(), state, lock)
 }
 
 // ---
 
-fn setup_root() {
-    root::setup_root().fatal("Cannot create root folder structure");
+/// returns the tag of the newly created registry, if any
+fn setup_root() -> Option<String> {
+    root::setup_root().fatal("Cannot create root folder structure")
 }
 
 fn read_registry() -> Registry {
@@ -53,6 +58,11 @@ fn load_state() -> State {
 
 pub fn acquire_lock() -> ProcessLock {
     let path = paths::lock_file();
+
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .fatal(&format!("Failed to create directory {}", parent.display()));
+    }
 
     let file = OpenOptions::new()
         .create(true)

@@ -2,6 +2,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct Release {
+    pub tag_name: String,
     pub assets: Vec<ReleaseAsset>,
 }
 

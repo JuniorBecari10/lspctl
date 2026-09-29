@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fs, path::Path};
 
+use colored::Colorize;
+
 use crate::{
     end, end_error, header,
     log::{Fatal, Format},
@@ -204,18 +206,49 @@ pub fn list_packages(
 // if the registry has already the version you are gonna install, show a message about that
 // if the spec is 'latest' or matches the latest one available.
 // TODO: add search for registry versions
-pub fn set_registry_version(version: String, yes: bool) -> OperationResult {
-    let _lock = prelude::acquire_lock();
+pub fn set_registry_version(version: &str, yes: bool) -> OperationResult {
+    let (_, _, mut state, _lock) = prelude::prelude();
     let version = version.to_lowercase();
 
-    step!("Version to be set: {}", version.quote());
+    let release_tag = match registry::get_release_data(&version) {
+        Ok(release) => release.tag_name,
+        Err(e) => {
+            end_error!("Couldn't get release: {e}");
+            return OperationResult::Failure;
+        }
+    };
+
+    step!("Version to be set: {}", release_tag.quote());
+
+    if release_tag == state.registry_tag {
+        note!(
+            "{} Your installed registry is the same as the one you are going to install.",
+            "[!]".yellow()
+        );
+    }
+
     if !util::confirm_action("Confirm action?", yes) {
         return OperationResult::Success;
     }
 
+    // this does the job again of getting a Release
     match registry::get_registry_release(&version) {
-        Ok(()) => end!("Registry version set successfully."),
-        Err(e) => end_error!("Couldn't set version of registry: {e}"),
+        Ok(tag) => {
+            state.set_registry_tag(tag);
+
+            // TODO: revert the old registry?
+            if let Err(e) = state.save() {
+                end_error!("Couldn't save updated state: {e}");
+                return OperationResult::Failure;
+            }
+
+            end!("Registry version set successfully.");
+        }
+
+        Err(e) => {
+            end_error!("Couldn't set version of registry: {e}");
+            return OperationResult::Failure;
+        }
     }
 
     OperationResult::Success

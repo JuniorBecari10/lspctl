@@ -12,9 +12,10 @@ use crate::{
 // only change this after launch and after introducing a breaking change to the registry state.
 const SCHEMA_VERSION: u32 = 1;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct State {
     pub schema_version: u32,
+    pub registry_tag: String,
     pub installed: HashMap<String, InstalledPackage>,
 }
 
@@ -34,7 +35,7 @@ impl State {
         if !path.exists() {
             return Ok(Self {
                 schema_version: SCHEMA_VERSION,
-                installed: HashMap::new(),
+                ..Default::default()
             });
         }
 
@@ -79,5 +80,9 @@ impl State {
 
     pub fn package_exists(&self, name: &str) -> bool {
         self.installed.contains_key(name)
+    }
+
+    pub fn set_registry_tag(&mut self, tag: String) {
+        self.registry_tag = tag;
     }
 }

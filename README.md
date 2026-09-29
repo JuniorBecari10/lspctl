@@ -42,8 +42,8 @@ Most of the packages are already supported; see the table below for the current 
 - [x] Search packages
 - [x] Info about packages
 - [x] Delete data
-- [ ] Registry manipulation
-- [ ] Synchronize packages to registry
+- [x] Registry version manipulation
+- [x] Synchronize packages to registry
 
 #### Install Targets
 

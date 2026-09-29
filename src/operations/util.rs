@@ -6,7 +6,7 @@ use dialoguer::Confirm;
 use crate::{
     end_error, header,
     log::Format,
-    operations::model::{Action, Marker},
+    operations::model::{Action, Marker, OperationResult},
     registry::model::{Entry, Registry},
     state::{InstalledPackage, State},
 };
@@ -188,4 +188,14 @@ pub fn list_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>
             source_width = source_width,
         );
     }
+}
+
+pub fn selection_error() -> OperationResult {
+    end_error!(
+        "Specify {} / {} or one or more package names to remove.",
+        "-a".quote(),
+        "--all".quote()
+    );
+
+    OperationResult::Failure
 }

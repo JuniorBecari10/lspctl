@@ -15,17 +15,25 @@ pub use util::REGISTRY_FILE;
 const REGISTRY_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases";
 
 fn registry_url(version: &str) -> String {
-    format!("{REGISTRY_URL}/{version}")
+    if version == "latest" {
+        format!("{REGISTRY_URL}/{version}")
+    } else {
+        format!("{REGISTRY_URL}/tags/{version}")
+    }
 }
 
-pub fn get_registry_release(version: &str) -> anyhow::Result<()> {
+pub fn get_release_data(version: &str) -> anyhow::Result<model::Release> {
     let mut raw_data = Vec::new();
 
     disk::perform_request(&registry_url(version))?
         .0
         .read_to_end(&mut raw_data)?;
 
-    let data = parse_release(&raw_data)?;
+    parse_release(&raw_data)
+}
+
+pub fn get_registry_release(version: &str) -> anyhow::Result<String> {
+    let data = get_release_data(version)?;
     let asset = find_registry_asset(&data)?;
 
     let mut zip = disk::new_temp()?;
@@ -37,10 +45,10 @@ pub fn get_registry_release(version: &str) -> anyhow::Result<()> {
     let extracted = disk::extract_to_memory(zip_file, REGISTRY_FILE)?;
     util::write_registry_to_disk(&extracted)?;
 
-    Ok(())
+    Ok(data.tag_name)
 }
 
-fn get_registry_latest_release() -> anyhow::Result<()> {
+fn get_registry_latest_release() -> anyhow::Result<String> {
     get_registry_release("latest")
 }
 
@@ -61,12 +69,12 @@ fn parse_release(raw_json: &[u8]) -> anyhow::Result<model::Release> {
     Ok(serde_json::from_slice(raw_json)?)
 }
 
-pub fn download_registry() -> anyhow::Result<()> {
+pub fn download_registry() -> anyhow::Result<String> {
     step!("Fetching latest registry...");
-    get_registry_latest_release()?;
+    let tag = get_registry_latest_release()?;
     note!("Fetching complete.");
 
-    Ok(())
+    Ok(tag)
 }
 
 pub fn read_registry() -> anyhow::Result<model::Registry> {

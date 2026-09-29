@@ -1,7 +1,7 @@
 use std::fs;
 
 use crate::{
-    consts, end_error, error,
+    consts, error,
     log::Format,
     operations::{
         markers::Selection,
@@ -35,13 +35,7 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
 
 pub fn remove(args: model::RemoveArgs) -> OperationResult {
     let Some(selection) = args.to_package_selection() else {
-        end_error!(
-            "Specify {} / {} or one or more package names to remove.",
-            "-a".quote(),
-            "--all".quote()
-        );
-
-        return OperationResult::Failure;
+        return util::selection_error();
     };
 
     subcommands::run_action(
@@ -120,18 +114,12 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
 }
 
 pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
-    subcommands::set_registry_version(args.version, args.yes)
+    subcommands::set_registry_version(&args.version, args.yes)
 }
 
 pub fn registry_sync(args: RegistrySyncArgs) -> OperationResult {
     let Some(selection) = args.selection.to_package_selection() else {
-        end_error!(
-            "Specify {} / {} or one or more package names to sync.",
-            "-a".quote(),
-            "--all".quote()
-        );
-
-        return OperationResult::Failure;
+        return util::selection_error();
     };
 
     subcommands::sync_packages(selection, args.yes)

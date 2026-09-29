@@ -2,14 +2,15 @@ use std::{collections::HashSet, fs, path::PathBuf};
 
 use crate::{disk, error, log::Format, paths, registry, state::State};
 
-pub fn setup_root() -> anyhow::Result<()> {
+/// returns the tag of the newly created registry, if any
+pub fn setup_root() -> anyhow::Result<Option<String>> {
     ensure_root_items()?;
 
     match paths::registry_file().try_exists() {
-        Ok(true) => Ok(()),
+        Ok(true) => Ok(None),
 
         // covers Ok(false) and Err(_)
-        _ => registry::download_registry(),
+        _ => registry::download_registry().map(Some),
     }
 }
 
