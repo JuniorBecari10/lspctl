@@ -1,8 +1,15 @@
 use std::{fs::File, io::Read};
 
 use anyhow::anyhow;
+use const_format::formatcp;
 
-use crate::{disk, log::Format, note, paths, registry::model::RawRegistry, step};
+use crate::{
+    disk,
+    log::Format,
+    note, paths,
+    registry::model::{RawRegistry, Release},
+    step,
+};
 
 pub mod model;
 pub mod parser;
@@ -14,12 +21,33 @@ pub use util::REGISTRY_FILE;
 
 const REGISTRY_URL: &str = "https://api.github.com/repos/mason-org/mason-registry/releases";
 
+const ITEMS_PER_PAGE: u32 = 10;
+const REGISTRY_LIST_URL: &str = formatcp!(
+    "https://api.github.com/repos/mason-org/mason-registry/releases?per_page={ITEMS_PER_PAGE}&page="
+);
+
 fn registry_url(version: &str) -> String {
     if version == "latest" {
         format!("{REGISTRY_URL}/{version}")
     } else {
         format!("{REGISTRY_URL}/tags/{version}")
     }
+}
+
+fn release_list_url(page: u32) -> String {
+    format!("{REGISTRY_LIST_URL}{page}")
+}
+
+// ---
+
+pub fn get_release_list(page: u32) -> anyhow::Result<Vec<Release>> {
+    let mut raw_data = Vec::new();
+
+    disk::perform_request(&&release_list_url(page))?
+        .0
+        .read_to_end(&mut raw_data)?;
+
+    Ok(serde_json::from_slice(&raw_data)?)
 }
 
 pub fn get_release_data(version: &str) -> anyhow::Result<model::Release> {

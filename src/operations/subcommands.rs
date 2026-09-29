@@ -203,6 +203,32 @@ pub fn list_packages(
     OperationResult::Success
 }
 
+pub fn delete_action(
+    path: &Path,
+    already_absent_msg: &str,
+    warning: &str,
+    fatal_msg: &str,
+    yes: bool,
+    delete: impl FnOnce(&Path) -> std::io::Result<()>,
+) -> OperationResult {
+    if let Ok(false) = fs::exists(path) {
+        end!("{already_absent_msg}");
+        return OperationResult::Success;
+    }
+
+    if !yes {
+        step!("Proceed with deletion?");
+        note!("{warning}");
+    }
+
+    if !util::confirm_action("Proceed?", yes) {
+        return OperationResult::Success;
+    }
+
+    delete(path).fatal(fatal_msg);
+    OperationResult::Success
+}
+
 // if the registry has already the version you are gonna install, show a message about that
 // if the spec is 'latest' or matches the latest one available.
 // TODO: add search for registry versions
@@ -258,28 +284,37 @@ pub fn sync_packages(selection: PackageSelection, yes: bool) -> OperationResult 
     run_action(selection, yes, true, Action::Sync, logic::install_pkg)
 }
 
-pub fn delete_action(
-    path: &Path,
-    already_absent_msg: &str,
-    warning: &str,
-    fatal_msg: &str,
-    yes: bool,
-    delete: impl FnOnce(&Path) -> std::io::Result<()>,
-) -> OperationResult {
-    if let Ok(false) = fs::exists(path) {
-        end!("{already_absent_msg}");
-        return OperationResult::Success;
-    }
+pub fn registry_current() -> OperationResult {
+    let (_, _, state, _lock) = prelude::prelude();
 
-    if !yes {
-        step!("Proceed with deletion?");
-        note!("{warning}");
-    }
+    // this time, we can continue even with errors
+    let latest_tag = registry::get_release_data("latest")
+        .map(|rel| rel.tag_name)
+        .unwrap_or_default();
 
-    if !util::confirm_action("Proceed?", yes) {
-        return OperationResult::Success;
-    }
+    step!(
+        "Current registry version is {}{}",
+        state.registry_tag.quote(),
+        if state.registry_tag == latest_tag {
+            " (latest)".italic()
+        } else {
+            "".into()
+        }
+    );
 
-    delete(path).fatal(fatal_msg);
+    OperationResult::Success
+}
+
+pub fn registry_list(page: u32) -> OperationResult {
+    let (_, _, state, _lock) = prelude::prelude();
+    let releases = match registry::get_release_list(page) {
+        Ok(list) => list,
+        Err(e) => {
+            end_error!("Couldn't fetch release list: {e}");
+            return OperationResult::Failure;
+        }
+    };
+
+    // write releases and mark latest as page = 1 and index = 0, and the current one, if present
     OperationResult::Success
 }
