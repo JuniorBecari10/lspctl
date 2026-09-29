@@ -35,7 +35,7 @@ pub fn install(args: model::InstallArgs) -> OperationResult {
 
 pub fn remove(args: model::RemoveArgs) -> OperationResult {
     let Some(selection) = args.to_package_selection() else {
-        return util::selection_error();
+        return util::selection_error(Action::Remove);
     };
 
     subcommands::run_action(
@@ -119,10 +119,10 @@ pub fn registry_set_version(args: RegistrySetVersionArgs) -> OperationResult {
 
 pub fn registry_sync(args: RegistrySyncArgs) -> OperationResult {
     let Some(selection) = args.selection.to_package_selection() else {
-        return util::selection_error();
+        return util::selection_error(Action::Sync);
     };
 
-    subcommands::sync_packages(selection, args.yes)
+    subcommands::sync_packages(args.version, selection, args.yes)
 }
 
 pub fn registry_current() -> OperationResult {

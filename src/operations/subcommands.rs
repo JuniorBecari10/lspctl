@@ -277,7 +277,18 @@ pub fn set_registry_version(version: &str, yes: bool) -> OperationResult {
     OperationResult::Success
 }
 
-pub fn sync_packages(selection: PackageSelection, yes: bool) -> OperationResult {
+pub fn sync_packages(
+    version: Option<String>,
+    selection: PackageSelection,
+    yes: bool,
+) -> OperationResult {
+    if let Some(v) = version
+        && let OperationResult::Failure = set_registry_version(&v, yes)
+    {
+        return OperationResult::Failure;
+    }
+
+    // TODO: show confirmation at once and don't prompt again here
     run_action(selection, yes, true, Action::Sync, logic::install_pkg)
 }
 

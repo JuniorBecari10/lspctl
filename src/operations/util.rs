@@ -214,11 +214,12 @@ pub fn list_release_tags(tags: &[String], current: &str, page: u32) {
     }
 }
 
-pub fn selection_error() -> OperationResult {
+pub fn selection_error(a: Action) -> OperationResult {
     end_error!(
-        "Specify {} / {} or one or more package names to remove.",
+        "Specify {} / {} or one or more package names to {}.",
         "-a".quote(),
-        "--all".quote()
+        "--all".quote(),
+        a.verb_base(),
     );
 
     OperationResult::Failure
