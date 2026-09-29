@@ -6,14 +6,16 @@ use crate::{
     operations::{
         markers::Selection,
         model::{
-            Action, DeleteFlags, OperationResult, PackageSelection, RegistrySetVersionArgs,
-            RegistrySyncArgs, SearchQuery,
+            Action, DeleteFlags, OperationResult, PackageSelection, RegistryListArgs,
+            RegistrySetVersionArgs, RegistrySyncArgs, SearchQuery,
         },
     },
     paths,
-    registry::model::Entry,
+    registry::{self, model::Entry},
+    step,
 };
 
+use colored::Colorize;
 use regex::RegexBuilder;
 
 mod logic;
@@ -123,4 +125,29 @@ pub fn registry_sync(args: RegistrySyncArgs) -> OperationResult {
     };
 
     subcommands::sync_packages(selection, args.yes)
+}
+
+pub fn registry_current() -> OperationResult {
+    let (_, _, state, _lock) = prelude::prelude();
+
+    // this time, we can continue even with errors
+    let latest_tag = registry::get_release_data("latest")
+        .map(|rel| rel.tag_name)
+        .unwrap_or_default();
+
+    step!(
+        "Current registry version is {}{}",
+        state.registry_tag.quote(),
+        if state.registry_tag == latest_tag {
+            " (latest)".italic()
+        } else {
+            "".into()
+        }
+    );
+
+    OperationResult::Success
+}
+
+pub fn registry_list(args: RegistryListArgs) -> OperationResult {
+    todo!()
 }

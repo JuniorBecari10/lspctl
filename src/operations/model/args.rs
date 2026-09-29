@@ -107,7 +107,6 @@ pub struct DeleteFlags {
     pub yes: bool,
 }
 
-// TODO: add 'update' to set the registry version to latest (if no version is set) and sync packages
 #[derive(Subcommand, Debug)]
 pub enum RegistrySubcommand {
     /// Set the registry version with optional package syncing
@@ -117,6 +116,14 @@ pub enum RegistrySubcommand {
     /// Sync packages to registry
     #[command(visible_alias = "s")]
     Sync(RegistrySyncArgs),
+
+    /// Print currently installed registry
+    #[command(visible_alias = "c")]
+    Current,
+
+    /// List available registry versions
+    #[command(visible_alias = "l")]
+    List(RegistryListArgs),
 }
 
 #[derive(Args, Debug)]
@@ -134,9 +141,19 @@ pub struct RegistrySyncArgs {
     #[command(flatten)]
     pub selection: PackageSelectionArgs,
 
+    /// Version to set the registry to (or 'latest'). Leave blank to sync to current version
+    pub version: Option<String>,
+
     /// Sync without confirmation prompts
     #[arg(short, long)]
     pub yes: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct RegistryListArgs {
+    /// Page number of the list
+    #[arg(short, long)]
+    pub page: u32,
 }
 
 // ---

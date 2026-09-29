@@ -222,7 +222,7 @@ pub fn set_registry_version(version: &str, yes: bool) -> OperationResult {
 
     if release_tag == state.registry_tag {
         note!(
-            "{} Your installed registry is the same as the one you are going to install.",
+            "{} The already installed registry is the same as the one you are going to install.",
             "[!]".yellow()
         );
     }
