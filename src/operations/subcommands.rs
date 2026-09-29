@@ -290,13 +290,13 @@ pub fn registry_current() -> OperationResult {
         .unwrap_or(false);
 
     let latest_marker = if is_latest {
-        " (latest)".italic().to_string()
+        " (latest)".cyan().to_string()
     } else {
         String::new()
     };
 
-    step!(
-        "Current registry version is {}{}",
+    end!(
+        "Current registry version is {}.{}",
         state.registry_tag.quote(),
         latest_marker
     );
