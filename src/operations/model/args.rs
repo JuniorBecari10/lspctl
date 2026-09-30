@@ -10,10 +10,6 @@ pub struct InstallArgs {
     /// Install without confirmation prompts
     #[arg(short, long)]
     pub yes: bool,
-
-    /// Install even if already installed
-    #[arg(short, long)]
-    pub force: bool,
 }
 
 #[derive(Args, Debug)]

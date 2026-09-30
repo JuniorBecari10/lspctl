@@ -23,7 +23,6 @@ use crate::{
 pub fn run_action(
     selection: PackageSelection,
     yes: bool,
-    force: bool,
     action: Action,
     op: fn(Entry, &Platform, &mut State) -> anyhow::Result<()>,
 ) -> OperationResult {
@@ -53,10 +52,9 @@ pub fn run_action(
     }
 
     let (mut ok_count, mut err_count, mut skip_count) = (0, 0, 0);
-    let not_forced = !matches!(action, Action::Install) || !force; // only applies to install
 
     for pkg in entries {
-        if not_forced && action.should_skip(&state, &pkg) {
+        if action.should_skip(&state, &pkg) {
             step!(
                 "Package {} {}. Skipping...",
                 pkg.name.quote(),
@@ -289,7 +287,7 @@ pub fn sync_packages(
     }
 
     // TODO: show confirmation at once and don't prompt again here
-    run_action(selection, yes, true, Action::Sync, logic::install_pkg)
+    run_action(selection, yes, Action::Sync, logic::install_pkg)
 }
 
 pub fn registry_current() -> OperationResult {
