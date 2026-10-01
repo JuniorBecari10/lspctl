@@ -135,6 +135,7 @@ pub struct RegistrySetVersionArgs {
 #[derive(Args, Debug)]
 pub struct RegistrySyncArgs {
     /// Version to set the registry to (or 'latest'). Leave blank to sync to current version
+    #[arg(short, long)]
     pub version: Option<String>,
 
     #[command(flatten)]

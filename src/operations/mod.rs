@@ -6,20 +6,20 @@ use crate::{
     consts, error,
     log::Format,
     operations::{
-        markers::Selection,
         model::{
             Action, DeleteFlags, OperationResult, PackageSelection, RegistryListArgs,
             RegistrySetVersionArgs, RegistrySyncArgs, SearchQuery,
         },
+        selection::Selection,
     },
     paths,
     registry::model::Entry,
 };
 
 mod logic;
-mod markers;
 pub mod model;
 mod prelude;
+mod selection;
 mod subcommands;
 pub mod util;
 

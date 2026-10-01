@@ -51,7 +51,9 @@ pub fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State
 
         if installed.is_some_and(|p| p.version == e.source.purl.version) {
             Some(action.marker())
-        } else if installed.is_some_and(|p| p.version != e.source.purl.version) {
+        } else if matches!(action, Action::Install)
+            && installed.is_some_and(|p| p.version != e.source.purl.version)
+        {
             Some(Marker::NotSynced)
         } else {
             None
@@ -327,7 +329,6 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
         );
     }
 
-    println!();
     confirm_action(&format!("Proceed with {}?", Action::Sync.noun()), yes)
 }
 
