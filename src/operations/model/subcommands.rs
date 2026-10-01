@@ -95,7 +95,7 @@ impl Action {
         match self {
             Action::Install => Marker::Installed,
             Action::Remove => Marker::NotInstalled,
-            Action::Sync => Marker::Matches,
+            Action::Sync => Marker::Synced,
         }
     }
 }
@@ -103,16 +103,20 @@ impl Action {
 pub enum Marker {
     Installed,
     NotInstalled,
-    Matches,
+    Synced,
+    Latest,
 }
 
+// TODO: implement colors for each kind, so they use '.installed_color()' instead of '.green()', for example.
 impl Marker {
-    pub fn render(&self) -> colored::ColoredString {
+    pub fn render(&self) -> String {
         match self {
             Marker::Installed => "(installed)".green(),
             Marker::NotInstalled => "(not installed)".yellow(),
-            Marker::Matches => "(synced)".cyan(),
+            Marker::Synced => "(synced)".purple(),
+            Marker::Latest => "(latest)".cyan(),
         }
+        .to_string()
     }
 }
 

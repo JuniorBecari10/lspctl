@@ -50,7 +50,6 @@ pub fn search(args: model::SearchArgs) -> OperationResult {
         .build()
     {
         Ok(re) => re,
-
         Err(e) => {
             error!("Invalid pattern {}: {e}", args.pattern.quote());
             return OperationResult::Failure;

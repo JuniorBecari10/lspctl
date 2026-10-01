@@ -216,10 +216,10 @@ pub fn list_release_tags(tags: &[String], current: &str, page: u32) {
         let (colored_tag, markers) = match (is_latest, is_installed) {
             (true, true) => (
                 tag.green().to_string(),
-                format!("{} {}", "(latest)".cyan(), "(installed)".green()),
+                format!("{} {}", Marker::Latest.render(), Marker::Installed.render()),
             ),
-            (true, false) => (tag.cyan().to_string(), "(latest)".cyan().to_string()),
-            (false, true) => (tag.green().to_string(), "(installed)".green().to_string()),
+            (true, false) => (tag.cyan().to_string(), Marker::Latest.render()),
+            (false, true) => (tag.green().to_string(), Marker::Installed.render()),
             (false, false) => (tag.clone(), String::new()),
         };
 
@@ -299,7 +299,7 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
 
     for (name, current, new, synced) in &rows {
         let marker = if *synced {
-            " (synced)".cyan().to_string()
+            format!(" {}", Marker::Synced.render())
         } else {
             String::new()
         };
@@ -325,7 +325,7 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
 
 pub fn latest_marker(is_latest: bool) -> String {
     if is_latest {
-        " (latest)".cyan().to_string()
+        format!(" {}", Marker::Latest.render())
     } else {
         String::new()
     }
@@ -333,7 +333,7 @@ pub fn latest_marker(is_latest: bool) -> String {
 
 fn installed_marker(is_installed: bool) -> String {
     if is_installed {
-        " (installed)".green().to_string()
+        format!(" {}", Marker::Installed.render())
     } else {
         String::new()
     }
