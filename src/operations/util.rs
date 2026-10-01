@@ -366,7 +366,7 @@ pub fn announce_pending_version(release: &Release, is_latest: bool, state: &Stat
     let is_installed = release.tag == state.registry_tag;
 
     step!(
-        "Version to be set: {}{}{}",
+        "Version to be set for registry: {}{}{}",
         release.tag.quote(),
         latest_marker(is_latest),
         installed_marker(is_installed)
@@ -380,6 +380,8 @@ pub fn announce_pending_version(release: &Release, is_latest: bool, state: &Stat
     }
 }
 
+// TODO: don't perform the action if the registry is the same.
+// or do it, maybe optionally and to keep consistency bring --force back.
 pub fn commit_registry(release: &Release, bytes: &[u8], state: &mut State) -> OperationResult {
     if let Err(e) = registry::write_registry_bytes(bytes) {
         end_error!("Couldn't save new registry: {e}");
