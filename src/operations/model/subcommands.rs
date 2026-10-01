@@ -111,7 +111,7 @@ impl Marker {
         match self {
             Marker::Installed => "(installed)".green(),
             Marker::NotInstalled => "(not installed)".yellow(),
-            Marker::Matches => "(synced)".green(),
+            Marker::Matches => "(synced)".cyan(),
         }
     }
 }

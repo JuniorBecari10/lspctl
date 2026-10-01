@@ -2,7 +2,8 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Release {
-    pub tag_name: String,
+    #[serde(rename = "tag_name")]
+    pub tag: String,
     pub assets: Vec<ReleaseAsset>,
 }
 

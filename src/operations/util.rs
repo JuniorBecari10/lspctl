@@ -53,7 +53,7 @@ pub fn confirm_action(action: &str, yes: bool) -> bool {
     }
 }
 
-fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str>) {
+pub fn filter_registry(registry: Registry, pkgs: &[String]) -> (Vec<Entry>, Vec<&str>) {
     let wanted: HashSet<&str> = pkgs.iter().map(String::as_str).collect();
 
     let found: Vec<Entry> = registry
@@ -200,17 +200,19 @@ pub fn list_release_tags(tags: &[String], current: &str, page: u32) {
         let is_latest = page <= 1 && i == 0;
         let is_installed = tag == current;
 
-        let markers = match (is_latest, is_installed) {
-            (true, true) => format!("{} {}", "(latest)".cyan(), "(installed)".green()),
-            (true, false) => "(latest)".cyan().to_string(),
-            (false, true) => "(installed)".green().to_string(),
-            (false, false) => String::new(),
+        let padding = " ".repeat(name_width.saturating_sub(tag.len()));
+
+        let (colored_tag, markers) = match (is_latest, is_installed) {
+            (true, true) => (
+                tag.green().to_string(),
+                format!("{} {}", "(latest)".cyan(), "(installed)".green()),
+            ),
+            (true, false) => (tag.cyan().to_string(), "(latest)".cyan().to_string()),
+            (false, true) => (tag.green().to_string(), "(installed)".green().to_string()),
+            (false, false) => (tag.clone(), String::new()),
         };
 
-        println!(
-            "{tag}  {}{markers}",
-            " ".repeat(name_width.saturating_sub(tag.len())),
-        );
+        println!("{colored_tag}  {padding}{markers}");
     }
 }
 
@@ -223,4 +225,89 @@ pub fn selection_error(a: Action) -> OperationResult {
     );
 
     OperationResult::Failure
+}
+
+pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
+    header!(
+        "Packages to be {} ({}):\n",
+        Action::Sync.past_participle(),
+        entries.len()
+    );
+
+    let rows: Vec<_> = entries
+        .iter()
+        .map(|e| {
+            let current = state
+                .installed
+                .get(&e.name)
+                .map(|installed| installed.version.clone())
+                .unwrap_or_else(|| "?".into());
+
+            let synced = Action::Sync.should_skip(state, e);
+
+            let new = if synced {
+                "-".to_string()
+            } else {
+                e.source.purl.version.clone()
+            };
+
+            (e.name.clone(), current, new, synced)
+        })
+        .collect();
+
+    let name_w = rows
+        .iter()
+        .map(|(n, _, _, _)| n.len())
+        .max()
+        .unwrap_or(0)
+        .max(15);
+
+    let cur_w = rows
+        .iter()
+        .map(|(_, c, _, _)| c.len())
+        .max()
+        .unwrap_or(0)
+        .max(15);
+
+    let new_w = rows
+        .iter()
+        .map(|(_, _, n, _)| n.len())
+        .max()
+        .unwrap_or(0)
+        .max(6);
+
+    let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(s.len())));
+
+    println!(
+        "{}  {}  {}",
+        pad("Name", name_w).bold(),
+        pad("Current", cur_w).bold(),
+        "New".bold(),
+    );
+    println!("{}", "─".repeat(name_w + cur_w + new_w + 4).dimmed());
+
+    for (name, current, new, synced) in &rows {
+        let marker = if *synced {
+            " (synced)".cyan().to_string()
+        } else {
+            String::new()
+        };
+
+        let new_cell = if *synced {
+            pad(new, new_w).dimmed().to_string()
+        } else {
+            pad(new, new_w).green().to_string()
+        };
+
+        println!(
+            "{}  {}  {}{}",
+            pad(name, name_w),
+            pad(current, cur_w).cyan(),
+            new_cell,
+            marker,
+        );
+    }
+
+    println!();
+    confirm_action(&format!("Proceed with {}?", Action::Sync.noun()), yes)
 }

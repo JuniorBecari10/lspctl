@@ -85,7 +85,7 @@ pub fn info(args: model::InfoArgs) -> OperationResult {
 }
 
 pub fn delete_lockfile(flags: DeleteFlags) -> OperationResult {
-    subcommands::delete_action(
+    subcommands::delete(
         &paths::lock_file(),
         "Lockfile is already not present.",
         "This should only be used when the program is in a deadlock and no other instances are running.",
@@ -96,7 +96,7 @@ pub fn delete_lockfile(flags: DeleteFlags) -> OperationResult {
 }
 
 pub fn delete_all(flags: DeleteFlags) -> OperationResult {
-    subcommands::delete_action(
+    subcommands::delete(
         &paths::root_dir(),
         "All data is already not present.",
         &format!("This will delete all data related to {}.", consts::APP_NAME),

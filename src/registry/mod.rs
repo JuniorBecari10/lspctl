@@ -59,29 +59,12 @@ pub fn fetch_latest_release() -> anyhow::Result<Release> {
         .ok_or_else(|| anyhow!("Couldn't get latest release"))
 }
 
-/// Fetches a specific release by tag, or the latest release if `version == "latest"`.
 pub fn fetch_release(version: &str) -> anyhow::Result<Release> {
     if version == "latest" {
         return fetch_latest_release();
     }
 
     fetch_json(&release_by_tag_url(version))
-}
-
-/// Downloads the registry asset from `release`, extracts it, and writes it to disk.
-pub fn install_registry_from_release(release: &Release) -> anyhow::Result<()> {
-    let asset = find_registry_asset(release)?;
-
-    let mut zip = disk::new_temp()?;
-    let zip_file = zip.as_file_mut();
-
-    disk::download_file(&asset.url, zip_file)?;
-
-    // TODO: extract the zip with an iterator to the file and write it directly into the final destination
-    let extracted = disk::extract_to_memory(zip_file, REGISTRY_FILE)?;
-    util::write_registry_to_disk(&extracted)?;
-
-    Ok(())
 }
 
 fn find_registry_asset(release: &Release) -> anyhow::Result<&ReleaseAsset> {
@@ -106,13 +89,35 @@ pub fn download_latest_registry() -> anyhow::Result<String> {
 
     note!("Fetching complete.");
 
-    Ok(release.tag_name)
+    Ok(release.tag)
+}
+
+pub fn fetch_registry_bytes_from_release(release: &Release) -> anyhow::Result<Vec<u8>> {
+    let asset = find_registry_asset(release)?;
+
+    let mut zip = disk::new_temp()?;
+    let zip_file = zip.as_file_mut();
+
+    disk::download_file(&asset.url, zip_file)?;
+    disk::extract_to_memory(zip_file, REGISTRY_FILE)
+}
+
+pub fn install_registry_from_release(release: &Release) -> anyhow::Result<()> {
+    let extracted = fetch_registry_bytes_from_release(release)?;
+    write_registry_bytes(&extracted)
+}
+
+pub fn write_registry_bytes(bytes: &[u8]) -> anyhow::Result<()> {
+    util::write_registry_to_disk(bytes)
+}
+
+pub fn parse_registry_from_bytes(bytes: &[u8]) -> anyhow::Result<Registry> {
+    let raw: RawRegistry = parse_json(bytes)?;
+    parser::parse_registry(raw)
 }
 
 pub fn read_registry() -> anyhow::Result<Registry> {
     let mut contents = Vec::new();
     File::open(paths::registry_file())?.read_to_end(&mut contents)?;
-
-    let raw: RawRegistry = parse_json(&contents)?;
-    parser::parse_registry(raw)
+    parse_registry_from_bytes(&contents)
 }
