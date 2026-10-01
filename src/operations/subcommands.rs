@@ -1,7 +1,5 @@
 use std::{collections::HashMap, fs, path::Path};
 
-use colored::Colorize;
-
 use crate::{
     end, end_error, header,
     log::{Fatal, Format},
@@ -79,19 +77,16 @@ pub fn run_action(
 ) -> OperationResult {
     let (registry, platform, mut state, _lock) = prelude::prelude();
 
-    let pkgs = match selection {
-        PackageSelection::Specific(items) => items,
-        PackageSelection::All => state.installed.keys().cloned().collect(),
-    };
+    let pkgs = util::resolve_selection(&state, selection);
 
     if pkgs.is_empty() {
         end!("There are no packages to be {}.", action.past_participle());
         return OperationResult::Success;
     }
 
-    let installed_pool: Vec<_> = match action {
+    let installed_pool = match action {
         Action::Install => registry.0.iter().map(|e| e.name.clone()).collect(),
-        Action::Remove | Action::Sync => state.installed.keys().cloned().collect(),
+        Action::Remove | Action::Sync => util::installed_names(&state),
     };
 
     let Ok(entries) = util::filter_registry_print(registry, &pkgs, &installed_pool) else {
@@ -239,59 +234,22 @@ pub fn delete(
 // TODO: add search for registry versions
 pub fn set_registry_version(version: &str, yes: bool) -> OperationResult {
     let (_, _, mut state, _lock) = prelude::prelude();
-    let lower_version = version.to_lowercase();
 
-    let release = match registry::fetch_release(&lower_version) {
-        Ok(release) => release,
+    let pending = match util::resolve_release(version) {
+        Ok(p) => p,
         Err(e) => {
-            end_error!("Couldn't get release: {e}");
+            end_error!("Couldn't resolve registry version: {e}");
             return OperationResult::Failure;
         }
     };
 
-    let latest_marker = if lower_version == "latest" {
-        " (latest)".cyan().to_string()
-    } else {
-        String::new()
-    };
-
-    step!(
-        "Version to be set: {}{}",
-        release.tag.quote(),
-        latest_marker
-    );
-
-    if release.tag == state.registry_tag {
-        note!(
-            "{} The already installed registry is the same as the one you are going to install.",
-            "[!]".yellow()
-        );
-    }
+    util::announce_pending_version(&pending.release, pending.is_latest, &state);
 
     if !util::confirm_action("Confirm action?", yes) {
         return OperationResult::Success;
     }
 
-    match registry::install_registry_from_release(&release) {
-        Ok(()) => {
-            state.set_registry_tag(release.tag);
-
-            // TODO: revert the old registry?
-            if let Err(e) = state.save() {
-                end_error!("Couldn't save updated state: {e}");
-                return OperationResult::Failure;
-            }
-
-            end!("Registry version set successfully.");
-        }
-
-        Err(e) => {
-            end_error!("Couldn't set version of registry: {e}");
-            return OperationResult::Failure;
-        }
-    }
-
-    OperationResult::Success
+    util::commit_registry(&pending.release, &pending.bytes, &mut state)
 }
 
 pub fn sync_packages(
@@ -301,77 +259,40 @@ pub fn sync_packages(
 ) -> OperationResult {
     let (registry, platform, mut state, _lock) = prelude::prelude();
 
-    let pending_release = match version {
-        Some(ref v) => {
-            let lower_version = v.to_lowercase();
-
-            let release = match registry::fetch_release(&lower_version) {
-                Ok(release) => release,
-                Err(e) => {
-                    end_error!("Couldn't get release: {e}");
-                    return OperationResult::Failure;
-                }
-            };
-
-            let bytes = match registry::fetch_registry_bytes_from_release(&release) {
-                Ok(bytes) => bytes,
-                Err(e) => {
-                    end_error!("Couldn't fetch registry contents: {e}");
-                    return OperationResult::Failure;
-                }
-            };
-
-            Some((release, bytes, lower_version == "latest"))
-        }
-
+    let pending = match version {
+        Some(ref v) => match util::resolve_release(v) {
+            Ok(p) => Some(p),
+            Err(e) => {
+                end_error!("Couldn't resolve registry version: {e}");
+                return OperationResult::Failure;
+            }
+        },
         None => None,
     };
 
-    if let Some((release, _, is_latest)) = &pending_release {
-        let latest_marker = if *is_latest {
-            " (latest)".cyan().to_string()
-        } else {
-            String::new()
-        };
-
-        step!(
-            "Version to be set: {}{}",
-            release.tag.quote(),
-            latest_marker
-        );
-
-        if release.tag == state.registry_tag {
-            note!(
-                "{} The already installed registry is the same as the one you are going to install.",
-                "[!]".yellow()
-            );
-        }
+    if let Some(p) = &pending {
+        util::announce_pending_version(&p.release, p.is_latest, &state);
     }
 
-    let sync_registry = match &pending_release {
-        Some((_, bytes, _)) => match registry::parse_registry_from_bytes(bytes) {
+    let sync_registry = match &pending {
+        Some(p) => match registry::parse_registry_from_bytes(&p.bytes) {
             Ok(r) => r,
-
             Err(e) => {
                 end_error!("Couldn't parse fetched registry: {e}");
                 return OperationResult::Failure;
             }
         },
-
-        None => registry, // just get the registry's read one
+        None => registry,
     };
 
-    let pkgs = match selection {
-        PackageSelection::Specific(items) => items,
-        PackageSelection::All => state.installed.keys().cloned().collect(),
-    };
+    let pkgs = util::resolve_selection(&state, selection);
 
     if pkgs.is_empty() {
         end!("There are no packages to be synced.");
         return OperationResult::Success;
     }
 
-    let installed_pool: Vec<_> = state.installed.keys().cloned().collect();
+    let installed_pool = util::installed_names(&state);
     let Ok(entries) = util::filter_registry_print(sync_registry, &pkgs, &installed_pool) else {
         return OperationResult::Failure;
     };
@@ -380,21 +301,10 @@ pub fn sync_packages(
         return OperationResult::Success;
     }
 
-    if let Some((release, bytes, _)) = pending_release {
-        if let Err(e) = registry::write_registry_bytes(&bytes) {
-            end_error!("Couldn't save new registry: {e}");
-            return OperationResult::Failure;
-        }
-
-        state.set_registry_tag(release.tag);
-
-        // TODO: revert the old registry?
-        if let Err(e) = state.save() {
-            end_error!("Couldn't save updated state: {e}");
-            return OperationResult::Failure;
-        }
-
-        end!("Registry version set successfully.");
+    if let Some(p) = pending
+        && let OperationResult::Failure = util::commit_registry(&p.release, &p.bytes, &mut state)
+    {
+        return OperationResult::Failure;
     }
 
     execute_entries(
@@ -409,21 +319,14 @@ pub fn sync_packages(
 pub fn registry_current() -> OperationResult {
     let (_, _, state, _lock) = prelude::prelude();
 
-    // this time, we can continue even with errors.
     let is_latest = registry::fetch_latest_release()
         .map(|r| r.tag == state.registry_tag)
         .unwrap_or(false);
 
-    let latest_marker = if is_latest {
-        " (latest)".cyan().to_string()
-    } else {
-        String::new()
-    };
-
     end!(
         "Current registry version is {}.{}",
         state.registry_tag.quote(),
-        latest_marker
+        util::latest_marker(is_latest)
     );
 
     OperationResult::Success

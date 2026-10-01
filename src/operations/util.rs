@@ -4,15 +4,26 @@ use colored::Colorize;
 use dialoguer::Confirm;
 
 use crate::{
-    end_error, header,
+    end, end_error, header,
     log::Format,
-    operations::model::{Action, Marker, OperationResult},
-    registry::model::{Entry, Registry},
+    note,
+    operations::model::{Action, Marker, OperationResult, PackageSelection},
+    registry::{
+        self,
+        model::{Entry, Registry, Release},
+    },
     state::{InstalledPackage, State},
+    step,
 };
 
 const SUGGESTION_THRESHOLD: f64 = 0.7;
 const MAX_SUGGESTIONS: usize = 3;
+
+pub struct PendingRelease {
+    pub release: Release,
+    pub bytes: Vec<u8>,
+    pub is_latest: bool,
+}
 
 fn suggest_similar<'a>(name: &str, pool: impl Iterator<Item = &'a str>) -> Vec<&'a str> {
     let mut scored: Vec<(f64, &str)> = pool
@@ -310,4 +321,78 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
 
     println!();
     confirm_action(&format!("Proceed with {}?", Action::Sync.noun()), yes)
+}
+
+pub fn latest_marker(is_latest: bool) -> String {
+    if is_latest {
+        " (latest)".cyan().to_string()
+    } else {
+        String::new()
+    }
+}
+
+fn installed_marker(is_installed: bool) -> String {
+    if is_installed {
+        " (installed)".green().to_string()
+    } else {
+        String::new()
+    }
+}
+
+pub fn installed_names(state: &State) -> Vec<String> {
+    state.installed.keys().cloned().collect()
+}
+
+pub fn resolve_selection(state: &State, selection: PackageSelection) -> Vec<String> {
+    match selection {
+        PackageSelection::Specific(items) => items,
+        PackageSelection::All => installed_names(state),
+    }
+}
+
+pub fn resolve_release(version: &str) -> anyhow::Result<PendingRelease> {
+    let lower = version.to_lowercase();
+    let release = registry::fetch_release(&lower)?;
+    let bytes = registry::fetch_registry_bytes_from_release(&release)?;
+
+    Ok(PendingRelease {
+        release,
+        bytes,
+        is_latest: lower == "latest",
+    })
+}
+
+pub fn announce_pending_version(release: &Release, is_latest: bool, state: &State) {
+    let is_installed = release.tag == state.registry_tag;
+
+    step!(
+        "Version to be set: {}{}{}",
+        release.tag.quote(),
+        latest_marker(is_latest),
+        installed_marker(is_installed)
+    );
+
+    if is_installed {
+        note!(
+            "{} The already installed registry is the same as the one you are going to install.",
+            "[!]".yellow()
+        );
+    }
+}
+
+pub fn commit_registry(release: &Release, bytes: &[u8], state: &mut State) -> OperationResult {
+    if let Err(e) = registry::write_registry_bytes(bytes) {
+        end_error!("Couldn't save new registry: {e}");
+        return OperationResult::Failure;
+    }
+
+    state.set_registry_tag(release.tag.clone());
+
+    if let Err(e) = state.save() {
+        end_error!("Couldn't save updated state: {e}");
+        return OperationResult::Failure;
+    }
+
+    end!("Registry version set successfully.");
+    OperationResult::Success
 }
