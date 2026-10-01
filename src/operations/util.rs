@@ -47,7 +47,15 @@ pub fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State
     );
 
     list_entries(pkgs, |e| {
-        action.should_skip(state, e).then(|| action.marker())
+        let installed = state.installed.get(&e.name);
+
+        if installed.is_some_and(|p| p.version == e.source.purl.version) {
+            Some(action.marker())
+        } else if installed.is_some_and(|p| p.version != e.source.purl.version) {
+            Some(Marker::NotSynced)
+        } else {
+            None
+        }
     });
 
     confirm_action(&format!("Proceed with {}?", action.noun()), yes)

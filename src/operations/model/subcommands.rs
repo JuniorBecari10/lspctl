@@ -66,9 +66,8 @@ impl Action {
     // TODO: also check version
     pub fn should_skip(&self, state: &State, entry: &Entry) -> bool {
         match self {
-            Action::Install => state.package_exists(&entry.name),
             Action::Remove => !state.package_exists(&entry.name),
-            Action::Sync => state
+            Action::Install | Action::Sync => state
                 .installed
                 .get(&entry.name)
                 .is_some_and(|installed| installed.version == entry.source.purl.version),
@@ -104,6 +103,7 @@ pub enum Marker {
     Installed,
     NotInstalled,
     Synced,
+    NotSynced,
     Latest,
 }
 
@@ -114,6 +114,7 @@ impl Marker {
             Marker::Installed => "(installed)".green(),
             Marker::NotInstalled => "(not installed)".yellow(),
             Marker::Synced => "(synced)".purple(),
+            Marker::NotSynced => "(not synced)".magenta(),
             Marker::Latest => "(latest)".cyan(),
         }
         .to_string()
