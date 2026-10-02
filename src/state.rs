@@ -45,6 +45,8 @@ impl State {
         let state: Self = serde_json::from_slice(&contents)?;
         match state.schema_version {
             SCHEMA_VERSION => Ok(state),
+
+            // TODO: suggest the user to run 'lspctl del all' if this happens
             older => anyhow::bail!(
                 "State file has an schema version {}, which is older than the current {} version.",
                 format!("v{older}").quote(),
