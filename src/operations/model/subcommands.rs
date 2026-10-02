@@ -63,7 +63,6 @@ impl Action {
         }
     }
 
-    // TODO: also check version
     pub fn should_skip(&self, state: &State, entry: &Entry) -> bool {
         match self {
             Action::Remove => !state.package_exists(&entry.name),

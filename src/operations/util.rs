@@ -383,7 +383,7 @@ pub fn announce_pending_version(release: &Release, is_latest: bool, state: &Stat
 
     if is_installed {
         note!(
-            "{} The already installed registry is the same as the one you are going to install.",
+            "{} Version already installed; proceeding will re-download the same registry.",
             "[!]".yellow()
         );
     }
