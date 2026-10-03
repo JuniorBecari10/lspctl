@@ -24,6 +24,11 @@ impl From<OperationResult> for ExitCode {
     }
 }
 
+pub enum VersionDisplay {
+    Installed,
+    RegistryIfMatches,
+}
+
 pub enum Action {
     Install,
     Remove,
@@ -94,6 +99,13 @@ impl Action {
             Action::Install => Marker::Installed,
             Action::Remove => Marker::NotInstalled,
             Action::Sync => Marker::Synced,
+        }
+    }
+
+    pub const fn to_display(&self) -> VersionDisplay {
+        match self {
+            Action::Install => VersionDisplay::RegistryIfMatches,
+            Action::Remove | Action::Sync => VersionDisplay::Installed,
         }
     }
 }

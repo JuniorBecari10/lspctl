@@ -6,7 +6,7 @@ use crate::{
     note,
     operations::{
         logic,
-        model::{Action, OperationResult, PackageSelection, SearchQuery},
+        model::{Action, OperationResult, PackageSelection, SearchQuery, VersionDisplay},
         prelude, util,
     },
     registry::{
@@ -33,6 +33,7 @@ fn execute_entries(
                 pkg.name.quote(),
                 action.skip_reason()
             );
+
             skip_count += 1;
             continue;
         }
@@ -191,11 +192,17 @@ pub fn list_packages(
             (false, false) => "All packages:\n",
         };
 
+        let display = if installed {
+            VersionDisplay::Installed
+        } else {
+            VersionDisplay::RegistryIfMatches
+        };
+
         header!("{header_text}");
         util::write_entries(
             &entries,
             &state,
-            &Action::Install, // fine for our purposes
+            display,
             verbose,
             &state.installed,
             !installed,

@@ -4,6 +4,7 @@ use crate::{
     log::Format,
     registry::model::{Arch, Entry, InstallKind, Libc, Os, Platform, Variant},
 };
+
 use colored::Colorize;
 
 impl Entry {
@@ -24,6 +25,7 @@ impl Entry {
         let field = |label: &str, value: &str| {
             println!("  {:<label_width$} {}", format!("{label}:").dimmed(), value);
         };
+
         let list_field = |label: &str, items: &[String], empty_label: &str| {
             if items.is_empty() {
                 field(label, &empty_label.red().bold().to_string());
@@ -64,6 +66,7 @@ impl Entry {
                 field("Registry Version", &self.source.purl.version);
                 field("Installed Version", &ver);
             }
+
             Some(_) => field(
                 "Version",
                 &format!(
@@ -72,6 +75,7 @@ impl Entry {
                     "(matches registry)".green()
                 ),
             ),
+
             None => field("Version", &self.source.purl.version),
         };
 
@@ -85,6 +89,7 @@ impl Entry {
                 let names: Vec<String> = bins.keys().cloned().collect();
                 list_field("Bins", &names, "No bins");
             }
+
             None => field("Bins", &"No bins".red().bold().to_string()),
         }
 

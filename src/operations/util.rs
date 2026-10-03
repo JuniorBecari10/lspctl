@@ -7,7 +7,7 @@ use crate::{
     end, end_error, header,
     log::Format,
     note,
-    operations::model::{Action, Marker, OperationResult, PackageSelection},
+    operations::model::{Action, Marker, OperationResult, PackageSelection, VersionDisplay},
     registry::{
         self,
         model::{Entry, Registry, Release},
@@ -18,6 +18,9 @@ use crate::{
 
 const SUGGESTION_THRESHOLD: f64 = 0.7;
 const MAX_SUGGESTIONS: usize = 3;
+
+const LONG_COL: usize = 15;
+const SHORT_COL: usize = 6;
 
 pub struct PendingRelease {
     pub release: Release,
@@ -46,7 +49,7 @@ pub fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State
         pkgs.len()
     );
 
-    list_entries(pkgs, state, action, |e| {
+    list_entries(pkgs, state, action.to_display(), |e| {
         let installed = state.installed.get(&e.name);
 
         match action {
@@ -135,7 +138,7 @@ pub const fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a s
 pub fn write_entries(
     entries: &[Entry],
     state: &State,
-    action: &Action,
+    display: VersionDisplay,
     verbose: bool,
     installed_packages: &HashMap<String, InstalledPackage>,
     show_marker: bool,
@@ -151,7 +154,7 @@ pub fn write_entries(
             entry.print_detailed(installed_version(entry), show_marker);
         }
     } else {
-        list_entries(entries, state, action, |e| {
+        list_entries(entries, state, display, |e| {
             (show_marker && installed_packages.contains_key(&e.name)).then_some(Marker::Installed)
         });
     }
@@ -160,51 +163,108 @@ pub fn write_entries(
 pub fn list_entries(
     entries: &[Entry],
     state: &State,
-    action: &Action,
+    display: VersionDisplay,
     marker: impl Fn(&Entry) -> Option<Marker>,
 ) {
-    let version_of = |e: &Entry| -> String {
-        match action {
-            Action::Install => e.source.purl.version.clone(),
+    let width = |s: &str| s.chars().count();
+    let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(width(s))));
 
-            Action::Remove => state
-                .installed
-                .get(&e.name)
-                .map(|p| p.version.clone())
-                .unwrap_or_else(|| "—".to_string()),
+    let installed_version = |e: &Entry| state.installed.get(&e.name).map(|p| p.version.clone());
 
-            Action::Sync => state
-                .installed
-                .get(&e.name)
-                .map(|p| p.version.clone())
-                .unwrap_or_else(|| e.source.purl.version.clone()),
+    let styled_name = |entry: &Entry, name_width: usize| {
+        let name = pad(&entry.name, name_width);
+        if entry.deprecation.is_some() {
+            name.strikethrough().dimmed().to_string()
+        } else {
+            name
         }
     };
 
-    let width = |s: &str| s.chars().count();
+    let label_of = |entry: &Entry| {
+        marker(entry)
+            .map(|m| format!("  {}", m.render()))
+            .unwrap_or_default()
+    };
+
+    // has at least one diverging package
+    let show_divergence = matches!(display, VersionDisplay::RegistryIfMatches)
+        && entries
+            .iter()
+            .any(|e| installed_version(e).is_some_and(|v| v != e.source.purl.version));
 
     let name_width = entries
         .iter()
         .map(|e| width(&e.name))
         .max()
         .unwrap_or(0)
-        .max(15);
-
-    let version_width = entries
-        .iter()
-        .map(|e| width(&version_of(e)))
-        .max()
-        .unwrap_or(0)
-        .max(15);
+        .max(LONG_COL);
 
     let source_width = entries
         .iter()
         .map(|e| width(&e.source.purl.kind.to_string()))
         .max()
         .unwrap_or(0)
-        .max(6);
+        .max(SHORT_COL);
 
-    let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(width(s))));
+    if show_divergence {
+        let current_of = |e: &Entry| installed_version(e).unwrap_or_else(|| "—".to_string());
+        let new_of = |e: &Entry| e.source.purl.version.clone();
+
+        let current_width = entries
+            .iter()
+            .map(|e| width(&current_of(e)))
+            .max()
+            .unwrap_or(0)
+            .max(LONG_COL);
+
+        let new_width = entries
+            .iter()
+            .map(|e| width(&new_of(e)))
+            .max()
+            .unwrap_or(0)
+            .max(LONG_COL);
+
+        println!(
+            "{}  {}  {}  {}",
+            pad("Name", name_width).bold(),
+            pad("Current", current_width).bold(),
+            pad("New", new_width).bold(),
+            "Source".bold(),
+        );
+
+        println!(
+            "{}",
+            "─"
+                .repeat(name_width + current_width + new_width + source_width + 6)
+                .dimmed()
+        );
+
+        for entry in entries {
+            let name = styled_name(entry, name_width);
+            let current = pad(&current_of(entry), current_width).cyan();
+            let new = pad(&new_of(entry), new_width).green();
+            let source = pad(&entry.source.purl.kind.to_string(), source_width).dimmed();
+            let label = label_of(entry);
+
+            println!("{name}  {current}  {new}  {source}{label}");
+        }
+
+        return;
+    }
+
+    let version_of = |e: &Entry| -> String {
+        match display {
+            VersionDisplay::RegistryIfMatches => e.source.purl.version.clone(),
+            VersionDisplay::Installed => installed_version(e).unwrap_or_else(|| "—".to_string()),
+        }
+    };
+
+    let version_width = entries
+        .iter()
+        .map(|e| width(&version_of(e)))
+        .max()
+        .unwrap_or(0)
+        .max(LONG_COL);
 
     println!(
         "{}  {}  {}",
@@ -221,26 +281,22 @@ pub fn list_entries(
     );
 
     for entry in entries {
-        let name = pad(&entry.name, name_width);
-        let name = if entry.deprecation.is_some() {
-            name.strikethrough().dimmed().to_string()
-        } else {
-            name
-        };
-
+        let name = styled_name(entry, name_width);
         let version = pad(&version_of(entry), version_width).cyan();
         let source = pad(&entry.source.purl.kind.to_string(), source_width).dimmed();
-
-        let label = marker(entry)
-            .map(|m| format!("  {}", m.render()))
-            .unwrap_or_default();
+        let label = label_of(entry);
 
         println!("{name}  {version}  {source}{label}");
     }
 }
 
 pub fn list_release_tags(tags: &[String], current: &str, page: u32) {
-    let name_width = tags.iter().map(|t| t.len()).max().unwrap_or(0).max(15);
+    let name_width = tags
+        .iter()
+        .map(|t| t.len())
+        .max()
+        .unwrap_or(0)
+        .max(LONG_COL);
 
     println!("{:<name_width$}", "Tag".bold());
     println!("{}", "─".repeat(name_width).dimmed());
@@ -311,19 +367,21 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
         .map(|(n, _, _, _)| width(n))
         .max()
         .unwrap_or(0)
-        .max(15);
+        .max(LONG_COL);
+
     let cur_w = rows
         .iter()
         .map(|(_, c, _, _)| width(c))
         .max()
         .unwrap_or(0)
-        .max(15);
+        .max(LONG_COL);
+
     let new_w = rows
         .iter()
         .map(|(_, _, n, _)| width(n))
         .max()
         .unwrap_or(0)
-        .max(6);
+        .max(LONG_COL);
 
     let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(width(s))));
 
@@ -333,6 +391,7 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
         pad("Current", cur_w).bold(),
         pad("New", new_w).bold(),
     );
+
     println!("{}", "─".repeat(name_w + cur_w + new_w + 4).dimmed());
 
     for (name, current, new, synced) in &rows {
