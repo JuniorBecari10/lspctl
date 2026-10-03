@@ -192,11 +192,19 @@ pub fn list_packages(
         };
 
         header!("{header_text}");
-        util::write_entries(&entries, verbose, &state.installed, !installed);
+        util::write_entries(
+            &entries,
+            &state,
+            &Action::Install, // fine for our purposes
+            verbose,
+            &state.installed,
+            !installed,
+        );
     }
 
     if !orphaned.is_empty() {
         header!("Installed but not found in registry:\n");
+
         for name in &orphaned {
             println!("  {name}");
         }

@@ -46,17 +46,21 @@ pub fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State
         pkgs.len()
     );
 
-    list_entries(pkgs, |e| {
+    list_entries(pkgs, state, action, |e| {
         let installed = state.installed.get(&e.name);
 
-        if installed.is_some_and(|p| p.version == e.source.purl.version) {
-            Some(action.marker())
-        } else if matches!(action, Action::Install)
-            && installed.is_some_and(|p| p.version != e.source.purl.version)
-        {
-            Some(Marker::NotSynced)
-        } else {
-            None
+        match action {
+            Action::Remove => installed.is_none().then(|| action.marker()),
+
+            Action::Sync => installed
+                .is_some_and(|p| p.version == e.source.purl.version)
+                .then(|| action.marker()),
+
+            Action::Install => match installed {
+                Some(p) if p.version == e.source.purl.version => Some(action.marker()),
+                Some(_) => Some(Marker::NotSynced),
+                None => None,
+            },
         }
     });
 
@@ -130,6 +134,8 @@ pub const fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a s
 
 pub fn write_entries(
     entries: &[Entry],
+    state: &State,
+    action: &Action,
     verbose: bool,
     installed_packages: &HashMap<String, InstalledPackage>,
     show_marker: bool,
@@ -145,41 +151,66 @@ pub fn write_entries(
             entry.print_detailed(installed_version(entry), show_marker);
         }
     } else {
-        list_entries(entries, |e| {
+        list_entries(entries, state, action, |e| {
             (show_marker && installed_packages.contains_key(&e.name)).then_some(Marker::Installed)
         });
     }
 }
 
-pub fn list_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>) {
+pub fn list_entries(
+    entries: &[Entry],
+    state: &State,
+    action: &Action,
+    marker: impl Fn(&Entry) -> Option<Marker>,
+) {
+    let version_of = |e: &Entry| -> String {
+        match action {
+            Action::Install => e.source.purl.version.clone(),
+
+            Action::Remove => state
+                .installed
+                .get(&e.name)
+                .map(|p| p.version.clone())
+                .unwrap_or_else(|| "—".to_string()),
+
+            Action::Sync => state
+                .installed
+                .get(&e.name)
+                .map(|p| p.version.clone())
+                .unwrap_or_else(|| e.source.purl.version.clone()),
+        }
+    };
+
+    let width = |s: &str| s.chars().count();
+
     let name_width = entries
         .iter()
-        .map(|e| e.name.len())
+        .map(|e| width(&e.name))
         .max()
         .unwrap_or(0)
         .max(15);
 
     let version_width = entries
         .iter()
-        .map(|e| e.source.purl.version.len())
+        .map(|e| width(&version_of(e)))
         .max()
         .unwrap_or(0)
         .max(15);
 
     let source_width = entries
         .iter()
-        .map(|e| e.source.purl.kind.to_string().len())
+        .map(|e| width(&e.source.purl.kind.to_string()))
         .max()
         .unwrap_or(0)
         .max(6);
 
+    let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(width(s))));
+
     println!(
-        "{:<name_width$}  {:<version_width$}  {}",
-        "Name".bold(),
-        "Version".bold(),
+        "{}  {}  {}",
+        pad("Name", name_width).bold(),
+        pad("Version", version_width).bold(),
         "Source".bold(),
-        name_width = name_width,
-        version_width = version_width,
     );
 
     println!(
@@ -190,24 +221,21 @@ pub fn list_entries(entries: &[Entry], marker: impl Fn(&Entry) -> Option<Marker>
     );
 
     for entry in entries {
+        let name = pad(&entry.name, name_width);
         let name = if entry.deprecation.is_some() {
-            entry.name.strikethrough().dimmed().to_string()
+            name.strikethrough().dimmed().to_string()
         } else {
-            entry.name.clone()
+            name
         };
+
+        let version = pad(&version_of(entry), version_width).cyan();
+        let source = pad(&entry.source.purl.kind.to_string(), source_width).dimmed();
 
         let label = marker(entry)
             .map(|m| format!("  {}", m.render()))
             .unwrap_or_default();
 
-        println!(
-            "{name}{}  {:<version_width$}  {:<source_width$}{label}",
-            " ".repeat(name_width.saturating_sub(entry.name.len())),
-            entry.source.purl.version.cyan(),
-            entry.source.purl.kind.to_string().dimmed(),
-            version_width = version_width,
-            source_width = source_width,
-        );
+        println!("{name}  {version}  {source}{label}");
     }
 }
 
@@ -267,7 +295,7 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
             let synced = Action::Sync.should_skip(state, e);
 
             let new = if synced {
-                "-".to_string()
+                "—".to_string()
             } else {
                 e.source.purl.version.clone()
             };
@@ -276,40 +304,40 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
         })
         .collect();
 
+    let width = |s: &str| s.chars().count();
+
     let name_w = rows
         .iter()
-        .map(|(n, _, _, _)| n.len())
+        .map(|(n, _, _, _)| width(n))
         .max()
         .unwrap_or(0)
         .max(15);
-
     let cur_w = rows
         .iter()
-        .map(|(_, c, _, _)| c.len())
+        .map(|(_, c, _, _)| width(c))
         .max()
         .unwrap_or(0)
         .max(15);
-
     let new_w = rows
         .iter()
-        .map(|(_, _, n, _)| n.len())
+        .map(|(_, _, n, _)| width(n))
         .max()
         .unwrap_or(0)
         .max(6);
 
-    let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(s.len())));
+    let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(width(s))));
 
     println!(
         "{}  {}  {}",
         pad("Name", name_w).bold(),
         pad("Current", cur_w).bold(),
-        "New".bold(),
+        pad("New", new_w).bold(),
     );
     println!("{}", "─".repeat(name_w + cur_w + new_w + 4).dimmed());
 
     for (name, current, new, synced) in &rows {
         let marker = if *synced {
-            format!(" {}", Marker::Synced.render())
+            format!("  {}", Marker::Synced.render())
         } else {
             String::new()
         };
