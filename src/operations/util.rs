@@ -43,10 +43,22 @@ fn suggest_similar<'a>(name: &str, pool: impl Iterator<Item = &'a str>) -> Vec<&
 }
 
 pub fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State) -> bool {
+    let will_act = |e: &Entry| -> bool {
+        let installed = state.installed.get(&e.name);
+
+        match action {
+            Action::Remove => installed.is_some(),
+            Action::Sync => installed.is_none_or(|p| p.version != e.source.purl.version),
+            Action::Install => installed.is_none_or(|p| p.version != e.source.purl.version),
+        }
+    };
+
+    let action_count = pkgs.iter().filter(|e| will_act(e)).count();
+
     header!(
         "Packages to be {} ({}):\n",
         action.past_participle(),
-        pkgs.len()
+        action_count
     );
 
     list_entries(pkgs, state, action.to_display(), |e| {
@@ -66,6 +78,17 @@ pub fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State
             },
         }
     });
+
+    if action_count == 0 {
+        eprintln!();
+
+        end!(
+            "All {} package(s) are already {}.",
+            pkgs.len(),
+            action.past_participle()
+        );
+        return false;
+    }
 
     confirm_action(&format!("Proceed with {}?", action.noun()), yes)
 }
@@ -335,10 +358,19 @@ pub fn selection_error(a: Action) -> OperationResult {
 }
 
 pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
+    let needs_sync = |e: &Entry| -> bool {
+        state
+            .installed
+            .get(&e.name)
+            .is_none_or(|p| p.version != e.source.purl.version)
+    };
+
+    let action_count = entries.iter().filter(|e| needs_sync(e)).count();
+
     header!(
         "Packages to be {} ({}):\n",
         Action::Sync.past_participle(),
-        entries.len()
+        action_count
     );
 
     let rows: Vec<_> = entries
@@ -378,12 +410,12 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
         .unwrap_or(0)
         .max(LONG_COL);
 
-    let reg_width = rows
+    let new_width = rows
         .iter()
         .map(|(_, _, n, _)| width(n))
         .max()
         .unwrap_or(0)
-        .max(LONG_COL);
+        .max(SHORT_COL);
 
     let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(width(s))));
 
@@ -391,25 +423,24 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
         "{}  {}  {}",
         pad("Name", name_width).bold(),
         pad("Current", cur_width).bold(),
-        pad("Registry", reg_width).bold(),
+        pad("Registry", new_width).bold(),
     );
-
     println!(
         "{}",
-        "─".repeat(name_width + cur_width + reg_width + 4).dimmed()
+        "─".repeat(name_width + cur_width + new_width + 6).dimmed()
     );
 
     for (name, current, new, synced) in &rows {
         let marker = if *synced {
-            format!("  {}", Marker::Synced.render())
+            format!(" {}", Marker::Synced.render())
         } else {
             String::new()
         };
 
         let new_cell = if *synced {
-            pad(new, reg_width).dimmed().to_string()
+            pad(new, new_width).dimmed().to_string()
         } else {
-            pad(new, reg_width).green().to_string()
+            pad(new, new_width).green().to_string()
         };
 
         println!(
@@ -419,6 +450,13 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
             new_cell,
             marker,
         );
+    }
+
+    if action_count == 0 {
+        eprintln!();
+
+        end!("All {} package(s) are already synced.", entries.len());
+        return false;
     }
 
     confirm_action(&format!("Proceed with {}?", Action::Sync.noun()), yes)
