@@ -172,12 +172,14 @@ pub fn list_entries(
     let installed_version = |e: &Entry| state.installed.get(&e.name).map(|p| p.version.clone());
 
     let styled_name = |entry: &Entry, name_width: usize| {
-        let name = pad(&entry.name, name_width);
-        if entry.deprecation.is_some() {
-            name.strikethrough().dimmed().to_string()
+        let styled = if entry.deprecation.is_some() {
+            entry.name.strikethrough().dimmed().to_string()
         } else {
-            name
-        }
+            entry.name.clone()
+        };
+
+        let spaces = " ".repeat(name_width.saturating_sub(width(&entry.name)));
+        format!("{styled}{spaces}")
     };
 
     let label_of = |entry: &Entry| {
