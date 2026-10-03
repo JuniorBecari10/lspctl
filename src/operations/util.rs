@@ -217,7 +217,7 @@ pub fn list_entries(
             .unwrap_or(0)
             .max(LONG_COL);
 
-        let new_width = entries
+        let reg_width = entries
             .iter()
             .map(|e| width(&new_of(e)))
             .max()
@@ -228,21 +228,21 @@ pub fn list_entries(
             "{}  {}  {}  {}",
             pad("Name", name_width).bold(),
             pad("Current", current_width).bold(),
-            pad("New", new_width).bold(),
+            pad("Registry", reg_width).bold(),
             "Source".bold(),
         );
 
         println!(
             "{}",
             "─"
-                .repeat(name_width + current_width + new_width + source_width + 6)
+                .repeat(name_width + current_width + reg_width + source_width + 6)
                 .dimmed()
         );
 
         for entry in entries {
             let name = styled_name(entry, name_width);
             let current = pad(&current_of(entry), current_width).cyan();
-            let new = pad(&new_of(entry), new_width).green();
+            let new = pad(&new_of(entry), reg_width).green();
             let source = pad(&entry.source.purl.kind.to_string(), source_width).dimmed();
             let label = label_of(entry);
 
@@ -362,21 +362,21 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
 
     let width = |s: &str| s.chars().count();
 
-    let name_w = rows
+    let name_width = rows
         .iter()
         .map(|(n, _, _, _)| width(n))
         .max()
         .unwrap_or(0)
         .max(LONG_COL);
 
-    let cur_w = rows
+    let cur_width = rows
         .iter()
         .map(|(_, c, _, _)| width(c))
         .max()
         .unwrap_or(0)
         .max(LONG_COL);
 
-    let new_w = rows
+    let reg_width = rows
         .iter()
         .map(|(_, _, n, _)| width(n))
         .max()
@@ -387,12 +387,15 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
 
     println!(
         "{}  {}  {}",
-        pad("Name", name_w).bold(),
-        pad("Current", cur_w).bold(),
-        pad("New", new_w).bold(),
+        pad("Name", name_width).bold(),
+        pad("Current", cur_width).bold(),
+        pad("Registry", reg_width).bold(),
     );
 
-    println!("{}", "─".repeat(name_w + cur_w + new_w + 4).dimmed());
+    println!(
+        "{}",
+        "─".repeat(name_width + cur_width + reg_width + 4).dimmed()
+    );
 
     for (name, current, new, synced) in &rows {
         let marker = if *synced {
@@ -402,15 +405,15 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
         };
 
         let new_cell = if *synced {
-            pad(new, new_w).dimmed().to_string()
+            pad(new, reg_width).dimmed().to_string()
         } else {
-            pad(new, new_w).green().to_string()
+            pad(new, reg_width).green().to_string()
         };
 
         println!(
             "{}  {}  {}{}",
-            pad(name, name_w),
-            pad(current, cur_w).cyan(),
+            pad(name, name_width),
+            pad(current, cur_width).cyan(),
             new_cell,
             marker,
         );
