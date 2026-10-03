@@ -7,7 +7,7 @@ use crate::{
 use colored::Colorize;
 
 impl Entry {
-    pub fn print_detailed(&self, installed_version: Option<String>) {
+    pub fn print_detailed(&self, installed_version: Option<String>, show_marker: bool) {
         const SHORT_WIDTH: usize = 12;
         const LONG_WIDTH: usize = 19;
 
@@ -52,7 +52,7 @@ impl Entry {
         println!("{}", self.description);
         println!();
 
-        if installed_version.is_some() {
+        if installed_version.is_some() && show_marker {
             println!("  {}", "Installed".green().bold());
             println!();
         }

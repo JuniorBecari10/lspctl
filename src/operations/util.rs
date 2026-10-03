@@ -142,7 +142,7 @@ pub fn write_entries(
 
     if verbose {
         for entry in entries {
-            entry.print_detailed(installed_version(entry));
+            entry.print_detailed(installed_version(entry), show_marker);
         }
     } else {
         list_entries(entries, |e| {
