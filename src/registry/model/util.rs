@@ -122,8 +122,8 @@ impl Platform {
         true
     }
 
-    /// How many fields this constraint pins down. Used to prefer the
-    /// more specific match if an asset array has overlapping targets.
+    /// how many fields this constraint satisfies. the more fields,
+    /// the more specific, and therefore preferred.
     pub fn specificity(&self) -> u8 {
         1 + self.arch.is_some() as u8 + self.libc.is_some() as u8
     }

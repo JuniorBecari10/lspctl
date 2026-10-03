@@ -47,7 +47,6 @@ fn fetch_json<T: DeserializeOwned>(url: &str) -> anyhow::Result<T> {
     parse_json(&raw_data)
 }
 
-/// Fetches one page of releases from the GitHub API, newest first.
 pub fn fetch_release_page(page: u32) -> anyhow::Result<Vec<Release>> {
     fetch_json(&release_page_url(page))
 }
@@ -80,7 +79,6 @@ fn find_registry_asset(release: &Release) -> anyhow::Result<&ReleaseAsset> {
         })
 }
 
-/// Fetches the latest release and installs its registry asset, returning the release's tag.
 pub fn download_latest_registry() -> anyhow::Result<String> {
     step!("Fetching latest registry...");
 
