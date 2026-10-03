@@ -13,7 +13,7 @@ use indicatif::{ProgressBar, ProgressBarIter, ProgressStyle};
 use maplit::hashmap;
 
 use crate::{
-    disk,
+    consts, disk,
     log::{self, Format},
     note, paths,
     registry::model::{PackageManager, Purl},
@@ -263,6 +263,50 @@ pub fn get_install_commands(
             ]
         }
 
+        PackageManager::Opam => {
+            let binary = "opam".to_string();
+
+            vec![
+                InstallCommand {
+                    binary: binary.clone(),
+                    args: vec![
+                        "init".into(),
+                        "--root".into(),
+                        ".".into(),
+                        "--no-setup".into(),
+                        "--disable-sandboxing".into(),
+                        "--bare".into(),
+                    ],
+                    env: hashmap! {},
+                },
+                InstallCommand {
+                    binary: binary.clone(),
+                    args: vec![
+                        "switch".into(),
+                        "create".into(),
+                        consts::APP_NAME.into(), // yeah, this name is arbitrary
+                        "ocaml-base-compiler".into(),
+                        "--root".into(),
+                        ".".into(),
+                    ],
+                    env: hashmap! {},
+                },
+                InstallCommand {
+                    binary,
+                    args: vec![
+                        "install".into(),
+                        format!("{}.{}", qualified_name, version),
+                        "--destdir".into(),
+                        ".".into(),
+                        "--root".into(),
+                        ".".into(),
+                        "-y".into(),
+                    ],
+                    env: hashmap! {},
+                },
+            ]
+        }
+
         _ => {
             let binary = manager.get_command();
             let args = get_install_args(
@@ -374,8 +418,7 @@ fn get_install_args(
 
         // handled elsewhere
         PackageManager::PyPI => unreachable!(),
-
-        PackageManager::Opam => todo!(),
+        PackageManager::Opam => unreachable!(),
     }
 }
 
@@ -395,8 +438,7 @@ fn get_install_env(manager: PackageManager, pkg_dir: &Path) -> HashMap<String, S
 
         // handled elsewhere
         PackageManager::PyPI => unreachable!(),
-
-        PackageManager::Opam => todo!(),
+        PackageManager::Opam => unreachable!(),
     }
 }
 

@@ -76,7 +76,7 @@ pub fn acquire_lock() -> ProcessLock {
 
         Err(TryLockError::WouldBlock) => {
             step!(
-                "One instance of {} is already running. Waiting for the lock to be released..",
+                "One instance of {} is already running. Waiting for the lock to be released...",
                 consts::APP_NAME
             );
 

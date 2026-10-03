@@ -55,7 +55,7 @@ Most of the packages are already supported; see the table below for the current 
 - [x] PyPI
 - [x] LuaRocks
 - [x] Composer
-- [ ] Opam
+- [x] Opam
 - [x] GitHub Assets
 - [x] Download
 - [ ] Build
