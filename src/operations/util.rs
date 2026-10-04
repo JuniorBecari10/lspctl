@@ -22,6 +22,19 @@ const MAX_SUGGESTIONS: usize = 3;
 const LONG_COL: usize = 15;
 const SHORT_COL: usize = 6;
 
+pub enum AcceptSync {
+    No,
+    YesWithPackages,
+    YesNoPackages,
+}
+
+struct OrphanedRow {
+    name: String,
+    current: String,
+    registry: String,
+    source: String,
+}
+
 pub struct PendingRelease {
     pub release: Release,
     pub bytes: Vec<u8>,
@@ -42,7 +55,13 @@ fn suggest_similar<'a>(name: &str, pool: impl Iterator<Item = &'a str>) -> Vec<&
         .collect()
 }
 
-pub fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State) -> bool {
+pub fn accepted_action(
+    pkgs: &[Entry],
+    orphaned: &[String],
+    yes: bool,
+    action: &Action,
+    state: &State,
+) -> bool {
     let will_act = |e: &Entry| -> bool {
         let installed = state.installed.get(&e.name);
 
@@ -61,7 +80,7 @@ pub fn accepted_action(pkgs: &[Entry], yes: bool, action: &Action, state: &State
         action_count
     );
 
-    list_entries(pkgs, state, action.to_display(), |e| {
+    list_entries(pkgs, orphaned, state, action.to_display(), |e| {
         let installed = state.installed.get(&e.name);
 
         match action {
@@ -136,10 +155,16 @@ pub fn filter_registry_print(
     }
 
     for m in missing {
-        let suggestions = suggest_similar(m, suggest_pool.iter().map(String::as_str));
+        let suggestions = suggest_similar(
+            m,
+            suggest_pool.iter().map(String::as_str).filter(|p| *p != m),
+        );
 
         if suggestions.is_empty() {
-            end_error!("Package {} doesn't exist.", m.quote());
+            end_error!(
+                "Package {} doesn't exist in the current registry.",
+                m.quote()
+            );
         } else {
             let list = suggestions
                 .iter()
@@ -147,7 +172,10 @@ pub fn filter_registry_print(
                 .collect::<Vec<_>>()
                 .join(", ");
 
-            end_error!("Package {} doesn't exist. Did you mean: {list}?", m.quote());
+            end_error!(
+                "Package {} doesn't exist in the current registry. Did you mean: {list}?",
+                m.quote()
+            );
         }
     }
 
@@ -160,6 +188,7 @@ pub const fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a s
 
 pub fn write_entries(
     entries: &[Entry],
+    orphaned: &[String],
     state: &State,
     display: VersionDisplay,
     verbose: bool,
@@ -177,7 +206,7 @@ pub fn write_entries(
             entry.print_detailed(installed_version(entry), show_marker);
         }
     } else {
-        list_entries(entries, state, display, |e| {
+        list_entries(entries, orphaned, state, display, |e| {
             (show_marker && installed_packages.contains_key(&e.name)).then_some(Marker::Installed)
         });
     }
@@ -185,6 +214,7 @@ pub fn write_entries(
 
 pub fn list_entries(
     entries: &[Entry],
+    orphaned: &[String],
     state: &State,
     display: VersionDisplay,
     marker: impl Fn(&Entry) -> Option<Marker>,
@@ -194,14 +224,14 @@ pub fn list_entries(
 
     let installed_version = |e: &Entry| state.installed.get(&e.name).map(|p| p.version.clone());
 
-    let styled_name = |entry: &Entry, name_width: usize| {
-        let styled = if entry.deprecation.is_some() {
-            entry.name.strikethrough().dimmed().to_string()
+    let styled_name = |name: &str, deprecated: bool, name_width: usize| {
+        let styled = if deprecated {
+            name.strikethrough().dimmed().to_string()
         } else {
-            entry.name.clone()
+            name.to_string()
         };
 
-        let spaces = " ".repeat(name_width.saturating_sub(width(&entry.name)));
+        let spaces = " ".repeat(name_width.saturating_sub(width(name)));
         format!("{styled}{spaces}")
     };
 
@@ -211,7 +241,35 @@ pub fn list_entries(
             .unwrap_or_default()
     };
 
-    // has at least one diverging package
+    let orphaned_label = format!("  {}", Marker::NotInRegistry.render());
+
+    let orphaned_rows: Vec<OrphanedRow> = orphaned
+        .iter()
+        .map(|name| {
+            let installed = state.installed.get(name);
+
+            match display {
+                VersionDisplay::Installed => OrphanedRow {
+                    name: name.clone(),
+                    current: installed
+                        .map(|p| p.version.clone())
+                        .unwrap_or_else(|| "—".to_string()),
+                    registry: String::new(), // unused in this display mode
+                    source: installed
+                        .map(|p| p.install_kind.to_string())
+                        .unwrap_or_else(|| "—".to_string()),
+                },
+
+                VersionDisplay::RegistryIfMatches => OrphanedRow {
+                    name: name.clone(),
+                    current: "—".to_string(),
+                    registry: "—".to_string(),
+                    source: "—".to_string(),
+                },
+            }
+        })
+        .collect();
+
     let show_divergence = matches!(display, VersionDisplay::RegistryIfMatches)
         && entries
             .iter()
@@ -220,6 +278,7 @@ pub fn list_entries(
     let name_width = entries
         .iter()
         .map(|e| width(&e.name))
+        .chain(orphaned_rows.iter().map(|r| width(&r.name)))
         .max()
         .unwrap_or(0)
         .max(LONG_COL);
@@ -227,24 +286,27 @@ pub fn list_entries(
     let source_width = entries
         .iter()
         .map(|e| width(&e.source.purl.kind.to_string()))
+        .chain(orphaned_rows.iter().map(|r| width(&r.source)))
         .max()
         .unwrap_or(0)
         .max(SHORT_COL);
 
     if show_divergence {
         let current_of = |e: &Entry| installed_version(e).unwrap_or_else(|| "—".to_string());
-        let new_of = |e: &Entry| e.source.purl.version.clone();
+        let registry_of = |e: &Entry| e.source.purl.version.clone();
 
         let current_width = entries
             .iter()
             .map(|e| width(&current_of(e)))
+            .chain(orphaned_rows.iter().map(|r| width(&r.current)))
             .max()
             .unwrap_or(0)
             .max(LONG_COL);
 
         let reg_width = entries
             .iter()
-            .map(|e| width(&new_of(e)))
+            .map(|e| width(&registry_of(e)))
+            .chain(orphaned_rows.iter().map(|r| width(&r.registry)))
             .max()
             .unwrap_or(0)
             .max(LONG_COL);
@@ -265,13 +327,22 @@ pub fn list_entries(
         );
 
         for entry in entries {
-            let name = styled_name(entry, name_width);
+            let name = styled_name(&entry.name, entry.deprecation.is_some(), name_width);
             let current = pad(&current_of(entry), current_width).cyan();
-            let new = pad(&new_of(entry), reg_width).green();
+            let registry = pad(&registry_of(entry), reg_width).green();
             let source = pad(&entry.source.purl.kind.to_string(), source_width).dimmed();
             let label = label_of(entry);
 
-            println!("{name}  {current}  {new}  {source}{label}");
+            println!("{name}  {current}  {registry}  {source}{label}");
+        }
+
+        for row in &orphaned_rows {
+            let name = styled_name(&row.name, false, name_width);
+            let current = pad(&row.current, current_width).cyan();
+            let registry = pad(&row.registry, reg_width).green();
+            let source = pad(&row.source, source_width).dimmed();
+
+            println!("{name}  {current}  {registry}  {source}{orphaned_label}");
         }
 
         return;
@@ -287,6 +358,7 @@ pub fn list_entries(
     let version_width = entries
         .iter()
         .map(|e| width(&version_of(e)))
+        .chain(orphaned_rows.iter().map(|r| width(&r.current)))
         .max()
         .unwrap_or(0)
         .max(LONG_COL);
@@ -306,12 +378,20 @@ pub fn list_entries(
     );
 
     for entry in entries {
-        let name = styled_name(entry, name_width);
+        let name = styled_name(&entry.name, entry.deprecation.is_some(), name_width);
         let version = pad(&version_of(entry), version_width).cyan();
         let source = pad(&entry.source.purl.kind.to_string(), source_width).dimmed();
         let label = label_of(entry);
 
         println!("{name}  {version}  {source}{label}");
+    }
+
+    for row in &orphaned_rows {
+        let name = styled_name(&row.name, false, name_width);
+        let version = pad(&row.current, version_width).cyan();
+        let source = pad(&row.source, source_width).dimmed();
+
+        println!("{name}  {version}  {source}{orphaned_label}");
     }
 }
 
@@ -357,15 +437,38 @@ pub fn selection_error(a: Action) -> OperationResult {
     OperationResult::Failure
 }
 
-pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
-    let needs_sync = |e: &Entry| -> bool {
-        state
-            .installed
-            .get(&e.name)
-            .is_none_or(|p| p.version != e.source.purl.version)
-    };
-
+pub fn accepted_sync(
+    entries: &[Entry],
+    state: &State,
+    yes: bool,
+    pending_version: bool,
+) -> AcceptSync {
+    let needs_sync = |e: &Entry| -> bool { !Action::Sync.should_skip(state, e) };
     let action_count = entries.iter().filter(|e| needs_sync(e)).count();
+
+    if action_count == 0 {
+        if pending_version {
+            eprintln!();
+
+            if entries.is_empty() {
+                end!("No packages to sync.");
+            } else {
+                end!("No packages need to be synced with the new registry version.");
+            }
+
+            if confirm_action(&format!("Proceed with {}?", Action::Sync.noun()), yes) {
+                return AcceptSync::YesNoPackages;
+            }
+        }
+
+        if entries.is_empty() {
+            end!("There are no packages to be synced.");
+        } else {
+            end!("All {} package(s) are already synced.", entries.len());
+        }
+
+        return AcceptSync::YesNoPackages;
+    }
 
     header!(
         "Packages to be {} ({}):\n",
@@ -382,15 +485,15 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
                 .map(|installed| installed.version.clone())
                 .unwrap_or_else(|| "?".into());
 
-            let synced = Action::Sync.should_skip(state, e);
+            let synced = !needs_sync(e);
 
-            let new = if synced {
+            let registry = if synced {
                 "—".to_string()
             } else {
                 e.source.purl.version.clone()
             };
 
-            (e.name.clone(), current, new, synced)
+            (e.name.clone(), current, registry, synced)
         })
         .collect();
 
@@ -401,65 +504,64 @@ pub fn accepted_sync(entries: &[Entry], state: &State, yes: bool) -> bool {
         .map(|(n, _, _, _)| width(n))
         .max()
         .unwrap_or(0)
-        .max(LONG_COL);
+        .max(15);
 
-    let cur_width = rows
+    let current_width = rows
         .iter()
         .map(|(_, c, _, _)| width(c))
         .max()
         .unwrap_or(0)
-        .max(LONG_COL);
+        .max(15);
 
-    let new_width = rows
+    let registry_width = rows
         .iter()
-        .map(|(_, _, n, _)| width(n))
+        .map(|(_, _, r, _)| width(r))
         .max()
         .unwrap_or(0)
-        .max(SHORT_COL);
+        .max(8);
 
     let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(width(s))));
 
     println!(
         "{}  {}  {}",
         pad("Name", name_width).bold(),
-        pad("Current", cur_width).bold(),
-        pad("Registry", new_width).bold(),
+        pad("Current", current_width).bold(),
+        pad("Registry", registry_width).bold(),
     );
     println!(
         "{}",
-        "─".repeat(name_width + cur_width + new_width + 6).dimmed()
+        "─"
+            .repeat(name_width + current_width + registry_width + 4)
+            .dimmed()
     );
 
-    for (name, current, new, synced) in &rows {
+    for (name, current, registry, synced) in &rows {
         let marker = if *synced {
-            format!(" {}", Marker::Synced.render())
+            format!("  {}", Marker::Synced.render())
         } else {
             String::new()
         };
 
-        let new_cell = if *synced {
-            pad(new, new_width).dimmed().to_string()
+        let registry_cell = if *synced {
+            pad(registry, registry_width).dimmed().to_string()
         } else {
-            pad(new, new_width).green().to_string()
+            pad(registry, registry_width).green().to_string()
         };
 
         println!(
             "{}  {}  {}{}",
             pad(name, name_width),
-            pad(current, cur_width).cyan(),
-            new_cell,
+            pad(current, current_width).cyan(),
+            registry_cell,
             marker,
         );
     }
 
-    if action_count == 0 {
-        eprintln!();
-
-        end!("All {} package(s) are already synced.", entries.len());
-        return false;
+    if confirm_action(&format!("Proceed with {}?", Action::Sync.noun()), yes) {
+        AcceptSync::YesWithPackages
+    } else {
+        AcceptSync::No
     }
-
-    confirm_action(&format!("Proceed with {}?", Action::Sync.noun()), yes)
 }
 
 pub fn latest_marker(is_latest: bool) -> String {

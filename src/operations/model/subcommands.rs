@@ -78,22 +78,6 @@ impl Action {
         }
     }
 
-    pub const fn skip_reason(&self) -> &'static str {
-        match self {
-            Action::Install => "is already installed",
-            Action::Remove => "is already not installed",
-            Action::Sync => "is already synced",
-        }
-    }
-
-    pub const fn skip_tally_word(&self) -> &'static str {
-        match self {
-            Action::Install => "already installed",
-            Action::Remove => "already not installed",
-            Action::Sync => "already synced",
-        }
-    }
-
     pub const fn marker(&self) -> Marker {
         match self {
             Action::Install => Marker::Installed,
@@ -116,6 +100,7 @@ pub enum Marker {
     Synced,
     NotSynced,
     Latest,
+    NotInRegistry,
 }
 
 // TODO: implement colors for each kind, so they use '.installed_color()' instead of '.green()', for example.
@@ -127,6 +112,7 @@ impl Marker {
             Marker::Synced => "(synced)".purple(),
             Marker::NotSynced => "(not synced)".magenta(),
             Marker::Latest => "(latest)".cyan(),
+            Marker::NotInRegistry => "(not in registry)".red(),
         }
         .to_string()
     }

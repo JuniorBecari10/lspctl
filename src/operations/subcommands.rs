@@ -7,7 +7,8 @@ use crate::{
     operations::{
         logic,
         model::{Action, OperationResult, PackageSelection, SearchQuery, VersionDisplay},
-        prelude, util,
+        prelude,
+        util::{self, AcceptSync},
     },
     registry::{
         self,
@@ -24,17 +25,11 @@ fn execute_entries(
     platform: &Platform,
     state: &mut State,
 ) -> OperationResult {
-    let (mut ok_count, mut err_count, mut skip_count) = (0, 0, 0);
+    let (mut ok_count, mut err_count) = (0, 0);
 
     for pkg in entries {
+        // just in case. but this is not expected to be run
         if action.should_skip(state, &pkg) {
-            step!(
-                "Package {} {}. Skipping...",
-                pkg.name.quote(),
-                action.skip_reason()
-            );
-
-            skip_count += 1;
             continue;
         }
 
@@ -55,12 +50,10 @@ fn execute_entries(
     }
 
     let ok_plural = util::plural(ok_count, "package", "packages");
-    let skip_plural = util::plural(skip_count, "was", "were");
 
     header!(
-        "Successfully {} {ok_count} {ok_plural}. {err_count} had errors. {skip_count} {skip_plural} {}.",
+        "Successfully {} {ok_count} {ok_plural}. {err_count} had errors.",
         action.past_participle(),
-        action.skip_tally_word(),
     );
 
     if err_count == 0 {
@@ -94,7 +87,7 @@ pub fn run_action(
         return OperationResult::Failure;
     };
 
-    if !util::accepted_action(&entries, yes, &action, &state) {
+    if !util::accepted_action(&entries, &[], yes, &action, &state) {
         return OperationResult::Success;
     }
 
@@ -201,20 +194,13 @@ pub fn list_packages(
         header!("{header_text}");
         util::write_entries(
             &entries,
+            &orphaned,
             &state,
             display,
             verbose,
             &state.installed,
             !installed,
         );
-    }
-
-    if !orphaned.is_empty() {
-        header!("Installed but not found in registry:\n");
-
-        for name in &orphaned {
-            println!("  {name}");
-        }
     }
 
     OperationResult::Success
@@ -302,33 +288,40 @@ pub fn sync_packages(
 
     let pkgs = util::resolve_selection(&state, selection);
 
-    if pkgs.is_empty() {
-        end!("There are no packages to be synced.");
-        return OperationResult::Success;
-    }
-
-    let installed_pool = util::installed_names(&state);
-    let Ok(entries) = util::filter_registry_print(sync_registry, &pkgs, &installed_pool) else {
-        return OperationResult::Failure;
+    let entries = if pkgs.is_empty() {
+        Vec::new()
+    } else {
+        let installed_pool = util::installed_names(&state);
+        match util::filter_registry_print(sync_registry, &pkgs, &installed_pool) {
+            Ok(entries) => entries,
+            Err(_) => return OperationResult::Failure,
+        }
     };
 
-    if !util::accepted_sync(&entries, &state, yes) {
-        return OperationResult::Success;
-    }
+    match util::accepted_sync(&entries, &state, yes, pending.is_some()) {
+        AcceptSync::No => OperationResult::Success,
 
-    if let Some(p) = pending
-        && let OperationResult::Failure = util::commit_registry(&p.release, &p.bytes, &mut state)
-    {
-        return OperationResult::Failure;
-    }
+        yes @ AcceptSync::YesWithPackages | yes @ AcceptSync::YesNoPackages => {
+            if let Some(p) = pending
+                && let OperationResult::Failure =
+                    util::commit_registry(&p.release, &p.bytes, &mut state)
+            {
+                return OperationResult::Failure;
+            }
 
-    execute_entries(
-        entries,
-        &Action::Sync,
-        logic::install_pkg,
-        &platform,
-        &mut state,
-    )
+            if matches!(yes, AcceptSync::YesWithPackages) {
+                execute_entries(
+                    entries,
+                    &Action::Sync,
+                    logic::install_pkg,
+                    &platform,
+                    &mut state,
+                )
+            } else {
+                OperationResult::Success
+            }
+        }
+    }
 }
 
 pub fn registry_current() -> OperationResult {
