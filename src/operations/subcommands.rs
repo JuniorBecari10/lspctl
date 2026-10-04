@@ -20,6 +20,7 @@ use crate::{
 
 fn execute_entries(
     entries: Vec<Entry>,
+    orphaned: &[String],
     action: &Action,
     op: fn(Entry, &Platform, &mut State) -> anyhow::Result<()>,
     platform: &Platform,
@@ -28,7 +29,6 @@ fn execute_entries(
     let (mut ok_count, mut err_count) = (0, 0);
 
     for pkg in entries {
-        // just in case. but this is not expected to be run
         if action.should_skip(state, &pkg) {
             continue;
         }
@@ -37,6 +37,22 @@ fn execute_entries(
         step!("{} package {}...", action.gerund(), pkg.name.quote());
 
         match op(pkg, platform, state) {
+            Ok(()) => {
+                end!("Package {} successfully.", action.past_participle());
+                ok_count += 1;
+            }
+
+            Err(e) => {
+                end_error!("Failed to {} {}: {e}", action.verb_base(), name.quote());
+                err_count += 1;
+            }
+        }
+    }
+
+    for name in orphaned {
+        step!("{} package {}...", action.gerund(), name.quote());
+
+        match logic::remove(name, state) {
             Ok(()) => {
                 end!("Package {} successfully.", action.past_participle());
                 ok_count += 1;
@@ -83,15 +99,35 @@ pub fn run_action(
         Action::Remove | Action::Sync => util::installed_names(&state),
     };
 
-    let Ok(entries) = util::filter_registry_print(registry, &pkgs, &installed_pool) else {
-        return OperationResult::Failure;
+    let (pkgs, orphaned): (Vec<String>, Vec<String>) = if matches!(action, Action::Remove) {
+        let registry_names: std::collections::HashSet<&str> =
+            registry.0.iter().map(|e| e.name.as_str()).collect();
+
+        pkgs.into_iter()
+            .partition(|name| registry_names.contains(name.as_str()))
+    } else {
+        (pkgs, Vec::new())
     };
 
-    if !util::accepted_action(&entries, &[], yes, &action, &state) {
+    let entries = if pkgs.is_empty() {
+        Vec::new()
+    } else {
+        match util::filter_registry_print(registry, &pkgs, &installed_pool) {
+            Ok(entries) => entries,
+            Err(_) => return OperationResult::Failure,
+        }
+    };
+
+    if entries.is_empty() && orphaned.is_empty() {
+        end!("There are no packages to be {}.", action.past_participle());
         return OperationResult::Success;
     }
 
-    execute_entries(entries, &action, op, &platform, &mut state)
+    if !util::accepted_action(&entries, &orphaned, yes, &action, &state) {
+        return OperationResult::Success;
+    }
+
+    execute_entries(entries, &orphaned, &action, op, &platform, &mut state)
 }
 
 pub fn list_packages(
@@ -312,6 +348,7 @@ pub fn sync_packages(
             if matches!(yes, AcceptSync::YesWithPackages) {
                 execute_entries(
                     entries,
+                    &[],
                     &Action::Sync,
                     logic::install_pkg,
                     &platform,

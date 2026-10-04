@@ -2,12 +2,12 @@ use std::fs;
 
 use anyhow::Context;
 
-use crate::{disk, log::Format, paths, registry::model::ResolvedEntry, state::State};
+use crate::{disk, log::Format, paths, state::State};
 
-pub fn remove(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
+pub fn remove(name: &str, state: &mut State) -> anyhow::Result<()> {
     let state_entry = state
-        .get_entry(&entry.name)
-        .ok_or_else(|| anyhow::anyhow!("Package {} is not installed", entry.name.quote()))?;
+        .get_entry(name)
+        .ok_or_else(|| anyhow::anyhow!("Package {} is not installed", name.quote()))?;
 
     for file in state_entry.bin.values() {
         match fs::remove_file(file) {
@@ -21,8 +21,8 @@ pub fn remove(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
         }
     }
 
-    remove_package(&entry.name)?;
-    state.remove_entry(&entry.name);
+    remove_package(name)?;
+    state.remove_entry(name);
     Ok(())
 }
 

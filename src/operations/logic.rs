@@ -24,6 +24,11 @@ pub fn install_pkg(e: Entry, host: &Platform, state: &mut State) -> anyhow::Resu
     resolve_and_perform(e, host, state, packages::install)
 }
 
-pub fn remove_pkg(e: Entry, host: &Platform, state: &mut State) -> anyhow::Result<()> {
-    resolve_and_perform(e, host, state, packages::remove)
+pub fn remove_pkg(e: Entry, _host: &Platform, state: &mut State) -> anyhow::Result<()> {
+    remove(&e.name, state)
+}
+
+pub fn remove(name: &str, state: &mut State) -> anyhow::Result<()> {
+    packages::remove(name, state)?;
+    state.save()
 }
