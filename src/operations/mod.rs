@@ -7,7 +7,7 @@ use crate::{
     log::Format,
     operations::{
         model::{
-            Action, DeleteFlags, OperationResult, PackageSelection, RegistryListArgs,
+            Action, DeleteFlags, OperationResult, OutputFlags, PackageSelection, RegistryListArgs,
             RegistrySetVersionArgs, RegistrySyncArgs, SearchQuery,
         },
         selection::Selection,
@@ -41,7 +41,8 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
 }
 
 pub fn list(args: model::ListArgs) -> OperationResult {
-    subcommands::list_packages(args.installed, args.verbose, args.bins, args.versions, None)
+    let flags = OutputFlags::from(&args);
+    subcommands::list_packages(args.installed, flags, None)
 }
 
 pub fn search(args: model::SearchArgs) -> OperationResult {
@@ -56,11 +57,11 @@ pub fn search(args: model::SearchArgs) -> OperationResult {
         }
     };
 
+    let flags = OutputFlags::new(args.verbose, false, false);
+
     subcommands::list_packages(
         args.installed,
-        args.verbose,
-	false,
-	false,
+        flags,
         Some(SearchQuery {
             pattern,
             filters: args.filters,

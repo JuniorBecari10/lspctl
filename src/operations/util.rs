@@ -7,7 +7,9 @@ use crate::{
     end, end_error, header,
     log::Format,
     note,
-    operations::model::{Action, Marker, OperationResult, PackageSelection, VersionDisplay},
+    operations::model::{
+        Action, Marker, OperationResult, OutputFlags, PackageSelection, VersionDisplay,
+    },
     registry::{
         self,
         model::{Entry, Registry, Release},
@@ -186,16 +188,12 @@ pub const fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a s
     if count == 1 { singular } else { plural }
 }
 
-/// TODO: Clamp output flags (verbose, bins, versions) in a single `OuputFlags` struct to avoid `too_many_arguments`.
-/// TODO: Abstract table formatting and column calculations into a dedicated print formatter utility.
 pub fn write_entries(
     entries: &[Entry],
     orphaned: &[String],
     state: &State,
     display: VersionDisplay,
-    verbose: bool,
-    bins: bool,
-    versions: bool,
+    flags: OutputFlags,
     installed_packages: &HashMap<String, InstalledPackage>,
     show_marker: bool,
 ) {
@@ -205,26 +203,17 @@ pub fn write_entries(
             .map(|pkg| pkg.version.clone())
     };
 
-    if verbose {
+    if flags.verbose {
         for entry in entries {
             entry.print_detailed(installed_version(entry), show_marker);
         }
+    } else if flags.bins || flags.versions {
+        let formatter = TableFormatter::new(entries, flags);
+        formatter.render();
     } else {
-        if bins || versions {
-	    for entry in entries {
-	        if bins && versions {
-		    println!("{}: version={}, bin={:?}", entry.name, entry.source.purl.version, entry.bin);
-		} else if bins {
-		    println!("{}: {:?}", entry.name, entry.bin);		   
-		} else if versions {
-		    println!("{}: {}", entry.name, entry.source.purl.version);		   
-		}
-	    }
-	} else {
-	    list_entries(entries, orphaned, state, display, |e| {
-                (show_marker && installed_packages.contains_key(&e.name)).then_some(Marker::Installed)
-            });
-        }
+        list_entries(entries, orphaned, state, display, |e| {
+            (show_marker && installed_packages.contains_key(&e.name)).then_some(Marker::Installed)
+        });
     }
 }
 
@@ -408,6 +397,93 @@ pub fn list_entries(
         let source = pad(&row.source, source_width).dimmed();
 
         println!("{name}  {version}  {source}{orphaned_label}");
+    }
+}
+
+pub struct TableFormatter<'a> {
+    entries: &'a [Entry],
+    flags: OutputFlags,
+}
+
+impl<'a> TableFormatter<'a> {
+    pub fn new(entries: &'a [Entry], flags: OutputFlags) -> Self {
+        Self { entries, flags }
+    }
+
+    fn max_name_width(&self) -> usize {
+        self.entries
+            .iter()
+            .map(|e| e.name.len())
+            .max()
+            .unwrap_or(20)
+            .max(20)
+    }
+
+    pub fn render(&self) {
+        let name_width = self.max_name_width();
+
+        match (self.flags.bins, self.flags.versions) {
+            (true, true) => println!(
+                "{:<width$} {:<15} {}",
+                "Name".bold(),
+                "Version".bold(),
+                "Binaries".bold(),
+                width = name_width
+            ),
+            (true, false) => println!(
+                "{:<width$}  {}",
+                "Name".bold(),
+                "Binaries".bold(),
+                width = name_width
+            ),
+            (false, true) => println!(
+                "{:<width$}  {}",
+                "Name".bold(),
+                "Version".bold(),
+                width = name_width
+            ),
+            _ => return,
+        }
+
+        let total_width = name_width
+            + if self.flags.bins && self.flags.versions {
+                35
+            } else {
+                20
+            };
+        println!("{}", "─".repeat(total_width).dimmed());
+
+        for entry in self.entries {
+            let version = &entry.source.purl.version;
+
+            let bins_str = match &entry.bin {
+                Some(bins) if !bins.is_empty() => {
+                    let names: Vec<&str> = bins.keys().map(|s| s.as_str()).collect();
+                    names.join(", ")
+                }
+                _ => "No bins".dimmed().to_string(),
+            };
+
+            match (self.flags.bins, self.flags.versions) {
+                (true, true) => println!(
+                    "{:<width$}  {:<15}  {}",
+                    entry.name,
+                    version.cyan(),
+                    bins_str,
+                    width = name_width
+                ),
+                (true, false) => {
+                    println!("{:<width$}  {}", entry.name, bins_str, width = name_width)
+                }
+                (false, true) => println!(
+                    "{:<width$}  {}",
+                    entry.name,
+                    version.cyan(),
+                    width = name_width
+                ),
+                _ => {}
+            }
+        }
     }
 }
 

@@ -78,6 +78,7 @@ pub struct SearchArgs {
     #[arg(short, long)]
     pub verbose: bool,
 }
+
 #[derive(Args, Debug)]
 pub struct InfoArgs {
     /// List of packages to list information about
@@ -171,4 +172,31 @@ pub struct PackageSelectionArgs {
     /// Sync all installed packages
     #[arg(short, long)]
     pub all: bool,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct OutputFlags {
+    pub verbose: bool,
+    pub bins: bool,
+    pub versions: bool,
+}
+
+impl OutputFlags {
+    pub fn new(verbose: bool, bins: bool, versions: bool) -> Self {
+        Self {
+            verbose,
+            bins,
+            versions,
+        }
+    }
+}
+
+impl From<&ListArgs> for OutputFlags {
+    fn from(args: &ListArgs) -> Self {
+        Self {
+            verbose: args.verbose,
+            bins: args.bins,
+            versions: args.versions,
+        }
+    }
 }
