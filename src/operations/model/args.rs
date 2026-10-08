@@ -27,7 +27,6 @@ pub struct RemoveArgs {
     pub yes: bool,
 }
 
-// TODO: add flags to only show some properties, like bins, versions..
 #[derive(Args, Debug)]
 pub struct ListArgs {
     /// List installed packages instead
@@ -37,6 +36,14 @@ pub struct ListArgs {
     /// Write more info when listing; this will write more than one line per package
     #[arg(short, long)]
     pub verbose: bool,
+
+    /// Show only package binaries
+    #[arg(long)]
+    pub bins: bool,
+
+    /// Show only package versions
+    #[arg(long)]
+    pub versions: bool,
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
@@ -71,6 +78,7 @@ pub struct SearchArgs {
     #[arg(short, long)]
     pub verbose: bool,
 }
+
 #[derive(Args, Debug)]
 pub struct InfoArgs {
     /// List of packages to list information about
@@ -164,4 +172,31 @@ pub struct PackageSelectionArgs {
     /// Sync all installed packages
     #[arg(short, long)]
     pub all: bool,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct OutputFlags {
+    pub verbose: bool,
+    pub bins: bool,
+    pub versions: bool,
+}
+
+impl OutputFlags {
+    pub fn new(verbose: bool, bins: bool, versions: bool) -> Self {
+        Self {
+            verbose,
+            bins,
+            versions,
+        }
+    }
+}
+
+impl From<&ListArgs> for OutputFlags {
+    fn from(args: &ListArgs) -> Self {
+        Self {
+            verbose: args.verbose,
+            bins: args.bins,
+            versions: args.versions,
+        }
+    }
 }

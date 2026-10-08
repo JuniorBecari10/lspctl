@@ -6,7 +6,9 @@ use crate::{
     note,
     operations::{
         logic,
-        model::{Action, OperationResult, PackageSelection, SearchQuery, VersionDisplay},
+        model::{
+            Action, OperationResult, OutputFlags, PackageSelection, SearchQuery, VersionDisplay,
+        },
         prelude,
         util::{self, AcceptSync},
     },
@@ -132,7 +134,7 @@ pub fn run_action(
 
 pub fn list_packages(
     installed: bool,
-    verbose: bool,
+    flags: OutputFlags,
     query: Option<SearchQuery>,
 ) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
@@ -214,11 +216,14 @@ pub fn list_packages(
     }
 
     if !entries.is_empty() {
-        let header_text = match (installed, query.is_some()) {
-            (true, true) => "All matching installed packages:\n",
-            (true, false) => "Installed packages:\n",
-            (false, true) => "All matching packages:\n",
-            (false, false) => "All packages:\n",
+        let header_text = match (flags.bins, flags.versions, installed, query.is_some()) {
+            (true, true, _, _) => "All binary versions:\n",
+            (true, false, _, _) => "All binaries:\n",
+            (false, true, _, _) => "All versions:\n",
+            (false, false, true, true) => "All matching installed packages:\n",
+            (false, false, true, false) => "Installed Packages:\n",
+            (false, false, false, true) => "All matching packages:\n",
+            (false, false, false, false) => "All packages:\n",
         };
 
         let display = if installed {
@@ -233,7 +238,7 @@ pub fn list_packages(
             &orphaned,
             &state,
             display,
-            verbose,
+            flags,
             &state.installed,
             !installed,
         );
