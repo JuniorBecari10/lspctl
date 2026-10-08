@@ -41,7 +41,7 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
 }
 
 pub fn list(args: model::ListArgs) -> OperationResult {
-    subcommands::list_packages(args.installed, args.verbose, None)
+    subcommands::list_packages(args.installed, args.verbose, args.bins, args.versions, None)
 }
 
 pub fn search(args: model::SearchArgs) -> OperationResult {
@@ -59,6 +59,8 @@ pub fn search(args: model::SearchArgs) -> OperationResult {
     subcommands::list_packages(
         args.installed,
         args.verbose,
+	false,
+	false,
         Some(SearchQuery {
             pattern,
             filters: args.filters,

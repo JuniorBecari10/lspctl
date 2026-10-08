@@ -133,6 +133,8 @@ pub fn run_action(
 pub fn list_packages(
     installed: bool,
     verbose: bool,
+    bins: bool,
+    versions: bool,
     query: Option<SearchQuery>,
 ) -> OperationResult {
     let (registry, _, state, _lock) = prelude::prelude();
@@ -234,6 +236,8 @@ pub fn list_packages(
             &state,
             display,
             verbose,
+	    bins,
+	    versions,
             &state.installed,
             !installed,
         );

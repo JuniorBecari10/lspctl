@@ -27,7 +27,6 @@ pub struct RemoveArgs {
     pub yes: bool,
 }
 
-// TODO: add flags to only show some properties, like bins, versions..
 #[derive(Args, Debug)]
 pub struct ListArgs {
     /// List installed packages instead
@@ -37,6 +36,14 @@ pub struct ListArgs {
     /// Write more info when listing; this will write more than one line per package
     #[arg(short, long)]
     pub verbose: bool,
+
+    /// Show only package binaries
+    #[arg(long)]
+    pub bins: bool,
+
+    /// Show only package versions
+    #[arg(long)]
+    pub versions: bool,
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]

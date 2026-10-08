@@ -186,12 +186,16 @@ pub const fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a s
     if count == 1 { singular } else { plural }
 }
 
+/// TODO: Clamp output flags (verbose, bins, versions) in a single `OuputFlags` struct to avoid `too_many_arguments`.
+/// TODO: Abstract table formatting and column calculations into a dedicated print formatter utility.
 pub fn write_entries(
     entries: &[Entry],
     orphaned: &[String],
     state: &State,
     display: VersionDisplay,
     verbose: bool,
+    bins: bool,
+    versions: bool,
     installed_packages: &HashMap<String, InstalledPackage>,
     show_marker: bool,
 ) {
@@ -206,9 +210,21 @@ pub fn write_entries(
             entry.print_detailed(installed_version(entry), show_marker);
         }
     } else {
-        list_entries(entries, orphaned, state, display, |e| {
-            (show_marker && installed_packages.contains_key(&e.name)).then_some(Marker::Installed)
-        });
+        if bins || versions {
+	    for entry in entries {
+	        if bins && versions {
+		    println!("{}: version={}, bin={:?}", entry.name, entry.source.purl.version, entry.bin);
+		} else if bins {
+		    println!("{}: {:?}", entry.name, entry.bin);		   
+		} else if versions {
+		    println!("{}: {}", entry.name, entry.source.purl.version);		   
+		}
+	    }
+	} else {
+	    list_entries(entries, orphaned, state, display, |e| {
+                (show_marker && installed_packages.contains_key(&e.name)).then_some(Marker::Installed)
+            });
+        }
     }
 }
 
