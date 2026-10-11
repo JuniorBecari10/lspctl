@@ -86,7 +86,6 @@ pub fn download_latest_registry() -> anyhow::Result<String> {
     install_registry_from_release(&release)?;
 
     note!("Fetching complete.");
-
     Ok(release.tag)
 }
 

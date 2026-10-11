@@ -59,7 +59,6 @@ pub fn clean_orphans(state: &State) {
 fn clean_orphan_packages(state: &State) {
     let entries = match fs::read_dir(paths::packages_dir()) {
         Ok(e) => e,
-
         Err(e) => {
             error!("Failed to read packages directory: {e}");
             return;
@@ -90,7 +89,7 @@ fn clean_orphan_packages(state: &State) {
         };
 
         if state.installed.contains_key(name) {
-            continue; // still a real, tracked package
+            continue; // still a real and tracked package
         }
 
         if let Err(e) = disk::make_writable_recursive(&path) {
