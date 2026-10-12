@@ -1,3 +1,5 @@
+use const_format::formatcp;
+
 #[macro_export]
 macro_rules! def_consts {
     ($($name: ident = $value: expr),+ $(,)?) => {
@@ -19,5 +21,5 @@ def_consts!(
     APP_NAME = "lspctl",
     APP_VERSION = "beta 1.0",
     APP_DESC = "A standalone, cross-platform package manager for LSP and DAP servers, linters, and formatters.",
-    BANNER = BANNER_ART,
+    BANNER = formatcp!("{BANNER_ART}    {APP_VERSION}"),
 );

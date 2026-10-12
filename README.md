@@ -17,8 +17,7 @@ installed tool to be used by your editor.
 ## Why this name?
 
 `lspctl` was chosen to mirror the name of [systemd](https://systemd.io/)'s command `systemctl`,
-which controls the running services, but it's for controlling the installation of
-LSP and DAP servers, linters, and formatters.
+which controls the running services; `lspctl` controls the installation of LSP and DAP servers, linters, and formatters.
 
 ## Status
 

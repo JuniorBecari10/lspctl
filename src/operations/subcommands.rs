@@ -337,7 +337,7 @@ pub fn sync_packages(
     match util::accepted_sync(&entries, &state, yes, pending.is_some()) {
         AcceptSync::No => OperationResult::Success,
 
-        yes @ AcceptSync::YesWithPackages | yes @ AcceptSync::YesNoPackages => {
+        yes @ (AcceptSync::YesWithPackages | AcceptSync::YesNoPackages) => {
             if let Some(p) = pending
                 && let OperationResult::Failure =
                     util::commit_registry(&p.release, &p.bytes, &mut state)
