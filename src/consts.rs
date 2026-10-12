@@ -19,7 +19,7 @@ const BANNER_ART: &str = r#"
 
 def_consts!(
     APP_NAME = "lspctl",
-    APP_VERSION = "beta 1.0",
+    APP_VERSION = "0.1.0 beta",
     APP_DESC = "A standalone, cross-platform package manager for LSP and DAP servers, linters, and formatters.",
     BANNER = formatcp!("{BANNER_ART}    {APP_VERSION}"),
 );

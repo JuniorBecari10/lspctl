@@ -4,7 +4,7 @@ A standalone, cross-platform package manager for LSP and DAP servers,
 linters, and formatters. It installs from the [Mason](https://github.com/mason-org/mason-registry)
 registry without depending on Neovim or any specific editor.
 
-Version: **Beta 1.0**.
+Version: **0.1.0 beta**.
 
 ## Motivation
 
