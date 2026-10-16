@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs, path::Path};
 
 use crate::{
-    end, end_error, header,
+    disk, end, end_error, header,
     log::{Fatal, Format},
     note,
     operations::{
@@ -262,6 +262,12 @@ pub fn delete(
 
     if !util::confirm_action("Proceed?", yes) {
         return OperationResult::Success;
+    }
+
+    // this won't stop execution
+    if let Err(e) = disk::make_writable(path) {
+        end_error!("Couldn't make path writable, continuing...");
+        note!("Reason: {e}");
     }
 
     delete_fn(path).fatal(fatal_msg);

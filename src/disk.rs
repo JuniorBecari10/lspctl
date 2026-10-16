@@ -65,7 +65,6 @@ pub fn link_files(from: &Path, to: &Path) -> anyhow::Result<()> {
         })?;
     }
 
-    // 'write_shim' works for both Unix and Windows.
     #[cfg(unix)]
     std::os::unix::fs::symlink(&real_target, to).with_context(|| {
         format!(
@@ -101,7 +100,7 @@ pub fn list_files(dir: &Path) -> anyhow::Result<Vec<PathBuf>> {
     Ok(files)
 }
 
-fn make_writable(path: &Path) -> anyhow::Result<()> {
+pub fn make_writable(path: &Path) -> anyhow::Result<()> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;

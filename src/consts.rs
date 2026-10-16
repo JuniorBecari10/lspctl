@@ -9,17 +9,19 @@ macro_rules! def_consts {
     };
 }
 
-const BANNER_ART: &str = r#"
+const BANNER_ART: &str = formatcp!(
+    r#"
   _                _   _ 
  | |___ _ __   ___| |_| |
  | / __| '_ \ / __| __| |
  | \__ \ |_) | (__| |_| |
- |_|___/ .__/ \___|\__|_|
-       |_|               "#;
+ |_|___/ .__/ \___|\__|_|    {APP_VERSION}
+       |_|               "#
+);
 
 def_consts!(
     APP_NAME = "lspctl",
-    APP_VERSION = "0.1.0 beta",
+    APP_VERSION = "0.2.0 beta",
     APP_DESC = "A standalone, cross-platform package manager for LSP and DAP servers, linters, and formatters.",
-    BANNER = formatcp!("{BANNER_ART}    {APP_VERSION}"),
+    BANNER = BANNER_ART,
 );

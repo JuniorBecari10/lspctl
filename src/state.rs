@@ -3,9 +3,9 @@ use std::{collections::HashMap, fs::File, io::Read, path::PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    disk, global,
+    consts, disk, end_error, global,
     log::Format,
-    paths,
+    note, paths,
     registry::model::{InstallKind, ResolvedEntry},
 };
 
@@ -46,12 +46,20 @@ impl State {
         match state.schema_version {
             SCHEMA_VERSION => Ok(state),
 
-            // TODO: suggest the user to run 'lspctl del all' if this happens
-            older => anyhow::bail!(
-                "State file has an schema version {}, which is older than the current {} version.",
-                format!("v{older}").quote(),
-                format!("v{SCHEMA_VERSION}").quote()
-            ),
+            older => {
+                end_error!(
+                    "State file has an schema version {}, which is older than the current {} version.",
+                    format!("v{older}").quote(),
+                    format!("v{SCHEMA_VERSION}").quote()
+                );
+
+                note!(
+                    "Run {} and install your packages again.\n",
+                    format!("{} del all", consts::APP_NAME).quote()
+                );
+
+                anyhow::bail!("Mismatched schema versions")
+            }
         }
     }
 
