@@ -46,10 +46,10 @@ impl State {
         match state.schema_version {
             SCHEMA_VERSION => Ok(state),
 
-            older => {
+            diff => {
                 end_error!(
-                    "State file has an schema version {}, which is older than the current {} version.",
-                    format!("v{older}").quote(),
+                    "State file has an schema version {}, which is different than the current {} version.",
+                    format!("v{diff}").quote(),
                     format!("v{SCHEMA_VERSION}").quote()
                 );
 
