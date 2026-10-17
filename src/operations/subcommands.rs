@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs, path::Path};
 
 use crate::{
-    disk, end, end_error, header,
+    disk, end, end_error, error, header,
     log::{Fatal, Format},
     note,
     operations::{
@@ -270,7 +270,11 @@ pub fn delete(
         note!("Reason: {e}");
     }
 
-    delete_fn(path).fatal(fatal_msg);
+    if let Err(e) = delete_fn(path) {
+        error!("{fatal_msg}: {e}");
+        return OperationResult::Failure;
+    }
+
     OperationResult::Success
 }
 
