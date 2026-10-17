@@ -100,7 +100,7 @@ pub fn list_files(dir: &Path) -> anyhow::Result<Vec<PathBuf>> {
     Ok(files)
 }
 
-pub fn make_writable(path: &Path) -> anyhow::Result<()> {
+fn make_writable(path: &Path) -> anyhow::Result<()> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;

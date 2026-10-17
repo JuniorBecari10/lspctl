@@ -265,7 +265,7 @@ pub fn delete(
     }
 
     // this won't stop execution
-    if let Err(e) = disk::make_writable(path) {
+    if let Err(e) = disk::make_writable_recursive(path) {
         end_error!("Couldn't make path writable, continuing...");
         note!("Reason: {e}");
     }
