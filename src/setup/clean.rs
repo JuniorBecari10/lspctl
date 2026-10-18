@@ -66,7 +66,7 @@ fn clean_orphan_packages(state: &State) {
             continue;
         };
 
-        if state.installed.contains_key(name) {
+        if state.package_exists(name) {
             continue; // still a real and tracked package
         }
 
@@ -89,8 +89,7 @@ fn clean_orphan_packages(state: &State) {
 
 fn clean_orphan_shims(state: &State) {
     let valid: HashSet<PathBuf> = state
-        .installed
-        .values()
+        .packages()
         .flat_map(|pkg| pkg.bin.values().cloned())
         .collect();
 

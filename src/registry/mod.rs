@@ -53,8 +53,8 @@ pub fn fetch_release_page(page: u32) -> anyhow::Result<Vec<Release>> {
 
 pub fn fetch_latest_release() -> anyhow::Result<Release> {
     fetch_release_page(1)?
-        .into_iter()
-        .next()
+        .first()
+        .cloned()
         .ok_or_else(|| anyhow!("Cannot get latest release"))
 }
 

@@ -228,15 +228,7 @@ pub fn list_packages(
         };
 
         header!("{header_text}");
-        util::write_entries(
-            &entries,
-            &orphaned,
-            &state,
-            display,
-            verbose,
-            &state.installed,
-            !installed,
-        );
+        util::write_entries(&entries, &orphaned, &state, display, verbose, !installed);
     }
 
     OperationResult::Success

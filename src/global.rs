@@ -4,7 +4,7 @@ use crate::registry::model::{Arch, Libc, Os, Platform};
 
 pub fn current_platform() -> anyhow::Result<Platform> {
     let os = match std::env::consts::OS {
-        "linux" => Os::Linux,
+        "linux" => Os::Linux, // TODO: add compatibility to any Unix-like OS?
         "macos" => Os::Darwin,
         "windows" => Os::Windows,
         other => anyhow::bail!("Unsupported OS: {other}"),

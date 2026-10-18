@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use colored::Colorize;
 use dialoguer::Confirm;
@@ -12,7 +12,7 @@ use crate::{
         self,
         model::{Entry, Registry, Release},
     },
-    state::{InstalledPackage, State},
+    state::State,
     step,
 };
 
@@ -63,7 +63,7 @@ pub fn accepted_action(
     state: &State,
 ) -> bool {
     let will_act = |e: &Entry| -> bool {
-        let installed = state.installed.get(&e.name);
+        let installed = state.get_package(&e.name);
 
         match action {
             Action::Remove => installed.is_some(),
@@ -192,14 +192,9 @@ pub fn write_entries(
     state: &State,
     display: VersionDisplay,
     verbose: bool,
-    installed_packages: &HashMap<String, InstalledPackage>,
     show_marker: bool,
 ) {
-    let installed_version = |e: &Entry| {
-        installed_packages
-            .get(&e.name)
-            .map(|pkg| pkg.version.clone())
-    };
+    let installed_version = |e: &Entry| state.get_package(&e.name).map(|pkg| pkg.version.clone());
 
     if verbose {
         for entry in entries {
@@ -207,7 +202,7 @@ pub fn write_entries(
         }
     } else {
         list_entries(entries, orphaned, state, display, |e| {
-            (show_marker && installed_packages.contains_key(&e.name)).then_some(Marker::Installed)
+            (show_marker && state.package_exists(&e.name)).then_some(Marker::Installed)
         });
     }
 }

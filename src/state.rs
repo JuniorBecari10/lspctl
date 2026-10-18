@@ -1,4 +1,12 @@
-use std::{collections::HashMap, fs::File, io::Read, path::PathBuf};
+use std::{
+    collections::{
+        HashMap,
+        hash_map::{Keys, Values},
+    },
+    fs::File,
+    io::Read,
+    path::PathBuf,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -10,13 +18,14 @@ use crate::{
 };
 
 // only change this after launch and after introducing a breaking change to the registry state.
+// TODO: add the backwards compatibility promise (having an older version will always work)?
 const SCHEMA_VERSION: u32 = 1;
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct State {
-    pub schema_version: u32,
-    pub registry_tag: String,
-    pub installed: HashMap<String, InstalledPackage>,
+    schema_version: u32,
+    pub registry_tag: String, // TODO: this needs read/write access
+    installed: HashMap<String, InstalledPackage>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -92,7 +101,19 @@ impl State {
         self.installed.contains_key(name)
     }
 
+    pub fn get_package(&self, name: &str) -> Option<&InstalledPackage> {
+        self.installed.get(name)
+    }
+
     pub fn set_registry_tag(&mut self, tag: String) {
         self.registry_tag = tag;
+    }
+
+    pub fn names(&self) -> Keys<'_, String, InstalledPackage> {
+        self.installed.keys()
+    }
+
+    pub fn packages(&self) -> Values<'_, String, InstalledPackage> {
+        self.installed.values()
     }
 }
