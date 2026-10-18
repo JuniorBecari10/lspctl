@@ -55,7 +55,7 @@ pub fn fetch_latest_release() -> anyhow::Result<Release> {
     fetch_release_page(1)?
         .into_iter()
         .next()
-        .ok_or_else(|| anyhow!("Couldn't get latest release"))
+        .ok_or_else(|| anyhow!("Cannot get latest release"))
 }
 
 pub fn fetch_release(version: &str) -> anyhow::Result<Release> {

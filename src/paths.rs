@@ -13,7 +13,7 @@ def_consts!(
 
 pub fn root_dir() -> PathBuf {
     dirs::data_local_dir()
-        .fatal("Could not determine home directory.")
+        .fatal("Cannot determine home directory.")
         .join(consts::APP_NAME)
 }
 
@@ -50,13 +50,13 @@ pub fn registry_file() -> PathBuf {
 // ---
 
 pub fn tmp_package_dir(name: &str) -> PathBuf {
-    get_pkg_dir(tmp_dir(), name)
+    join_package_dir(tmp_dir(), name)
 }
 
 pub fn package_dir(name: &str) -> PathBuf {
-    get_pkg_dir(packages_dir(), name)
+    join_package_dir(packages_dir(), name)
 }
 
-fn get_pkg_dir(dir: PathBuf, name: &str) -> PathBuf {
+fn join_package_dir(dir: PathBuf, name: &str) -> PathBuf {
     dir.join(name)
 }

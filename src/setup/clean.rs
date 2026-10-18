@@ -1,34 +1,9 @@
 use std::{collections::HashSet, fs, path::PathBuf};
 
-use crate::{disk, error, log::Format, paths, registry, state::State};
+use crate::{disk, error, log::Format, paths, state::State};
 
-/// returns the tag of the newly created registry, if any
-pub fn setup_root() -> anyhow::Result<Option<String>> {
-    ensure_root_items()?;
-
-    match paths::registry_file().try_exists() {
-        Ok(true) => Ok(None),
-
-        // covers Ok(false) and Err(_)
-        _ => registry::download_latest_registry().map(Some),
-    }
-}
-
-fn ensure_root_items() -> anyhow::Result<()> {
-    clean_tmp();
-
-    fs::create_dir_all(paths::bin_dir())?;
-    fs::create_dir_all(paths::tmp_dir())?;
-    fs::create_dir_all(paths::registry_dir())?;
-    fs::create_dir_all(paths::packages_dir())?;
-
-    Ok(())
-}
-
-// ---
-
-// this only prints errors, and doesn't block the command's job
-fn clean_tmp() {
+/// this only prints errors, and doesn't block the command's job.
+pub fn clean_tmp() {
     let dir = paths::tmp_dir();
 
     match dir.try_exists() {
@@ -36,18 +11,21 @@ fn clean_tmp() {
         Ok(false) => return, // doesn't exist. nothing to clean.
 
         Err(e) => {
-            error!("Failed to check existence of tmp: {e}");
+            error!("Failed to check existence of {}: {e}", "tmp".quote());
             return;
         }
     }
 
     if let Err(e) = disk::make_writable_recursive(&dir) {
-        error!("Failed to prepare tmp directory for cleanup: {e}");
+        error!(
+            "Failed to make {} directory writable for cleanup: {e}",
+            "tmp".quote()
+        );
         return;
     }
 
     if let Err(e) = fs::remove_dir_all(&dir) {
-        error!("Failed to clean tmp directory: {e}");
+        error!("Failed to clean {} directory: {e}", "tmp".quote());
     }
 }
 

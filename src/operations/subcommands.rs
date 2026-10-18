@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs, path::Path};
 
 use crate::{
     disk, end, end_error, error, header,
-    log::{Fatal, Format},
+    log::Format,
     note,
     operations::{
         logic,
@@ -266,7 +266,7 @@ pub fn delete(
 
     // this won't stop execution
     if let Err(e) = disk::make_writable_recursive(path) {
-        end_error!("Couldn't make path writable, continuing...");
+        end_error!("Cannot make path writable, continuing...");
         note!("Reason: {e}");
     }
 
@@ -285,7 +285,7 @@ pub fn set_registry_version(version: &str, yes: bool) -> OperationResult {
     let pending = match util::resolve_release(version) {
         Ok(p) => p,
         Err(e) => {
-            end_error!("Couldn't resolve registry version: {e}");
+            end_error!("Cannot resolve registry version: {e}");
             return OperationResult::Failure;
         }
     };
@@ -310,7 +310,7 @@ pub fn sync_packages(
         Some(ref v) => match util::resolve_release(v) {
             Ok(p) => Some(p),
             Err(e) => {
-                end_error!("Couldn't resolve registry version: {e}");
+                end_error!("Cannot resolve registry version: {e}");
                 return OperationResult::Failure;
             }
         },
@@ -325,7 +325,7 @@ pub fn sync_packages(
         Some(p) => match registry::parse_registry_from_bytes(&p.bytes) {
             Ok(r) => r,
             Err(e) => {
-                end_error!("Couldn't parse fetched registry: {e}");
+                end_error!("Cannot parse fetched registry: {e}");
                 return OperationResult::Failure;
             }
         },
@@ -393,7 +393,7 @@ pub fn registry_list(page: u32) -> OperationResult {
     let release_tags: Vec<_> = match registry::fetch_release_page(page) {
         Ok(list) => list.into_iter().map(|r| r.tag).collect(),
         Err(e) => {
-            end_error!("Couldn't fetch release list: {e}");
+            end_error!("Cannot fetch release list: {e}");
             return OperationResult::Failure;
         }
     };

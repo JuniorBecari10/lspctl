@@ -9,7 +9,7 @@ mod operations;
 mod packages;
 mod paths;
 mod registry;
-mod root;
+mod setup;
 mod state;
 
 fn main() -> ExitCode {

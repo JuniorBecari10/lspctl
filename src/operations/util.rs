@@ -625,14 +625,14 @@ pub fn announce_pending_version(release: &Release, is_latest: bool, state: &Stat
 // or do it, maybe optionally and to keep consistency bring --force back.
 pub fn commit_registry(release: &Release, bytes: &[u8], state: &mut State) -> OperationResult {
     if let Err(e) = registry::write_registry_bytes(bytes) {
-        end_error!("Couldn't save new registry: {e}");
+        end_error!("Cannot save new registry: {e}");
         return OperationResult::Failure;
     }
 
     state.set_registry_tag(release.tag.clone());
 
     if let Err(e) = state.save() {
-        end_error!("Couldn't save updated state: {e}");
+        end_error!("Cannot save updated state: {e}");
         return OperationResult::Failure;
     }
 

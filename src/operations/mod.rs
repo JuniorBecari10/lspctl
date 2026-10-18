@@ -88,7 +88,7 @@ pub fn delete_lockfile(flags: DeleteFlags) -> OperationResult {
         &paths::lock_file(),
         "Lockfile is already not present.",
         "This should only be used when the program is in a deadlock and no other instances are running.",
-        "Could not delete lockfile.",
+        "Cannot delete lockfile.",
         flags.yes,
         |p| fs::remove_file(p),
     )
@@ -99,7 +99,7 @@ pub fn delete_all(flags: DeleteFlags) -> OperationResult {
         &paths::root_dir(),
         "All data is already not present.",
         &format!("This will delete all data related to {}.", consts::APP_NAME),
-        "Could not delete root directory.",
+        "Cannot delete root directory.",
         flags.yes,
         |p| fs::remove_dir_all(p),
     )

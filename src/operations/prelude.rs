@@ -8,11 +8,12 @@ use crate::{
         self,
         model::{Platform, Registry},
     },
-    root,
+    setup,
     state::State,
     step,
 };
 
+// TODO: register the PID, user and date/time of access inside the lock file?
 pub struct ProcessLock {
     _file: File,
 }
@@ -23,23 +24,24 @@ type Prelude = (Registry, Platform, State, ProcessLock);
 // for it to exist throughout the entire function
 pub fn prelude() -> Prelude {
     let lock = acquire_lock();
-    let maybe_tag = setup_root();
+    setup_root();
+
+    let maybe_tag = create_registry();
     let mut state = load_state();
 
     if let Some(tag) = maybe_tag {
         state.set_registry_tag(tag);
-        state.save().fatal("Couldn't save state");
+        state.save().fatal("Cannot save state");
     }
 
-    root::clean_orphans(&state);
+    setup::clean::clean_orphans(&state);
     (read_registry(), get_platform(), state, lock)
 }
 
 // ---
 
-/// returns the tag of the newly created registry, if any
-fn setup_root() -> Option<String> {
-    root::setup_root().fatal("Cannot create root folder structure")
+fn setup_root() {
+    setup::setup_root().fatal("Cannot create root folder structure")
 }
 
 fn read_registry() -> Registry {
@@ -54,14 +56,26 @@ fn load_state() -> State {
     State::load().fatal("Cannot read state")
 }
 
+/// returns the tag of the newly created registry, if any
+fn create_registry() -> Option<String> {
+    match paths::registry_file().try_exists() {
+        Ok(true) => None,
+
+        // covers Ok(false) and Err(_)
+        _ => Some(registry::download_latest_registry().fatal("Cannot download latest registry")),
+    }
+}
+
 // ---
 
 pub fn acquire_lock() -> ProcessLock {
     let path = paths::lock_file();
 
     if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent)
-            .fatal(&format!("Failed to create directory {}", parent.display()));
+        std::fs::create_dir_all(parent).fatal(&format!(
+            "Failed to create directory {}",
+            parent.display().quote()
+        ));
     }
 
     let file = OpenOptions::new()
@@ -69,7 +83,10 @@ pub fn acquire_lock() -> ProcessLock {
         .write(true)
         .truncate(false)
         .open(&path)
-        .fatal(&format!("Failed to open lock file at {}", path.display()));
+        .fatal(&format!(
+            "Failed to open lock file at {}",
+            path.display().quote()
+        ));
 
     match file.try_lock() {
         Ok(()) => {}
@@ -77,7 +94,7 @@ pub fn acquire_lock() -> ProcessLock {
         Err(TryLockError::WouldBlock) => {
             step!(
                 "One instance of {} is already running. Waiting for the lock to be released...",
-                consts::APP_NAME
+                consts::APP_NAME // no quote!
             );
 
             note!(
