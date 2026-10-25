@@ -24,7 +24,7 @@ const SCHEMA_VERSION: u32 = 1;
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct State {
     schema_version: u32,
-    pub registry_tag: String, // TODO: this needs read/write access
+    pub registry_tag: String, // this needs read/write access, so it's kept public
     installed: HashMap<String, InstalledPackage>,
 }
 
@@ -103,10 +103,6 @@ impl State {
 
     pub fn get_package(&self, name: &str) -> Option<&InstalledPackage> {
         self.installed.get(name)
-    }
-
-    pub fn set_registry_tag(&mut self, tag: String) {
-        self.registry_tag = tag;
     }
 
     pub fn names(&self) -> Keys<'_, String, InstalledPackage> {

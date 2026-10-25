@@ -618,13 +618,13 @@ pub fn announce_pending_version(release: &Release, is_latest: bool, state: &Stat
 
 // TODO: don't perform the action if the registry is the same.
 // or do it, maybe optionally and to keep consistency bring --force back.
-pub fn commit_registry(release: &Release, bytes: &[u8], state: &mut State) -> OperationResult {
-    if let Err(e) = registry::write_registry_bytes(bytes) {
+pub fn commit_registry(release: Release, bytes: &[u8], state: &mut State) -> OperationResult {
+    if let Err(e) = registry::write_registry_to_disk(bytes) {
         end_error!("Cannot save new registry: {e}");
         return OperationResult::Failure;
     }
 
-    state.set_registry_tag(release.tag.clone());
+    state.registry_tag = release.tag;
 
     if let Err(e) = state.save() {
         end_error!("Cannot save updated state: {e}");

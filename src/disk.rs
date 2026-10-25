@@ -1,6 +1,6 @@
 use std::{
     fs::{self, File},
-    io::{self, ErrorKind, Read, Write},
+    io::{self, ErrorKind, Read, Seek, Write},
     path::{Path, PathBuf},
 };
 
@@ -146,17 +146,7 @@ pub fn make_writable_recursive(dir: &Path) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn download_file(url: &str, dest: &mut File) -> anyhow::Result<()> {
-    let (mut reader, total) = perform_request(url)?;
-    let pb = ProgressBar::new(total);
-
-    pb.set_style(log::get_progress_bar("Downloading")?);
-    io::copy(&mut pb.wrap_read(&mut reader), dest)?;
-    pb.finish_and_clear();
-
-    Ok(())
-}
-
+// TODO: move this elsewhere, such as a web module?
 pub fn perform_request(url: &str) -> anyhow::Result<(BodyReader<'static>, u64)> {
     if !url.starts_with("https://") {
         anyhow::bail!("This only performs 'https' requests. URL: {}.", url.quote());
@@ -170,11 +160,25 @@ pub fn perform_request(url: &str) -> anyhow::Result<(BodyReader<'static>, u64)> 
     Ok((response.into_body().into_reader(), len))
 }
 
-pub fn extract_to_memory(zip: &File, entry_name: &str) -> anyhow::Result<Vec<u8>> {
-    let mut archive = ZipArchive::new(zip)?;
-    let mut entry = archive.by_name(entry_name)?;
-    let mut contents = Vec::new();
+pub fn download_file(url: &str, dest: &mut impl Write) -> anyhow::Result<()> {
+    let (mut reader, total) = perform_request(url)?;
+    let pb = ProgressBar::new(total);
 
+    pb.set_style(log::get_progress_bar("Downloading")?);
+    io::copy(&mut pb.wrap_read(&mut reader), dest)?;
+    pb.finish_and_clear();
+
+    Ok(())
+}
+
+pub fn extract_entry_from_zip(zip: impl Read + Seek, entry_name: &str) -> anyhow::Result<Vec<u8>> {
+    let mut archive = ZipArchive::new(zip)?;
+    let mut entry = archive
+        .by_name(entry_name)
+        .with_context(|| format!("Entry {} not found in zip", entry_name.quote()))?;
+
+    let mut contents = Vec::with_capacity(entry.size() as usize);
     entry.read_to_end(&mut contents)?;
+
     Ok(contents)
 }

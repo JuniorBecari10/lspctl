@@ -288,7 +288,7 @@ pub fn set_registry_version(version: &str, yes: bool) -> OperationResult {
         return OperationResult::Success;
     }
 
-    util::commit_registry(&pending.release, &pending.bytes, &mut state)
+    util::commit_registry(pending.release, &pending.bytes, &mut state)
 }
 
 pub fn sync_packages(
@@ -342,7 +342,7 @@ pub fn sync_packages(
         yes @ (AcceptSync::YesWithPackages | AcceptSync::YesNoPackages) => {
             if let Some(p) = pending
                 && let OperationResult::Failure =
-                    util::commit_registry(&p.release, &p.bytes, &mut state)
+                    util::commit_registry(p.release, &p.bytes, &mut state)
             {
                 return OperationResult::Failure;
             }

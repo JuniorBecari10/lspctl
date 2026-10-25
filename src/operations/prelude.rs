@@ -30,7 +30,7 @@ pub fn prelude() -> Prelude {
     let mut state = load_state();
 
     if let Some(tag) = maybe_tag {
-        state.set_registry_tag(tag);
+        state.registry_tag = tag;
         state.save().fatal("Cannot save state");
     }
 

@@ -50,13 +50,9 @@ pub fn registry_file() -> PathBuf {
 // ---
 
 pub fn tmp_package_dir(name: &str) -> PathBuf {
-    join_package_dir(tmp_dir(), name)
+    tmp_dir().join(name)
 }
 
 pub fn package_dir(name: &str) -> PathBuf {
-    join_package_dir(packages_dir(), name)
-}
-
-fn join_package_dir(dir: PathBuf, name: &str) -> PathBuf {
-    dir.join(name)
+    packages_dir().join(name)
 }
