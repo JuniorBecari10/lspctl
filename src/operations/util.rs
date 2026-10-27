@@ -586,6 +586,7 @@ pub fn resolve_selection(state: &State, selection: PackageSelection) -> Vec<Stri
     }
 }
 
+// TODO: what is this
 pub fn resolve_release(version: &str) -> anyhow::Result<PendingRelease> {
     let lower = version.to_lowercase();
     let release = registry::fetch_release(&lower)?;

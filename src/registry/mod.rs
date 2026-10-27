@@ -41,7 +41,10 @@ pub fn fetch_latest_release() -> anyhow::Result<Release> {
         .ok_or_else(|| anyhow!("Cannot get latest release"))
 }
 
+// TODO: maybe this isn't a good idea
 /// use "latest" to get the latest version
+/// yes, this is because the user can type it and the text is
+/// directly sent to here.
 pub fn fetch_release(version: &str) -> anyhow::Result<Release> {
     if version == "latest" {
         return fetch_latest_release();
