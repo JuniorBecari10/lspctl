@@ -24,6 +24,7 @@ pub fn install_pkg(e: Entry, host: &Platform, state: &mut State) -> anyhow::Resu
     resolve_and_perform(e, host, state, packages::install)
 }
 
+// this function has an extra argument for it to be accepted in 'run_action' despite not using it
 pub fn remove_pkg(e: Entry, _host: &Platform, state: &mut State) -> anyhow::Result<()> {
     remove(&e.name, state)
 }

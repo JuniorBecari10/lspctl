@@ -12,6 +12,8 @@ use crate::registry::{
     parser::template::context::ResolveContext,
 };
 
+// the type is the same, but it now holds pre-resolved data.
+// TODO: add an alias / wrapper called PreResolvedEntry?
 pub fn resolve_entry(e: Entry, ctx: &ResolveContext) -> anyhow::Result<Entry> {
     Ok(Entry {
         bin: e

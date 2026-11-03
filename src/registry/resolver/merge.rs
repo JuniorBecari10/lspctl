@@ -9,6 +9,7 @@ use crate::{
     },
 };
 
+// expected to be run after resolving 'entry.bin'
 pub fn merge_context(entry: Entry, host: &Platform) -> ResolvedEntry {
     let variant = match entry.source.variant {
         Variant::PackageManager {

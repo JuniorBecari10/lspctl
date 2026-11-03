@@ -26,6 +26,7 @@ pub enum ResolveVariant {
     Build(Value),
 }
 
+// builds a context from the provided source and host platform, selecting the best variant for your platform
 pub fn build_context(source: &Source, host: &Platform) -> anyhow::Result<ResolveContext> {
     let variant =
         match &source.variant {
