@@ -6,6 +6,8 @@ use crate::registry::{
     parser::template::select,
 };
 
+// Holds the best variant for your system plus some needed metadata, since this is what
+// will be passed around and not the ResolvedEntry for that package.
 #[derive(Serialize)]
 pub struct ResolveContext {
     pub version: String,
@@ -13,6 +15,9 @@ pub struct ResolveContext {
     pub bin: Option<String>, // Source.bin: the js-debug-adapter edge case
 }
 
+// The best variant chosen for this platform for the specific package you want to install.
+// For example, there are a lot of Assets for some package and this holds the best one suitable
+// for your system.
 #[derive(Serialize)]
 pub enum ResolveVariant {
     PackageManager,
