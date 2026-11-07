@@ -2,9 +2,11 @@ use std::collections::HashMap;
 
 use crate::registry::parser::template::{
     context::ResolveContext,
-    eval::eval,
-    parser::Parser,
-    segment::{Segment, split_segments},
+    interpreter::{
+        eval::eval,
+        parser::Parser,
+        segment::{Segment, split_segments},
+    },
 };
 
 pub fn parse_template_hashmap(

@@ -8,6 +8,17 @@ use crate::{
     },
 };
 
+const MAX_COMPONENT_LEN: usize = 200;
+
+// Characters that are invalid in Windows file names (besides '/').
+const WINDOWS_INVALID: &[char] = &['\\', '<', '>', ':', '"', '|', '?', '*'];
+
+// Windows device names are invalid as a file stem, with or without an extension.
+const WINDOWS_RESERVED: &[&str] = &[
+    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+    "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+];
+
 impl<T> From<OneOrMany<T>> for Vec<T> {
     fn from(value: OneOrMany<T>) -> Self {
         match value {
@@ -27,15 +38,17 @@ impl<'a> TryFrom<PackageUrl<'a>> for Purl {
             kind: get_install_kind(purl.ty())
                 .ok_or_else(|| anyhow!("Invalid install kind: {}", purl.ty().quote()))?,
 
-            namespace: purl.namespace().map(Into::into),
+            namespace: purl
+                .namespace()
+                .map(Into::into)
+                .map(sanitize_path_component),
+
             name: sanitize_path_component(purl.name()),
 
-            version: sanitize_path_component(
-                &purl
-                    .version()
-                    .map(Into::<String>::into)
-                    .ok_or_else(|| anyhow::anyhow!("Expected version number"))?,
-            ),
+            version: purl
+                .version()
+                .map(sanitize_path_component)
+                .ok_or_else(|| anyhow::anyhow!("Expected version number"))?,
 
             qualifiers: purl
                 .qualifiers()
@@ -43,7 +56,7 @@ impl<'a> TryFrom<PackageUrl<'a>> for Purl {
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect(),
 
-            subpath: purl.subpath().map(Into::into),
+            subpath: purl.subpath().map(sanitize_path_component),
         })
     }
 }
@@ -174,40 +187,55 @@ fn get_install_kind(s: &str) -> Option<InstallKind> {
     }
 }
 
+// TODO: apply the Windows restriction to all OSs,
+// since the user may want to sync between the two filesystems?
+/// this sanitizes a string to be valid as a file/directory name on your target OS.
+/// this has conditional code that rejects more names in Windows, but '/' is blocked everywhere.
 fn sanitize_path_component(raw: &str) -> String {
-    let mut out = String::with_capacity(raw.len());
+    let mut out: String = raw
+        .chars()
+        .filter(|c| !c.is_control())
+        .map(|c| match c {
+            '/' => '_',
+            c if cfg!(windows) && WINDOWS_INVALID.contains(&c) => '_',
+            c => c,
+        })
+        .collect();
 
-    for c in raw.trim().chars() {
-        match c {
-            '/' | '\\' => out.push('_'),
-            '<' | '>' | ':' | '"' | '|' | '?' | '*' => out.push('_'),
+    // Truncate on a char boundary (String::truncate panics otherwise).
+    // Done before trimming so the cut can't leave a trailing '.' or ' '.
+    if out.len() > MAX_COMPONENT_LEN {
+        let mut end = MAX_COMPONENT_LEN;
+        while !out.is_char_boundary(end) {
+            end -= 1;
+        }
+        out.truncate(end);
+    }
 
-            c if (c as u32) < 0x20 => {}
-            c => out.push(c),
+    // Windows silently strips trailing dots/spaces, so "a." and "a" would alias.
+    let s = if cfg!(windows) {
+        out.trim_start()
+            .trim_end_matches(|c: char| c == '.' || c.is_whitespace())
+    } else {
+        out.as_str()
+    };
+
+    // "." and ".." only vanish via the Windows trim above, so they must be
+    // checked explicitly everywhere else.
+    if s.is_empty() || s == "." || s == ".." {
+        return "unknown".to_owned();
+    }
+
+    if cfg!(windows) {
+        // "CON .txt" is also reserved, hence the trim_end on the stem.
+        let stem = s.split('.').next().unwrap_or(s).trim_end();
+        if WINDOWS_RESERVED
+            .iter()
+            .any(|r| stem.eq_ignore_ascii_case(r))
+        {
+            return format!("_{s}");
         }
     }
 
-    while out.ends_with('.') || out.ends_with(' ') {
-        out.pop();
-    }
-
-    if out.is_empty() || out == "." || out == ".." {
-        out = "unknown".to_string();
-    }
-
-    // Windows reserved device names are invalid regardless of extension
-    const RESERVED: &[&str] = &[
-        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
-        "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
-    ];
-    let stem = out.split('.').next().unwrap_or(&out);
-    if RESERVED.iter().any(|r| stem.eq_ignore_ascii_case(r)) {
-        out = format!("_{out}");
-    }
-
-    if out.len() > 200 {
-        out.truncate(200);
-    }
-
-    out
+    s.to_owned()
 }

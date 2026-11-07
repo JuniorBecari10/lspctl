@@ -48,7 +48,7 @@ fn parse_source(raw: RawSource) -> anyhow::Result<Source> {
 }
 
 fn parse_variant(raw: Option<RawSourceVariant>, kind: InstallKind) -> anyhow::Result<Variant> {
-    let manager: Result<PackageManager, _> = kind.try_into();
+    let manager: anyhow::Result<PackageManager> = kind.try_into();
 
     match raw {
         Some(RawSourceVariant::ExtraPackages { extra_packages }) => Ok(Variant::PackageManager {

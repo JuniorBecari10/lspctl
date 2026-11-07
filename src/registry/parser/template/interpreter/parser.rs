@@ -2,7 +2,7 @@ use logos::Logos;
 
 use crate::{
     log::{Format, LogPretty},
-    registry::parser::template::{
+    registry::parser::template::interpreter::{
         ast::{Expr, Filter},
         token::Token,
     },

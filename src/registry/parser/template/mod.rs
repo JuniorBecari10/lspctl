@@ -1,11 +1,7 @@
-mod ast;
 pub mod context;
-mod eval;
-mod parser;
+pub mod interpreter;
 pub mod public;
-mod segment;
 pub mod select;
-mod token;
 
 use crate::registry::{
     model::{Asset, Build, Download, Downloads, Entry, Source, Variant},
@@ -13,6 +9,7 @@ use crate::registry::{
 };
 
 // the type is the same, but it now holds pre-resolved data.
+// yes, 'entry.bin' is resolved here
 // TODO: add an alias / wrapper called PreResolvedEntry?
 pub fn resolve_entry(e: Entry, ctx: &ResolveContext) -> anyhow::Result<Entry> {
     Ok(Entry {
