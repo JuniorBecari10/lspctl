@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::registry::model::{AssetVars, Deprecation, OneOrMap};
+use crate::registry::model::{AssetVars, Category, Deprecation, OneOrMap};
 use std::collections::HashMap;
 
 // All fields like this has templates:
@@ -19,7 +19,7 @@ pub struct Entry {
     pub homepage: String,
     pub licenses: Vec<String>,
     pub languages: Vec<String>,
-    pub categories: Vec<String>,
+    pub categories: Vec<Category>,
     pub source: Source,
     pub bin: Option<HashMap<String, String>>,
     pub deprecation: Option<Deprecation>,

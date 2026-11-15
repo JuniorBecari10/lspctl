@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::{
     log::Format,
-    registry::model::{Arch, Entry, InstallKind, Libc, Os, Platform, Variant},
+    registry::model::{Arch, Category, Entry, InstallKind, Libc, Os, Platform, Variant},
 };
 
 use colored::Colorize;
@@ -82,7 +82,15 @@ impl Entry {
         field("Source", &self.source.purl.kind.to_string());
         list_field("Licenses", &self.licenses, "No licenses");
         list_field("Languages", &self.languages, "No languages");
-        list_field("Categories", &self.categories, "No categories");
+        list_field(
+            "Categories",
+            &self
+                .categories
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>(),
+            "No categories",
+        );
 
         match &self.bin {
             Some(bins) => {
@@ -186,6 +194,19 @@ impl Display for Variant {
             Variant::Asset(_) => write!(f, "asset"),
             Variant::Download(_) => write!(f, "download"),
             Variant::Build(_) => write!(f, "build"),
+        }
+    }
+}
+
+impl Display for Category {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Category::Compiler => write!(f, "Compiler"),
+            Category::Dap => write!(f, "DAP"),
+            Category::Formatter => write!(f, "Formatter"),
+            Category::Lsp => write!(f, "LSP"),
+            Category::Linter => write!(f, "Linter"),
+            Category::Runtime => write!(f, "Runtime"),
         }
     }
 }

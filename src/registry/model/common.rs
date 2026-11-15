@@ -21,3 +21,13 @@ pub enum AssetVars {
     Path(String),
     Nested(HashMap<String, String>),
 }
+
+#[derive(Deserialize, Serialize, Debug)]
+pub enum Category {
+    Compiler,
+    Dap,
+    Formatter,
+    Lsp,
+    Linter,
+    Runtime,
+}

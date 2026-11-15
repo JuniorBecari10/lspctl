@@ -81,7 +81,7 @@ pub fn accepted_action(
     );
 
     list_entries(pkgs, orphaned, state, action.to_display(), |e| {
-        let installed = state.installed.get(&e.name);
+        let installed = state.get_package(&e.name);
 
         match action {
             Action::Remove => installed.is_none().then(|| action.marker()),
@@ -217,7 +217,7 @@ pub fn list_entries(
     let width = |s: &str| s.chars().count();
     let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(width(s))));
 
-    let installed_version = |e: &Entry| state.installed.get(&e.name).map(|p| p.version.clone());
+    let installed_version = |e: &Entry| state.get_package(&e.name).map(|p| p.version.clone());
 
     let styled_name = |name: &str, deprecated: bool, name_width: usize| {
         let styled = if deprecated {
@@ -241,7 +241,7 @@ pub fn list_entries(
     let orphaned_rows: Vec<OrphanedRow> = orphaned
         .iter()
         .map(|name| {
-            let installed = state.installed.get(name);
+            let installed = state.get_package(name);
 
             match display {
                 VersionDisplay::Installed => OrphanedRow {
@@ -475,8 +475,7 @@ pub fn accepted_sync(
         .iter()
         .map(|e| {
             let current = state
-                .installed
-                .get(&e.name)
+                .get_package(&e.name)
                 .map(|installed| installed.version.clone())
                 .unwrap_or_else(|| "?".into());
 
@@ -576,7 +575,7 @@ fn installed_marker(is_installed: bool) -> String {
 }
 
 pub fn installed_names(state: &State) -> Vec<String> {
-    state.installed.keys().cloned().collect()
+    state.names().cloned().collect()
 }
 
 pub fn resolve_selection(state: &State, selection: PackageSelection) -> Vec<String> {

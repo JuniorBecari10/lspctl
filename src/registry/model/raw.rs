@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::registry::model::{AssetVars, OneOrMap, common::Deprecation};
+use crate::registry::model::{AssetVars, Category, OneOrMap, common::Deprecation};
 
 #[derive(Deserialize, Debug)]
 pub struct RawRegistry(pub Vec<RawEntry>);
@@ -14,7 +14,7 @@ pub struct RawEntry {
     pub homepage: String,
     pub licenses: Vec<String>,
     pub languages: Vec<String>,
-    pub categories: Vec<String>,
+    pub categories: Vec<Category>,
     pub source: RawSource,
     pub bin: Option<HashMap<String, String>>,
     pub deprecation: Option<Deprecation>,

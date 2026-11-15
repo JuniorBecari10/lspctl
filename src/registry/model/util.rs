@@ -38,11 +38,7 @@ impl<'a> TryFrom<PackageUrl<'a>> for Purl {
             kind: get_install_kind(purl.ty())
                 .ok_or_else(|| anyhow!("Invalid install kind: {}", purl.ty().quote()))?,
 
-            namespace: purl
-                .namespace()
-                .map(Into::into)
-                .map(sanitize_path_component),
-
+            namespace: purl.namespace().map(sanitize_path_component),
             name: sanitize_path_component(purl.name()),
 
             version: purl

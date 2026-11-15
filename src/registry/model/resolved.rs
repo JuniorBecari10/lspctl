@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::registry::model::{Asset, Build, Deprecation, Download, PackageManager, Platform, Purl};
+use crate::registry::model::{
+    Asset, Build, Category, Deprecation, Download, PackageManager, Platform, Purl,
+};
 
 #[derive(Debug, Serialize)]
 pub struct ResolvedEntry {
@@ -11,7 +13,7 @@ pub struct ResolvedEntry {
     pub homepage: String,
     pub licenses: Vec<String>,
     pub languages: Vec<String>,
-    pub categories: Vec<String>,
+    pub categories: Vec<Category>,
     pub source: ResolvedSource,
     pub bin: Option<HashMap<String, String>>,
     pub deprecation: Option<Deprecation>,

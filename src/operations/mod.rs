@@ -74,7 +74,7 @@ pub fn info(args: model::InfoArgs) -> OperationResult {
         return OperationResult::Failure;
     };
 
-    let installed_version = |e: &Entry| state.installed.get(&e.name).map(|pkg| pkg.version.clone());
+    let installed_version = |e: &Entry| state.get_package(&e.name).map(|pkg| pkg.version.clone());
 
     for e in entries {
         e.print_detailed(installed_version(&e), true);

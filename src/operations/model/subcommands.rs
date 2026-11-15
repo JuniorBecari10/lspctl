@@ -72,8 +72,7 @@ impl Action {
         match self {
             Action::Remove => !state.package_exists(&entry.name),
             Action::Install | Action::Sync => state
-                .installed
-                .get(&entry.name)
+                .get_package(&entry.name)
                 .is_some_and(|installed| installed.version == entry.source.purl.version),
         }
     }
@@ -152,7 +151,10 @@ impl SearchQuery {
             SearchFilter::Description => self.pattern.is_match(&entry.description),
             SearchFilter::License => entry.licenses.iter().any(|l| self.pattern.is_match(l)),
             SearchFilter::Language => entry.languages.iter().any(|l| self.pattern.is_match(l)),
-            SearchFilter::Category => entry.categories.iter().any(|c| self.pattern.is_match(c)),
+            SearchFilter::Category => entry
+                .categories
+                .iter()
+                .any(|c| self.pattern.is_match(&c.to_string())),
             SearchFilter::Source => self.pattern.is_match(&entry.source.purl.kind.to_string()),
         })
     }

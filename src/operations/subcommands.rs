@@ -147,7 +147,7 @@ pub fn list_packages(
         let mut entries = Vec::new();
         let mut orphaned = Vec::new();
 
-        for name in state.installed.keys() {
+        for name in state.names() {
             match by_name.remove(name) {
                 Some(entry) => entries.push(entry),
                 None => orphaned.push(name.clone()),
