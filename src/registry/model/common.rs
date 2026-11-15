@@ -23,11 +23,12 @@ pub enum AssetVars {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+#[allow(clippy::upper_case_acronyms)] // to avoid renaming with serde
 pub enum Category {
     Compiler,
-    Dap,
+    DAP,
     Formatter,
-    Lsp,
+    LSP,
     Linter,
     Runtime,
 }

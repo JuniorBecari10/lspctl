@@ -202,9 +202,9 @@ impl Display for Category {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Category::Compiler => write!(f, "Compiler"),
-            Category::Dap => write!(f, "DAP"),
+            Category::DAP => write!(f, "DAP"),
             Category::Formatter => write!(f, "Formatter"),
-            Category::Lsp => write!(f, "LSP"),
+            Category::LSP => write!(f, "LSP"),
             Category::Linter => write!(f, "Linter"),
             Category::Runtime => write!(f, "Runtime"),
         }
