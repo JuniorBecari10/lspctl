@@ -68,6 +68,8 @@ fn create_registry() -> Option<String> {
 
 // ---
 
+// when the lock is released, the file is not deleted, it is only unlocked.
+// so another process can use it again without recreating the file.
 pub fn acquire_lock() -> ProcessLock {
     let path = paths::lock_file();
 

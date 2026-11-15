@@ -49,6 +49,7 @@ fn install_by_variant(entry: &ResolvedEntry, tmp_pkg_path: &Path) -> anyhow::Res
     }
 }
 
+// TODO: let the user choose where to put the shims, or put they on their place and add a symlink to them, and link them also in the state file?
 fn make_links(
     entry: &ResolvedEntry,
     pkg_path: &Path,
