@@ -59,7 +59,7 @@ pub fn merge_context(entry: Entry, host: &Platform) -> ResolvedEntry {
     }
 }
 
-fn select_owned<T: Targets>(items: Vec<T>, host: &Platform, label: &str) -> T {
+fn select_owned<T: Targets>(mut items: Vec<T>, host: &Platform, label: &str) -> T {
     let index = items
         .iter()
         .enumerate()
@@ -73,6 +73,5 @@ fn select_owned<T: Targets>(items: Vec<T>, host: &Platform, label: &str) -> T {
             )
         });
 
-    let mut items = items;
     items.swap_remove(index)
 }

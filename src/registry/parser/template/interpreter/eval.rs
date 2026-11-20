@@ -53,7 +53,7 @@ fn resolve_path(segs: &[String], ctx_json: &serde_json::Value) -> anyhow::Result
     for seg in rest {
         match cur.get(seg) {
             Some(v) => cur = v,
-            None => return Ok(String::new()), // this silently replaces missing keys with ""
+            None => return Ok(String::new()), // this silently replaces missing keys with "", which is needed for some packages
         }
     }
 
@@ -141,6 +141,7 @@ fn apply_filter(f: &Filter, input: Value, ctx_json: &serde_json::Value) -> anyho
     }
 }
 
+// TODO: use the internal Platform struct?
 fn current_platform_matches(name: &str) -> bool {
     let os = std::env::consts::OS;
 

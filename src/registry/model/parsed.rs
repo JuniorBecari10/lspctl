@@ -87,7 +87,7 @@ pub enum PackageManager {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Os {
     Linux,
-    Darwin,
+    Darwin, // MacOS
     Windows,
 }
 
@@ -103,7 +103,7 @@ pub enum Arch {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Libc {
-    Gnu,
+    Gnu, // GLibc
     Musl,
     OpenBSD,
 }

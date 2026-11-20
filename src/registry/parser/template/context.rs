@@ -7,7 +7,7 @@ use crate::registry::{
 };
 
 // Holds the best variant for your system plus some needed metadata, since this is what
-// will be passed around and not the ResolvedEntry for that package.
+// will be used to generate a ResolvedEntry for that package.
 #[derive(Serialize)]
 pub struct ResolveContext {
     pub version: String,

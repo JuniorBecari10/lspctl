@@ -8,31 +8,34 @@ use crate::registry::{
     parser::template::context::ResolveContext,
 };
 
+// just for documenting and clarity purposes
+type PreResolvedEntry = Entry;
+
+// pre-resolving means all templates replaced with actual data.
 // the type is the same, but it now holds pre-resolved data.
 // yes, 'entry.bin' is resolved here
-// TODO: add an alias / wrapper called PreResolvedEntry?
-pub fn resolve_entry(e: Entry, ctx: &ResolveContext) -> anyhow::Result<Entry> {
+pub fn pre_resolve_entry(e: Entry, ctx: &ResolveContext) -> anyhow::Result<PreResolvedEntry> {
     Ok(Entry {
         bin: e
             .bin
             .map(|b| public::parse_template_hashmap(b, ctx))
             .transpose()?,
 
-        source: resolve_source(e.source, ctx)?,
+        source: pre_resolve_source(e.source, ctx)?,
         ..e
     })
 }
 
-fn resolve_source(s: Source, ctx: &ResolveContext) -> anyhow::Result<Source> {
+fn pre_resolve_source(s: Source, ctx: &ResolveContext) -> anyhow::Result<Source> {
     Ok(Source {
-        variant: resolve_variant(s.variant, ctx)?,
+        variant: pre_resolve_variant(s.variant, ctx)?,
         bin: s.bin.map(|b| public::parse_template(b, ctx)).transpose()?,
 
         ..s
     })
 }
 
-fn resolve_variant(v: Variant, ctx: &ResolveContext) -> anyhow::Result<Variant> {
+fn pre_resolve_variant(v: Variant, ctx: &ResolveContext) -> anyhow::Result<Variant> {
     match v {
         Variant::PackageManager {
             manager,
@@ -45,22 +48,24 @@ fn resolve_variant(v: Variant, ctx: &ResolveContext) -> anyhow::Result<Variant> 
         Variant::Asset(assets) => Ok(Variant::Asset(
             assets
                 .into_iter()
-                .map(|a| resolve_asset(a, ctx))
+                .map(|a| pre_resolve_asset(a, ctx))
                 .collect::<anyhow::Result<_>>()?,
         )),
 
-        Variant::Download(downloads) => Ok(Variant::Download(resolve_downloads(downloads, ctx)?)),
+        Variant::Download(downloads) => {
+            Ok(Variant::Download(pre_resolve_downloads(downloads, ctx)?))
+        }
 
         Variant::Build(builds) => Ok(Variant::Build(
             builds
                 .into_iter()
-                .map(|b| resolve_build(b, ctx))
+                .map(|b| pre_resolve_build(b, ctx))
                 .collect::<anyhow::Result<_>>()?,
         )),
     }
 }
 
-fn resolve_asset(a: Asset, ctx: &ResolveContext) -> anyhow::Result<Asset> {
+fn pre_resolve_asset(a: Asset, ctx: &ResolveContext) -> anyhow::Result<Asset> {
     Ok(Asset {
         files: a
             .files
@@ -88,7 +93,7 @@ fn resolve_asset(a: Asset, ctx: &ResolveContext) -> anyhow::Result<Asset> {
     })
 }
 
-fn resolve_downloads(d: Downloads, ctx: &ResolveContext) -> anyhow::Result<Downloads> {
+fn pre_resolve_downloads(d: Downloads, ctx: &ResolveContext) -> anyhow::Result<Downloads> {
     match d {
         Downloads::Simple { file } => Ok(Downloads::Simple {
             file: public::parse_template(file, ctx)?,
@@ -97,13 +102,13 @@ fn resolve_downloads(d: Downloads, ctx: &ResolveContext) -> anyhow::Result<Downl
         Downloads::Detailed(downloads) => Ok(Downloads::Detailed(
             downloads
                 .into_iter()
-                .map(|d| resolve_download(d, ctx))
+                .map(|d| pre_resolve_download(d, ctx))
                 .collect::<anyhow::Result<_>>()?,
         )),
     }
 }
 
-fn resolve_download(d: Download, ctx: &ResolveContext) -> anyhow::Result<Download> {
+fn pre_resolve_download(d: Download, ctx: &ResolveContext) -> anyhow::Result<Download> {
     Ok(Download {
         files: public::parse_template_hashmap(d.files, ctx)?,
         bin: d.bin.map(|b| public::parse_template(b, ctx)).transpose()?,
@@ -112,7 +117,7 @@ fn resolve_download(d: Download, ctx: &ResolveContext) -> anyhow::Result<Downloa
     })
 }
 
-fn resolve_build(b: Build, ctx: &ResolveContext) -> anyhow::Result<Build> {
+fn pre_resolve_build(b: Build, ctx: &ResolveContext) -> anyhow::Result<Build> {
     Ok(Build {
         bin: b
             .bin
