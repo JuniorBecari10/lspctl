@@ -4,6 +4,7 @@ use colored::{ColoredString, Colorize};
 
 use crate::{error, fatal};
 
+// read it as Fatal that returns T
 pub trait Fatal<T> {
     fn fatal(self, message: &str) -> T;
 }
@@ -28,17 +29,12 @@ impl<T> Fatal<T> for Option<T> {
 
 // ---
 
-pub trait LogPretty<T> {
-    fn log(self, f: impl Fn() -> String) -> String
-    where
-        T: Display;
+pub trait LogPretty<T: Display> {
+    fn log(self, f: impl Fn() -> String) -> String;
 }
 
-impl<T> LogPretty<T> for Option<T> {
-    fn log(self, f: impl Fn() -> String) -> String
-    where
-        T: Display,
-    {
+impl<T: Display> LogPretty<T> for Option<T> {
+    fn log(self, f: impl Fn() -> String) -> String {
         self.map_or_else(f, |t| t.to_string())
     }
 }
