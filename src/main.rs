@@ -11,6 +11,7 @@ mod paths;
 mod registry;
 mod setup;
 mod state;
+mod table;
 
 fn main() -> ExitCode {
     cli::cli().into()

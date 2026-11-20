@@ -3,7 +3,7 @@ use crate::{
     registry::model::{Arch, Libc, Os, Platform},
 };
 
-pub fn get_platform(s: &str) -> anyhow::Result<Vec<Platform>> {
+fn get_platform(s: &str) -> anyhow::Result<Vec<Platform>> {
     if s == "unix" {
         return Ok(vec![
             Platform {

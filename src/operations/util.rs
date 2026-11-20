@@ -14,25 +14,16 @@ use crate::{
     },
     state::State,
     step,
+    table::{self, Table, cell::Cell, row::Row},
 };
 
 const SUGGESTION_THRESHOLD: f64 = 0.7;
 const MAX_SUGGESTIONS: usize = 3;
 
-const LONG_COL: usize = 15;
-const SHORT_COL: usize = 6;
-
 pub enum AcceptSync {
     No,
     YesWithPackages,
     YesNoPackages,
-}
-
-struct OrphanedRow {
-    name: String,
-    current: String,
-    registry: String,
-    source: String,
 }
 
 pub struct PendingRelease {
@@ -214,211 +205,107 @@ pub fn list_entries(
     display: VersionDisplay,
     marker: impl Fn(&Entry) -> Option<Marker>,
 ) {
-    let width = |s: &str| s.chars().count();
-    let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(width(s))));
-
     let installed_version = |e: &Entry| state.get_package(&e.name).map(|p| p.version.clone());
-
-    let styled_name = |name: &str, deprecated: bool, name_width: usize| {
-        let styled = if deprecated {
-            name.strikethrough().dimmed().to_string()
-        } else {
-            name.to_string()
-        };
-
-        let spaces = " ".repeat(name_width.saturating_sub(width(name)));
-        format!("{styled}{spaces}")
-    };
-
-    let label_of = |entry: &Entry| {
-        marker(entry)
-            .map(|m| format!("  {}", m.render()))
-            .unwrap_or_default()
-    };
-
-    let orphaned_label = format!("  {}", Marker::NotInRegistry.render());
-
-    let orphaned_rows: Vec<OrphanedRow> = orphaned
-        .iter()
-        .map(|name| {
-            let installed = state.get_package(name);
-
-            match display {
-                VersionDisplay::Installed => OrphanedRow {
-                    name: name.clone(),
-                    current: installed
-                        .map(|p| p.version.clone())
-                        .unwrap_or_else(|| "—".to_string()),
-                    registry: String::new(), // unused in this display mode
-                    source: installed
-                        .map(|p| p.install_kind.to_string())
-                        .unwrap_or_else(|| "—".to_string()),
-                },
-
-                VersionDisplay::RegistryIfMatches => OrphanedRow {
-                    name: name.clone(),
-                    current: "—".to_string(),
-                    registry: "—".to_string(),
-                    source: "—".to_string(),
-                },
-            }
-        })
-        .collect();
 
     let show_divergence = matches!(display, VersionDisplay::RegistryIfMatches)
         && entries
             .iter()
             .any(|e| installed_version(e).is_some_and(|v| v != e.source.purl.version));
 
-    let name_width = entries
-        .iter()
-        .map(|e| width(&e.name))
-        .chain(orphaned_rows.iter().map(|r| width(&r.name)))
-        .max()
-        .unwrap_or(0)
-        .max(LONG_COL);
-
-    let source_width = entries
-        .iter()
-        .map(|e| width(&e.source.purl.kind.to_string()))
-        .chain(orphaned_rows.iter().map(|r| width(&r.source)))
-        .max()
-        .unwrap_or(0)
-        .max(SHORT_COL);
-
-    if show_divergence {
-        let current_of = |e: &Entry| installed_version(e).unwrap_or_else(|| "—".to_string());
-        let registry_of = |e: &Entry| e.source.purl.version.clone();
-
-        let current_width = entries
-            .iter()
-            .map(|e| width(&current_of(e)))
-            .chain(orphaned_rows.iter().map(|r| width(&r.current)))
-            .max()
-            .unwrap_or(0)
-            .max(LONG_COL);
-
-        let reg_width = entries
-            .iter()
-            .map(|e| width(&registry_of(e)))
-            .chain(orphaned_rows.iter().map(|r| width(&r.registry)))
-            .max()
-            .unwrap_or(0)
-            .max(LONG_COL);
-
-        println!(
-            "{}  {}  {}  {}",
-            pad("Name", name_width).bold(),
-            pad("Current", current_width).bold(),
-            pad("Registry", reg_width).bold(),
-            "Source".bold(),
-        );
-
-        println!(
-            "{}",
-            "─"
-                .repeat(name_width + current_width + reg_width + source_width + 6)
-                .dimmed()
-        );
-
-        for entry in entries {
-            let name = styled_name(&entry.name, entry.deprecation.is_some(), name_width);
-            let current = pad(&current_of(entry), current_width).cyan();
-            let registry = pad(&registry_of(entry), reg_width).green();
-            let source = pad(&entry.source.purl.kind.to_string(), source_width).dimmed();
-            let label = label_of(entry);
-
-            println!("{name}  {current}  {registry}  {source}{label}");
-        }
-
-        for row in &orphaned_rows {
-            let name = styled_name(&row.name, false, name_width);
-            let current = pad(&row.current, current_width).cyan();
-            let registry = pad(&row.registry, reg_width).green();
-            let source = pad(&row.source, source_width).dimmed();
-
-            println!("{name}  {current}  {registry}  {source}{orphaned_label}");
-        }
-
-        return;
-    }
-
-    let version_of = |e: &Entry| -> String {
-        match display {
-            VersionDisplay::RegistryIfMatches => e.source.purl.version.clone(),
-            VersionDisplay::Installed => installed_version(e).unwrap_or_else(|| "—".to_string()),
-        }
+    let mut table = Table::new().column("Name", table::LONG_COL);
+    table = if show_divergence {
+        table
+            .column("Current", table::LONG_COL)
+            .column("Registry", table::LONG_COL)
+    } else {
+        table.column("Version", table::LONG_COL)
     };
 
-    let version_width = entries
-        .iter()
-        .map(|e| width(&version_of(e)))
-        .chain(orphaned_rows.iter().map(|r| width(&r.current)))
-        .max()
-        .unwrap_or(0)
-        .max(LONG_COL);
+    let mut table = table.column("Source", table::SHORT_COL);
 
-    println!(
-        "{}  {}  {}",
-        pad("Name", name_width).bold(),
-        pad("Version", version_width).bold(),
-        "Source".bold(),
-    );
+    // Shared by registry entries and orphans. None = no value
+    let build_row = |name: Cell,
+                     current: Option<String>,
+                     registry: Option<String>,
+                     source: Option<String>,
+                     marker: Option<Marker>| {
+        let mut cells = vec![name];
 
-    println!(
-        "{}",
-        "─"
-            .repeat(name_width + version_width + source_width + 4)
-            .dimmed()
-    );
+        if show_divergence {
+            cells.push(current.map(|v| v.cyan()).into());
+            cells.push(registry.map(|v| v.green()).into());
+        } else {
+            let version = match display {
+                VersionDisplay::Installed => current,
+                VersionDisplay::RegistryIfMatches => registry,
+            };
 
-    for entry in entries {
-        let name = styled_name(&entry.name, entry.deprecation.is_some(), name_width);
-        let version = pad(&version_of(entry), version_width).cyan();
-        let source = pad(&entry.source.purl.kind.to_string(), source_width).dimmed();
-        let label = label_of(entry);
+            cells.push(version.map(|v| v.cyan()).into());
+        }
 
-        println!("{name}  {version}  {source}{label}");
+        cells.push(source.map(|s| s.dimmed()).into());
+        Row::new(cells).marker(marker)
+    };
+
+    for e in entries {
+        let name = if e.deprecation.is_some() {
+            e.name.strikethrough().dimmed()
+        } else {
+            e.name.normal()
+        };
+
+        table.push_row(build_row(
+            name.into(),
+            installed_version(e),
+            Some(e.source.purl.version.clone()),
+            Some(e.source.purl.kind.to_string()),
+            marker(e),
+        ));
     }
 
-    for row in &orphaned_rows {
-        let name = styled_name(&row.name, false, name_width);
-        let version = pad(&row.current, version_width).cyan();
-        let source = pad(&row.source, source_width).dimmed();
+    for name in orphaned {
+        // Orphans only have installed info, and only in `Installed` mode.
+        let installed = match display {
+            VersionDisplay::Installed => state.get_package(name),
+            VersionDisplay::RegistryIfMatches => None,
+        };
 
-        println!("{name}  {version}  {source}{orphaned_label}");
+        table.push_row(build_row(
+            name.as_str().into(),
+            installed.map(|p| p.version.clone()),
+            None,
+            installed.map(|p| p.install_kind.to_string()),
+            Some(Marker::NotInRegistry),
+        ));
     }
+
+    table.print();
 }
 
 pub fn list_release_tags(tags: &[String], current: &str, page: u32) {
-    let name_width = tags
-        .iter()
-        .map(|t| t.len())
-        .max()
-        .unwrap_or(0)
-        .max(LONG_COL);
-
-    println!("{:<name_width$}", "Tag".bold());
-    println!("{}", "─".repeat(name_width).dimmed());
+    let mut table = Table::new().column("Tag", table::LONG_COL);
 
     for (i, tag) in tags.iter().enumerate() {
         let is_latest = page <= 1 && i == 0;
         let is_installed = tag == current;
 
-        let padding = " ".repeat(name_width.saturating_sub(tag.len()));
-
-        let (colored_tag, markers) = match (is_latest, is_installed) {
-            (true, true) => (
-                tag.green().to_string(),
-                format!("{} {}", Marker::Latest.render(), Marker::Installed.render()),
-            ),
-            (true, false) => (tag.cyan().to_string(), Marker::Latest.render()),
-            (false, true) => (tag.green().to_string(), Marker::Installed.render()),
-            (false, false) => (tag.clone(), String::new()),
+        let cell: Cell = match (is_latest, is_installed) {
+            (_, true) => tag.green().into(),
+            (true, false) => tag.cyan().into(),
+            (false, false) => tag.as_str().into(),
         };
 
-        println!("{colored_tag}  {padding}{markers}");
+        let markers = [
+            (is_latest, Marker::Latest),
+            (is_installed, Marker::Installed),
+        ]
+        .into_iter()
+        .filter_map(|(on, m)| on.then_some(m));
+
+        table.push_row(Row::new([cell]).markers(markers));
     }
+
+    table.print();
 }
 
 pub fn selection_error(a: Action) -> OperationResult {
