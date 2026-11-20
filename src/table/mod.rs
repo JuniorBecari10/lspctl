@@ -48,6 +48,7 @@ impl Table {
             header: header.into(),
             min_width,
         });
+
         self
     }
 
@@ -57,6 +58,7 @@ impl Table {
             self.columns.len(),
             "row has a different number of cells than the table has columns"
         );
+
         self.rows.push(row);
         self
     }
@@ -76,6 +78,7 @@ impl Table {
             .iter()
             .map(|c| (c.header.bold().to_string(), util::display_width(&c.header)))
             .collect();
+
         self.write_line(
             &mut out,
             headers.iter().map(|(s, w)| (s.as_str(), *w)),
