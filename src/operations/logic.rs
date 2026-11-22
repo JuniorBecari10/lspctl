@@ -1,31 +1,32 @@
 use crate::{
     packages,
     registry::{
-        model::{Entry, Platform, ResolvedEntry},
+        model::{Entry, Platform},
         resolver,
     },
     state::State,
 };
 
 // this mutates and writes state down
-fn resolve_and_perform(
+pub fn install_pkg(
     e: Entry,
     host: &Platform,
     state: &mut State,
-    op: fn(&ResolvedEntry, &mut State) -> anyhow::Result<()>,
+    output: Option<&str>,
 ) -> anyhow::Result<()> {
     let entry = resolver::resolve_entry(e, host)?;
-    op(&entry, state)?;
+    packages::install(&entry, state, output)?;
 
     state.save()
 }
 
-pub fn install_pkg(e: Entry, host: &Platform, state: &mut State) -> anyhow::Result<()> {
-    resolve_and_perform(e, host, state, packages::install)
-}
-
-// this function has an extra argument for it to be accepted in 'run_action' despite not using it
-pub fn remove_pkg(e: Entry, _host: &Platform, state: &mut State) -> anyhow::Result<()> {
+// this function has some extra arguments for it to be accepted in 'run_action' despite not using them
+pub fn remove_pkg(
+    e: Entry,
+    _host: &Platform,
+    state: &mut State,
+    _o: Option<&str>,
+) -> anyhow::Result<()> {
     remove(&e.name, state)
 }
 

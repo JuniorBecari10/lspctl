@@ -25,6 +25,8 @@ struct Cli {
 
 // TODO: add recover command
 // add tui command
+// add fix command, which just runs what runs on every startup: clean obsolete data and try to fix some issues,
+// like if the state file is invalid, suggest cleaning everything and reinstalling every package?
 #[derive(Subcommand)]
 enum Command {
     /// Install packages

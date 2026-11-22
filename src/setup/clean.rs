@@ -1,6 +1,11 @@
 use std::{collections::HashSet, fs, path::PathBuf};
 
-use crate::{disk, error, log::Format, paths, state::State};
+use crate::{
+    disk, error,
+    log::Format,
+    paths,
+    state::{Executables, State},
+};
 
 /// this only prints errors, and doesn't block the command's job.
 pub fn clean_tmp() {
@@ -90,7 +95,7 @@ fn clean_orphan_packages(state: &State) {
 fn clean_orphan_shims(state: &State) {
     let valid: HashSet<PathBuf> = state
         .packages()
-        .flat_map(|pkg| pkg.bin.values().cloned())
+        .flat_map(|pkg| pkg.bin.values().flat_map(Executables::iter).cloned())
         .collect();
 
     let entries = match fs::read_dir(paths::bin_dir()) {

@@ -2,14 +2,19 @@ use std::fs;
 
 use anyhow::Context;
 
-use crate::{disk, log::Format, paths, state::State};
+use crate::{
+    disk,
+    log::Format,
+    paths,
+    state::{Executables, State},
+};
 
 pub fn remove(name: &str, state: &mut State) -> anyhow::Result<()> {
     let state_entry = state
         .get_entry(name)
         .ok_or_else(|| anyhow::anyhow!("Package {} is not installed", name.quote()))?;
 
-    for file in state_entry.bin.values() {
+    for file in state_entry.bin.values().flat_map(Executables::iter) {
         match fs::remove_file(file) {
             Ok(()) => {}
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}

@@ -40,11 +40,12 @@ pub fn fetch_json<T: DeserializeOwned>(url: &str) -> anyhow::Result<T> {
     parse_json(&raw_data)
 }
 
+// checksum is not so needed now.
 pub fn find_registry_asset(release: &Release) -> anyhow::Result<&ReleaseAsset> {
     release
         .assets
         .iter()
-        .find(|a| a.name == consts::REGISTRY_ZIP) // TODO: fetch 'checksums.txt' as well
+        .find(|a| a.name == consts::REGISTRY_ZIP)
         .ok_or_else(|| {
             anyhow!(
                 "{} not found in release assets.",

@@ -10,6 +10,10 @@ pub struct InstallArgs {
     /// Install without confirmation prompts
     #[arg(short, long)]
     pub yes: bool,
+
+    /// Optional output path of the executables
+    #[arg(short, long)]
+    pub output: Option<String>,
 }
 
 #[derive(Args, Debug)]

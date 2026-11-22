@@ -5,6 +5,7 @@ use crate::{
     log::Format,
     packages::{install::link::asset::write_shim, link::util},
     paths,
+    state::Executables,
 };
 use std::{
     collections::HashMap,
@@ -15,9 +16,11 @@ use std::{
 fn link_with(
     bins: &[&str],
     bin_path: &Path,
-    place: impl Fn(&str, &Path) -> anyhow::Result<PathBuf>,
-) -> anyhow::Result<HashMap<String, PathBuf>> {
+    output: Option<&Path>,
+    place: impl Fn(&str, &Path, &Path) -> anyhow::Result<PathBuf>, // (name, source, target_dir)
+) -> anyhow::Result<HashMap<String, Executables>> {
     let files = disk::list_files(bin_path)?;
+    let bin_dir = paths::bin_dir();
     let mut map = HashMap::new();
 
     for file in files {
@@ -30,44 +33,68 @@ fn link_with(
             continue; // binary not in the registry; skip it.
         }
 
-        let linked = place(&name, &file)?;
-        map.insert(name, linked);
+        let bin = place(&name, &file, &bin_dir)?;
+        let out = output.map(|dir| place(&name, &file, dir)).transpose()?;
+
+        map.insert(name, Executables(bin, out));
     }
 
     Ok(map)
 }
 
-fn link(bins: &[&str], bin_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
-    link_with(bins, bin_path, |name, file| {
-        let bin = paths::bin_dir().join(name);
+fn link(
+    bins: &[&str],
+    bin_path: &Path,
+    output: Option<&Path>,
+) -> anyhow::Result<HashMap<String, Executables>> {
+    link_with(bins, bin_path, output, |name, file, dir| {
+        let target = dir.join(name);
 
-        disk::link_files(file, &bin)?;
-        Ok(bin)
+        disk::link_files(file, &target)?;
+        Ok(target)
     })
 }
 
-pub fn link_npm(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
-    link(&bins, &pkg_path.join("node_modules").join(".bin"))
+// ---
+
+pub fn link_npm(
+    bins: Vec<&str>,
+    pkg_path: &Path,
+    output: Option<&Path>,
+) -> anyhow::Result<HashMap<String, Executables>> {
+    link(&bins, &pkg_path.join("node_modules").join(".bin"), output)
 }
 
 // all package managers that use plain /bin
-pub fn link_bin(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
-    link(&bins, &pkg_path.join("bin"))
+pub fn link_bin(
+    bins: Vec<&str>,
+    pkg_path: &Path,
+    output: Option<&Path>,
+) -> anyhow::Result<HashMap<String, Executables>> {
+    link(&bins, &pkg_path.join("bin"), output)
 }
 
 // all package managers that put binaries at the root folder
-pub fn link_root(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
-    link(&bins, pkg_path)
+pub fn link_root(
+    bins: Vec<&str>,
+    pkg_path: &Path,
+    output: Option<&Path>,
+) -> anyhow::Result<HashMap<String, Executables>> {
+    link(&bins, pkg_path, output)
 }
 
 // Gem packages need shims to isolate a Ruby environment
-pub fn link_gem(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
+pub fn link_gem(
+    bins: Vec<&str>,
+    pkg_path: &Path,
+    output: Option<&Path>,
+) -> anyhow::Result<HashMap<String, Executables>> {
     let bin_dir = pkg_path.join("bin");
     let gem_home = pkg_path.to_string_lossy().into_owned();
 
-    link_with(&bins, &bin_dir, |name, file| {
+    link_with(&bins, &bin_dir, output, |name, file, dir| {
         write_shim(
-            &paths::bin_dir().join(name),
+            &dir.join(name),
             "ruby",
             &[],
             file,
@@ -76,7 +103,11 @@ pub fn link_gem(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<Stri
     })
 }
 
-pub fn link_pypi(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
+pub fn link_pypi(
+    bins: Vec<&str>,
+    pkg_path: &Path,
+    output: Option<&Path>,
+) -> anyhow::Result<HashMap<String, Executables>> {
     let scripts_dir = if cfg!(windows) { "Scripts" } else { "bin" };
     let bin_dir = pkg_path.join(scripts_dir);
 
@@ -88,8 +119,8 @@ pub fn link_pypi(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<Str
 
     let interpreter = bin_dir.join(python_bin).to_string_lossy().into_owned();
 
-    link_with(&bins, &bin_dir, |name, file| {
-        write_shim(&paths::bin_dir().join(name), &interpreter, &[], file, &[])
+    link_with(&bins, &bin_dir, output, |name, file, dir| {
+        write_shim(&dir.join(name), &interpreter, &[], file, &[])
     })
 }
 
@@ -97,13 +128,18 @@ pub fn link_luarocks(
     bins: Vec<&str>,
     pkg_path: &Path,
     staging_path: &Path,
-) -> anyhow::Result<HashMap<String, PathBuf>> {
+    output: Option<&Path>,
+) -> anyhow::Result<HashMap<String, Executables>> {
     let bin_dir = pkg_path.join("bin");
 
     util::rewrite_embedded_paths(&bin_dir, staging_path, pkg_path)?;
-    link(&bins, &bin_dir)
+    link(&bins, &bin_dir, output)
 }
 
-pub fn link_composer(bins: Vec<&str>, pkg_path: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
-    link(&bins, &pkg_path.join("vendor").join("bin"))
+pub fn link_composer(
+    bins: Vec<&str>,
+    pkg_path: &Path,
+    output: Option<&Path>,
+) -> anyhow::Result<HashMap<String, Executables>> {
+    link(&bins, &pkg_path.join("vendor").join("bin"), output)
 }

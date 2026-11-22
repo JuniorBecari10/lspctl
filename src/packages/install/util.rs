@@ -17,7 +17,7 @@ use crate::{
     log::{self, Format},
     note, paths,
     registry::model::{PackageManager, Purl},
-    state::InstalledPackage,
+    state::{Executables, InstalledPackage},
 };
 
 enum ArchiveKind {
@@ -479,7 +479,7 @@ pub fn commit_package(name: &str, previous: Option<&InstalledPackage>) -> anyhow
     let to = paths::packages_dir().join(name);
 
     if let Some(old) = previous {
-        for shim_path in old.bin.values() {
+        for shim_path in old.bin.values().flat_map(Executables::iter) {
             match fs::remove_file(shim_path) {
                 Ok(()) => {}
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}

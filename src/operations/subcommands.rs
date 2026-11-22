@@ -18,11 +18,14 @@ use crate::{
     step,
 };
 
+type ActionFn = fn(Entry, &Platform, &mut State, Option<&str>) -> Result<(), anyhow::Error>;
+
 fn execute_entries(
     entries: Vec<Entry>,
     orphaned: &[String],
     action: &Action,
-    op: fn(Entry, &Platform, &mut State) -> anyhow::Result<()>,
+    output: Option<String>,
+    op: ActionFn,
     platform: &Platform,
     state: &mut State,
 ) -> OperationResult {
@@ -36,7 +39,7 @@ fn execute_entries(
         let name = pkg.name.clone();
         step!("{} package {}...", action.gerund(), pkg.name.quote());
 
-        match op(pkg, platform, state) {
+        match op(pkg, platform, state, output.as_deref()) {
             Ok(()) => {
                 end!("Package {} successfully.", action.past_participle());
                 ok_count += 1;
@@ -83,7 +86,8 @@ pub fn run_action(
     selection: PackageSelection,
     yes: bool,
     action: Action,
-    op: fn(Entry, &Platform, &mut State) -> anyhow::Result<()>,
+    output: Option<String>,
+    op: ActionFn,
 ) -> OperationResult {
     let (registry, platform, mut state, _lock) = prelude::prelude();
 
@@ -127,7 +131,9 @@ pub fn run_action(
         return OperationResult::Success;
     }
 
-    execute_entries(entries, &orphaned, &action, op, &platform, &mut state)
+    execute_entries(
+        entries, &orphaned, &action, output, op, &platform, &mut state,
+    )
 }
 
 pub fn list_packages(
@@ -352,6 +358,7 @@ pub fn sync_packages(
                     entries,
                     &[],
                     &Action::Sync,
+                    None,
                     logic::install_pkg,
                     &platform,
                     &mut state,

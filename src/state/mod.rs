@@ -1,3 +1,5 @@
+mod util;
+
 use std::{
     collections::{
         HashMap,
@@ -19,7 +21,7 @@ use crate::{
 
 // only change this after launch and after introducing a breaking change to the registry state.
 // TODO: add the backwards compatibility promise (having an older version will always work)?
-const SCHEMA_VERSION: u32 = 1;
+const SCHEMA_VERSION: u32 = 2;
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct State {
@@ -28,11 +30,15 @@ pub struct State {
     installed: HashMap<String, InstalledPackage>,
 }
 
+// link in bins and the one the user put (optional)
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Executables(pub PathBuf, pub Option<PathBuf>);
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct InstalledPackage {
     pub version: String,
     pub install_kind: InstallKind,
-    pub bin: HashMap<String, PathBuf>,
+    pub bin: HashMap<String, Executables>,
     pub install_time: String,
 }
 
@@ -77,7 +83,7 @@ impl State {
         disk::write_file_atomic_contents(&paths::state_file(), &contents, true)
     }
 
-    pub fn add_entry(&mut self, e: &ResolvedEntry, bin: HashMap<String, PathBuf>) {
+    pub fn add_entry(&mut self, e: &ResolvedEntry, bin: HashMap<String, Executables>) {
         self.installed.insert(
             e.name.clone(),
             InstalledPackage {

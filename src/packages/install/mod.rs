@@ -18,10 +18,14 @@ use crate::{
     registry::model::{
         Asset, Build, PackageManager, ResolvedDownloads, ResolvedEntry, ResolvedVariant,
     },
-    state::State,
+    state::{Executables, State},
 };
 
-pub fn install(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
+pub fn install(
+    entry: &ResolvedEntry,
+    state: &mut State,
+    output: Option<&str>,
+) -> anyhow::Result<()> {
     let tmp_pkg_path = paths::tmp_package_dir(&entry.name);
     fs::create_dir_all(&tmp_pkg_path)?;
 
@@ -30,7 +34,12 @@ pub fn install(entry: &ResolvedEntry, state: &mut State) -> anyhow::Result<()> {
     util::commit_package(&entry.name, state.get_entry(&entry.name))?;
 
     // make links in bin and add the entry to state
-    let bins = make_links(entry, &paths::package_dir(&entry.name), &tmp_pkg_path)?;
+    let bins = make_links(
+        entry,
+        &paths::package_dir(&entry.name),
+        &tmp_pkg_path,
+        output.map(Path::new),
+    )?;
 
     state.add_entry(entry, bins);
     Ok(())
@@ -49,21 +58,21 @@ fn install_by_variant(entry: &ResolvedEntry, tmp_pkg_path: &Path) -> anyhow::Res
     }
 }
 
-// TODO: let the user choose where to put the shims, or put they on their place and add a symlink to them, and link them also in the state file?
 fn make_links(
     entry: &ResolvedEntry,
     pkg_path: &Path,
     tmp_pkg_path: &Path,
-) -> anyhow::Result<HashMap<String, PathBuf>> {
+    output: Option<&Path>,
+) -> anyhow::Result<HashMap<String, Executables>> {
     match &entry.source.variant {
         ResolvedVariant::PackageManager {
             manager,
             extra_packages: _,
-        } => link::link_manager(entry, *manager, pkg_path, tmp_pkg_path),
+        } => link::link_manager(entry, *manager, pkg_path, tmp_pkg_path, output),
 
-        ResolvedVariant::Asset(_) => link::link_asset_and_download(entry, pkg_path),
-        ResolvedVariant::Download(_) => link::link_asset_and_download(entry, pkg_path),
-        ResolvedVariant::Build(build) => link::link_build(entry, build, pkg_path),
+        ResolvedVariant::Asset(_) => link::link_asset_and_download(entry, pkg_path, output),
+        ResolvedVariant::Download(_) => link::link_asset_and_download(entry, pkg_path, output),
+        ResolvedVariant::Build(build) => link::link_build(entry, build, pkg_path, output),
     }
 }
 
