@@ -68,7 +68,7 @@ pub fn link_files(from: &Path, to: &Path) -> anyhow::Result<()> {
     #[cfg(unix)]
     std::os::unix::fs::symlink(&real_target, to).with_context(|| {
         format!(
-            "failed to symlink {} -> {}",
+            "failed to symlink {} -> {}.",
             to.display().quote(),
             real_target.display().quote()
         )

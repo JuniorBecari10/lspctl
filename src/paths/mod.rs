@@ -1,3 +1,5 @@
+mod util;
+
 use std::path::PathBuf;
 
 use crate::{consts, def_consts, log::Fatal, registry};
@@ -12,7 +14,7 @@ def_consts!(
 );
 
 pub fn root_dir() -> PathBuf {
-    dirs::data_local_dir()
+    util::data_local_dir()
         .fatal("Cannot determine home directory.")
         .join(consts::APP_NAME)
 }
