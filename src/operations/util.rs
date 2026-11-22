@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, path::PathBuf};
 
 use colored::Colorize;
 use dialoguer::Confirm;
@@ -74,6 +74,7 @@ pub fn accepted_action(
     yes: bool,
     action: &Action,
     state: &State,
+    output: &[PathBuf],
 ) -> bool {
     let will_act = |e: &Entry| -> bool {
         let installed = state.get_package(&e.name);
@@ -120,6 +121,17 @@ pub fn accepted_action(
             action.past_participle()
         );
         return false;
+    }
+
+    if !output.is_empty() {
+        step!(
+            "Directories to link the executables: {}.",
+            output
+                .iter()
+                .map(|path| path.display().quote().to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
     }
 
     confirm_action(&format!("Proceed with {}?", action.noun()), yes)

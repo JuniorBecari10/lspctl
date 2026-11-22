@@ -131,7 +131,7 @@ pub fn run_action(
         return OperationResult::Success;
     }
 
-    if !util::accepted_action(&entries, &orphaned, yes, &action, &state) {
+    if !util::accepted_action(&entries, &orphaned, yes, &action, &state, &output) {
         return OperationResult::Success;
     }
 
