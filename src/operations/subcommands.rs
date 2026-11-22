@@ -8,7 +8,7 @@ use crate::{
         logic,
         model::{Action, OperationResult, PackageSelection, SearchQuery, VersionDisplay},
         prelude,
-        util::{self, AcceptSync},
+        util::{self, AcceptSync, ReleaseVersion},
     },
     registry::{
         self,
@@ -274,7 +274,7 @@ pub fn delete(
 pub fn set_registry_version(version: &str, yes: bool) -> OperationResult {
     let (_, _, mut state, _lock) = prelude::prelude();
 
-    let pending = match util::resolve_release(version) {
+    let pending = match util::resolve_release(ReleaseVersion::new(version)) {
         Ok(p) => p,
         Err(e) => {
             end_error!("Cannot resolve registry version: {e}");
@@ -299,7 +299,7 @@ pub fn sync_packages(
     let (registry, platform, mut state, _lock) = prelude::prelude();
 
     let pending = match version {
-        Some(ref v) => match util::resolve_release(v) {
+        Some(ref v) => match util::resolve_release(ReleaseVersion::new(v)) {
             Ok(p) => Some(p),
             Err(e) => {
                 end_error!("Cannot resolve registry version: {e}");

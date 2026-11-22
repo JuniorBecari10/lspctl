@@ -26,7 +26,29 @@ pub enum AcceptSync {
     YesNoPackages,
 }
 
-pub struct PendingRelease {
+#[derive(Copy, Clone)]
+pub enum ReleaseVersion<'a> {
+    Latest,
+    Other(&'a str),
+}
+
+impl<'a> ReleaseVersion<'a> {
+    pub fn new(version: &'a str) -> Self {
+        if version.to_lowercase() == "latest" {
+            Self::Latest
+        } else {
+            Self::Other(version)
+        }
+    }
+
+    pub fn is_latest(&self) -> bool {
+        matches!(self, Self::Latest)
+    }
+}
+
+// the downloaded release with its Release struct and downloaded JSON raw data.
+// also, a bool telling this is the latest or not.
+pub struct DownloadedRelease {
     pub release: Release,
     pub bytes: Vec<u8>,
     pub is_latest: bool,
@@ -472,16 +494,15 @@ pub fn resolve_selection(state: &State, selection: PackageSelection) -> Vec<Stri
     }
 }
 
-// TODO: what is this
-pub fn resolve_release(version: &str) -> anyhow::Result<PendingRelease> {
-    let lower = version.to_lowercase();
-    let release = registry::fetch_release(&lower)?;
+// this gets a registry release from the string passed in.
+pub fn resolve_release(version: ReleaseVersion) -> anyhow::Result<DownloadedRelease> {
+    let release = registry::fetch_release(version)?;
     let bytes = registry::fetch_registry_bytes_from_release(&release)?;
 
-    Ok(PendingRelease {
+    Ok(DownloadedRelease {
         release,
         bytes,
-        is_latest: lower == "latest",
+        is_latest: version.is_latest(),
     })
 }
 

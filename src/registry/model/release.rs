@@ -1,5 +1,6 @@
 use serde::Deserialize;
 
+// this is only the tag and assets
 #[derive(Deserialize, Debug, Clone)]
 pub struct Release {
     #[serde(rename = "tag_name")]

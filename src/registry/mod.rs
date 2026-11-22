@@ -6,7 +6,9 @@ use std::{
 use anyhow::anyhow;
 
 use crate::{
-    disk, note, paths,
+    disk, note,
+    operations::util::ReleaseVersion,
+    paths,
     registry::model::{RawRegistry, Registry, Release},
     step,
 };
@@ -41,16 +43,11 @@ pub fn fetch_latest_release() -> anyhow::Result<Release> {
         .ok_or_else(|| anyhow!("Cannot get latest release"))
 }
 
-// TODO: maybe this isn't a good idea
-/// use "latest" to get the latest version
-/// yes, this is because the user can type it and the text is
-/// directly sent to here.
-pub fn fetch_release(version: &str) -> anyhow::Result<Release> {
-    if version == "latest" {
-        return fetch_latest_release();
+pub fn fetch_release(version: ReleaseVersion) -> anyhow::Result<Release> {
+    match version {
+        ReleaseVersion::Latest => fetch_latest_release(),
+        ReleaseVersion::Other(v) => util::fetch_json(&util::release_by_tag_url(v)),
     }
-
-    util::fetch_json(&util::release_by_tag_url(version))
 }
 
 pub fn fetch_registry_bytes_from_release(release: &Release) -> anyhow::Result<Vec<u8>> {

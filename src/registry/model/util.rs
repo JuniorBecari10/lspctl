@@ -186,8 +186,6 @@ fn get_install_kind(s: &str) -> Option<InstallKind> {
 // TODO: apply the Windows restriction to all OSs,
 // since the user may want to sync between the two filesystems?
 
-// TODO: let the user change the installation directory?
-
 /// this sanitizes a string to be valid as a file/directory name on your target OS.
 /// this has conditional code that rejects more names in Windows, but '/' is blocked everywhere.
 fn sanitize_path_component(raw: &str) -> String {
