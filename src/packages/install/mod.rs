@@ -21,11 +21,7 @@ use crate::{
     state::{Executables, State},
 };
 
-pub fn install(
-    entry: &ResolvedEntry,
-    state: &mut State,
-    output: Option<&str>,
-) -> anyhow::Result<()> {
+pub fn install(entry: &ResolvedEntry, state: &mut State, output: &[PathBuf]) -> anyhow::Result<()> {
     let tmp_pkg_path = paths::tmp_package_dir(&entry.name);
     fs::create_dir_all(&tmp_pkg_path)?;
 
@@ -38,7 +34,7 @@ pub fn install(
         entry,
         &paths::package_dir(&entry.name),
         &tmp_pkg_path,
-        output.map(Path::new),
+        output,
     )?;
 
     state.add_entry(entry, bins);
@@ -62,7 +58,7 @@ fn make_links(
     entry: &ResolvedEntry,
     pkg_path: &Path,
     tmp_pkg_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     match &entry.source.variant {
         ResolvedVariant::PackageManager {

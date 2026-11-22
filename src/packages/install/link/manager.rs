@@ -16,7 +16,7 @@ use std::{
 fn link_with(
     bins: &[&str],
     bin_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
     place: impl Fn(&str, &Path, &Path) -> anyhow::Result<PathBuf>, // (name, source, target_dir)
 ) -> anyhow::Result<HashMap<String, Executables>> {
     let files = disk::list_files(bin_path)?;
@@ -34,9 +34,12 @@ fn link_with(
         }
 
         let bin = place(&name, &file, &bin_dir)?;
-        let out = output.map(|dir| place(&name, &file, dir)).transpose()?;
+        let links = output
+            .iter()
+            .map(|dir| place(&name, &file, dir))
+            .collect::<anyhow::Result<Vec<_>>>()?;
 
-        map.insert(name, Executables(bin, out));
+        map.insert(name, Executables { bin, links });
     }
 
     Ok(map)
@@ -45,7 +48,7 @@ fn link_with(
 fn link(
     bins: &[&str],
     bin_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     link_with(bins, bin_path, output, |name, file, dir| {
         let target = dir.join(name);
@@ -60,7 +63,7 @@ fn link(
 pub fn link_npm(
     bins: Vec<&str>,
     pkg_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     link(&bins, &pkg_path.join("node_modules").join(".bin"), output)
 }
@@ -69,7 +72,7 @@ pub fn link_npm(
 pub fn link_bin(
     bins: Vec<&str>,
     pkg_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     link(&bins, &pkg_path.join("bin"), output)
 }
@@ -78,7 +81,7 @@ pub fn link_bin(
 pub fn link_root(
     bins: Vec<&str>,
     pkg_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     link(&bins, pkg_path, output)
 }
@@ -87,7 +90,7 @@ pub fn link_root(
 pub fn link_gem(
     bins: Vec<&str>,
     pkg_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     let bin_dir = pkg_path.join("bin");
     let gem_home = pkg_path.to_string_lossy().into_owned();
@@ -106,7 +109,7 @@ pub fn link_gem(
 pub fn link_pypi(
     bins: Vec<&str>,
     pkg_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     let scripts_dir = if cfg!(windows) { "Scripts" } else { "bin" };
     let bin_dir = pkg_path.join(scripts_dir);
@@ -128,7 +131,7 @@ pub fn link_luarocks(
     bins: Vec<&str>,
     pkg_path: &Path,
     staging_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     let bin_dir = pkg_path.join("bin");
 
@@ -139,7 +142,7 @@ pub fn link_luarocks(
 pub fn link_composer(
     bins: Vec<&str>,
     pkg_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     link(&bins, &pkg_path.join("vendor").join("bin"), output)
 }

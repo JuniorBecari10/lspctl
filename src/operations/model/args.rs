@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{Args, Subcommand, ValueEnum};
 
 // TODO: add '--all' here?
@@ -11,9 +13,9 @@ pub struct InstallArgs {
     #[arg(short, long)]
     pub yes: bool,
 
-    /// Optional output path of the executables
-    #[arg(short, long)]
-    pub output: Option<String>,
+    /// Directories to also link the executables into (repeatable)
+    #[arg(short, long, value_name = "DIR")]
+    pub output: Vec<PathBuf>,
 }
 
 #[derive(Args, Debug)]

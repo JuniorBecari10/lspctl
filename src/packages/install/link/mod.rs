@@ -20,7 +20,7 @@ pub fn link_manager(
     manager: PackageManager,
     pkg_path: &Path,
     tmp_pkg_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     let hash_map = entry.bin.clone().unwrap_or_default();
     let bins = hash_map.keys().map(String::as_str).collect();
@@ -43,7 +43,7 @@ pub fn link_manager(
 pub fn link_asset_and_download(
     entry: &ResolvedEntry,
     pkg_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     let mut map = HashMap::new();
 
@@ -54,9 +54,12 @@ pub fn link_asset_and_download(
         };
 
         let bin = get_target(&paths::bin_dir())?;
-        let out = output.map(get_target).transpose()?;
+        let links = output
+            .iter()
+            .map(|dir| get_target(dir))
+            .collect::<anyhow::Result<Vec<_>>>()?;
 
-        map.insert(name.clone(), Executables(bin, out));
+        map.insert(name.clone(), Executables { bin, links });
     }
 
     Ok(map)
@@ -66,7 +69,7 @@ pub fn link_build(
     entry: &ResolvedEntry,
     build: &Build,
     pkg_path: &Path,
-    output: Option<&Path>,
+    output: &[PathBuf],
 ) -> anyhow::Result<HashMap<String, Executables>> {
     anyhow::bail!("todo")
 }

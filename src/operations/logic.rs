@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{
     packages,
     registry::{
@@ -12,7 +14,7 @@ pub fn install_pkg(
     e: Entry,
     host: &Platform,
     state: &mut State,
-    output: Option<&str>,
+    output: &[PathBuf],
 ) -> anyhow::Result<()> {
     let entry = resolver::resolve_entry(e, host)?;
     packages::install(&entry, state, output)?;
@@ -25,7 +27,7 @@ pub fn remove_pkg(
     e: Entry,
     _host: &Platform,
     state: &mut State,
-    _o: Option<&str>,
+    _o: &[PathBuf],
 ) -> anyhow::Result<()> {
     remove(&e.name, state)
 }

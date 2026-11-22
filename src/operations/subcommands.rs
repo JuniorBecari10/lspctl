@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fs, path::Path};
+use std::{
+    collections::HashMap,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use crate::{
     disk, end, end_error, error, header,
@@ -18,13 +22,13 @@ use crate::{
     step,
 };
 
-type ActionFn = fn(Entry, &Platform, &mut State, Option<&str>) -> Result<(), anyhow::Error>;
+type ActionFn = fn(Entry, &Platform, &mut State, &[PathBuf]) -> Result<(), anyhow::Error>;
 
 fn execute_entries(
     entries: Vec<Entry>,
     orphaned: &[String],
     action: &Action,
-    output: Option<String>,
+    output: Vec<PathBuf>,
     op: ActionFn,
     platform: &Platform,
     state: &mut State,
@@ -39,7 +43,7 @@ fn execute_entries(
         let name = pkg.name.clone();
         step!("{} package {}...", action.gerund(), pkg.name.quote());
 
-        match op(pkg, platform, state, output.as_deref()) {
+        match op(pkg, platform, state, &output) {
             Ok(()) => {
                 end!("Package {} successfully.", action.past_participle());
                 ok_count += 1;
@@ -86,7 +90,7 @@ pub fn run_action(
     selection: PackageSelection,
     yes: bool,
     action: Action,
-    output: Option<String>,
+    output: Vec<PathBuf>,
     op: ActionFn,
 ) -> OperationResult {
     let (registry, platform, mut state, _lock) = prelude::prelude();
@@ -358,7 +362,7 @@ pub fn sync_packages(
                     entries,
                     &[],
                     &Action::Sync,
-                    None,
+                    Vec::new(),
                     logic::install_pkg,
                     &platform,
                     &mut state,

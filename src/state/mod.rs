@@ -30,9 +30,13 @@ pub struct State {
     installed: HashMap<String, InstalledPackage>,
 }
 
-// link in bins and the one the user put (optional)
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Executables(pub PathBuf, pub Option<PathBuf>);
+pub struct Executables {
+    pub bin: PathBuf,
+
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub links: Vec<PathBuf>,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct InstalledPackage {

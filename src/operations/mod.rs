@@ -38,7 +38,13 @@ pub fn remove(args: model::RemoveArgs) -> OperationResult {
         return util::selection_error(Action::Remove);
     };
 
-    subcommands::run_action(selection, args.yes, Action::Remove, None, logic::remove_pkg)
+    subcommands::run_action(
+        selection,
+        args.yes,
+        Action::Remove,
+        Vec::new(),
+        logic::remove_pkg,
+    )
 }
 
 pub fn list(args: model::ListArgs) -> OperationResult {
