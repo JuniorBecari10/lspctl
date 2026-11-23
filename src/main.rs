@@ -14,12 +14,12 @@ mod state;
 mod table;
 
 fn main() -> ExitCode {
-    let code = cli::cli().into();
+    let result = cli::cli();
 
     if let Err(e) = disk::give_root_dir_to_user() {
         error!("Error while trying to give root directory to user: {}", e);
         return ExitCode::FAILURE;
     }
 
-    code
+    result.into()
 }
