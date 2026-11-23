@@ -182,3 +182,52 @@ pub fn extract_entry_from_zip(zip: impl Read + Seek, entry_name: &str) -> anyhow
 
     Ok(contents)
 }
+
+#[cfg(unix)]
+fn sudo_owner() -> Option<(u32, u32)> {
+    if !nix::unistd::geteuid().is_root() {
+        return None;
+    }
+
+    let uid: u32 = std::env::var("SUDO_UID").ok()?.parse().ok()?;
+    let gid: u32 = std::env::var("SUDO_GID").ok()?.parse().ok()?;
+
+    (uid != 0).then_some((uid, gid))
+}
+
+pub fn give_root_dir_to_user() -> anyhow::Result<()> {
+    let root = &paths::root_dir();
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+
+        let Some((uid, gid)) = sudo_owner() else {
+            // this isn't needed if we didn't run the command with sudo
+            return Ok(());
+        };
+
+        fn walk(path: &Path, uid: u32, gid: u32) -> anyhow::Result<()> {
+            let meta = fs::symlink_metadata(path)?;
+
+            if meta.uid() != uid {
+                std::os::unix::fs::lchown(path, Some(uid), Some(gid))
+                    .with_context(|| format!("Failed to chown {}", path.display().quote()))?;
+            }
+
+            if meta.is_dir() {
+                for entry in fs::read_dir(path)? {
+                    walk(&entry?.path(), uid, gid)?;
+                }
+            }
+
+            Ok(())
+        }
+
+        if root.exists() {
+            walk(root, uid, gid)?;
+        }
+    }
+
+    Ok(())
+}

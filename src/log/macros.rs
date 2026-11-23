@@ -58,6 +58,11 @@ macro_rules! error {
 macro_rules! fatal {
     ($($arg:tt)*) => {{
         error!($($arg)*);
+
+        if let Err(e) = $crate::disk::give_root_dir_to_user() {
+            error!("Error while trying to give root directory to user: {}", e);
+        }
+
         std::process::exit(1)
     }};
 }
