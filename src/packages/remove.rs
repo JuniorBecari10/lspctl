@@ -6,6 +6,7 @@ use crate::{
     disk,
     log::Format,
     paths,
+    registry::model::util,
     state::{Executables, State},
 };
 
@@ -32,7 +33,9 @@ pub fn remove(name: &str, state: &mut State) -> anyhow::Result<()> {
 }
 
 fn remove_package(name: &str) -> anyhow::Result<()> {
-    let path = paths::package_dir(name);
+    let name_path = util::sanitize_path_component(name);
+    let path = paths::package_dir(&name_path);
+
     disk::make_writable_recursive(&path)?;
     fs::remove_dir_all(&path)?;
 

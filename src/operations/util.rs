@@ -68,75 +68,6 @@ fn suggest_similar<'a>(name: &str, pool: impl Iterator<Item = &'a str>) -> Vec<&
         .collect()
 }
 
-pub fn accepted_action(
-    pkgs: &[Entry],
-    orphaned: &[String],
-    yes: bool,
-    action: &Action,
-    state: &State,
-    output: &[PathBuf],
-) -> bool {
-    let will_act = |e: &Entry| -> bool {
-        let installed = state.get_package(&e.name);
-
-        match action {
-            Action::Remove => installed.is_some(),
-            Action::Sync => installed.is_none_or(|p| p.version != e.source.purl.version),
-            Action::Install => installed.is_none_or(|p| p.version != e.source.purl.version),
-        }
-    };
-
-    let action_count = pkgs.iter().filter(|e| will_act(e)).count();
-
-    header!(
-        "Packages to be {} ({}):\n",
-        action.past_participle(),
-        action_count
-    );
-
-    list_entries(pkgs, orphaned, state, action.to_display(), |e| {
-        let installed = state.get_package(&e.name);
-
-        match action {
-            Action::Remove => installed.is_none().then(|| action.marker()),
-
-            Action::Sync => installed
-                .is_some_and(|p| p.version == e.source.purl.version)
-                .then(|| action.marker()),
-
-            Action::Install => match installed {
-                Some(p) if p.version == e.source.purl.version => Some(action.marker()),
-                Some(_) => Some(Marker::NotSynced),
-                None => None,
-            },
-        }
-    });
-
-    if action_count == 0 {
-        eprintln!();
-
-        end!(
-            "All {} package(s) are already {}.",
-            pkgs.len(),
-            action.past_participle()
-        );
-        return false;
-    }
-
-    if !output.is_empty() {
-        step!(
-            "Directories to link the executables: {}.",
-            output
-                .iter()
-                .map(|path| path.display().quote().to_string())
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
-    }
-
-    confirm_action(&format!("Proceed with {}?", action.noun()), yes)
-}
-
 pub fn confirm_action(action: &str, yes: bool) -> bool {
     yes || {
         eprintln!();
@@ -209,6 +140,10 @@ pub fn filter_registry_print(
 
 pub const fn plural<'a>(count: i32, singular: &'a str, plural: &'a str) -> &'a str {
     if count == 1 { singular } else { plural }
+}
+
+const fn plural_packages(count: usize) -> &'static str {
+    plural(count as i32, "package", "packages")
 }
 
 pub fn write_entries(
@@ -298,7 +233,7 @@ pub fn list_entries(
     }
 
     for name in orphaned {
-        // Orphans only have installed info, and only in `Installed` mode.
+        // Orphans only have installed info, and only in Installed mode.
         let installed = match display {
             VersionDisplay::Installed => state.get_package(name),
             VersionDisplay::RegistryIfMatches => None,
@@ -314,6 +249,179 @@ pub fn list_entries(
     }
 
     table.print();
+}
+
+fn will_act(action: &Action, state: &State, e: &Entry) -> bool {
+    let installed = state.get_package(&e.name);
+
+    match action {
+        Action::Remove => installed.is_some(),
+        Action::Sync | Action::Install => {
+            installed.is_none_or(|p| p.version != e.source.purl.version)
+        }
+    }
+}
+
+fn marker_for(action: &Action, state: &State, e: &Entry) -> Option<Marker> {
+    let installed = state.get_package(&e.name);
+
+    match action {
+        Action::Remove => installed.is_none().then(|| action.marker()),
+
+        Action::Sync => installed
+            .is_some_and(|p| p.version == e.source.purl.version)
+            .then(|| action.marker()),
+
+        Action::Install => match installed {
+            Some(p) if p.version == e.source.purl.version => Some(action.marker()),
+            Some(_) => Some(Marker::NotSynced),
+            None => None,
+        },
+    }
+}
+
+// Header + package table, shared by every action.
+fn print_plan(
+    pkgs: &[Entry],
+    orphaned: &[String],
+    state: &State,
+    action: &Action,
+    action_count: usize,
+) {
+    header!(
+        "Packages to be {} ({}):\n",
+        action.past_participle(),
+        action_count
+    );
+
+    list_entries(pkgs, orphaned, state, action.to_display(), |e| {
+        marker_for(action, state, e)
+    });
+}
+
+fn confirm(action: &Action, yes: bool) -> bool {
+    confirm_action(&format!("Proceed with {}?", action.noun()), yes)
+}
+
+/// Sync's table: Name / Current / Registry, no Source column.
+/// A synced row has no registry value (rendered as the placeholder) and a `Synced` marker.
+fn print_sync_table(entries: &[Entry], state: &State, needs_sync: impl Fn(&Entry) -> bool) {
+    let mut table = Table::new()
+        .column("Name", 15)
+        .column("Current", 15)
+        .column("Registry", 8);
+
+    for e in entries {
+        let synced = !needs_sync(e);
+
+        let current = state
+            .get_package(&e.name)
+            .map(|p| p.version.clone())
+            .unwrap_or_else(|| "?".into());
+
+        let registry = (!synced).then(|| e.source.purl.version.clone());
+
+        table.push_row(
+            Row::new([
+                e.name.as_str().into(),
+                current.cyan().into(),
+                registry.map(|v| v.green()).into(),
+            ])
+            .marker(synced.then_some(Marker::Synced)),
+        );
+    }
+
+    table.print();
+}
+
+pub fn accepted_sync(
+    entries: &[Entry],
+    state: &State,
+    yes: bool,
+    pending_version: bool,
+) -> AcceptSync {
+    let action = Action::Sync;
+    let needs_sync = |e: &Entry| !Action::Sync.should_skip(state, e);
+    let action_count = entries.iter().filter(|e| needs_sync(e)).count();
+
+    if action_count == 0 {
+        if pending_version {
+            eprintln!();
+
+            if entries.is_empty() {
+                end!("No packages to sync.");
+            } else {
+                end!("No packages need to be synced with the new registry version.");
+            }
+
+            if confirm(&action, yes) {
+                return AcceptSync::YesNoPackages;
+            }
+        }
+
+        if entries.is_empty() {
+            end!("There are no packages to be synced.");
+        } else {
+            end!(
+                "All {} {} are already synced.",
+                entries.len(),
+                plural_packages(entries.len())
+            );
+        }
+
+        return AcceptSync::YesNoPackages;
+    }
+
+    header!(
+        "Packages to be {} ({}):\n",
+        action.past_participle(),
+        action_count
+    );
+
+    print_sync_table(entries, state, needs_sync);
+
+    if confirm(&action, yes) {
+        AcceptSync::YesWithPackages
+    } else {
+        AcceptSync::No
+    }
+}
+
+pub fn accepted_action(
+    pkgs: &[Entry],
+    orphaned: &[String],
+    yes: bool,
+    action: &Action,
+    state: &State,
+    output: &[PathBuf],
+) -> bool {
+    let action_count = pkgs.iter().filter(|e| will_act(action, state, e)).count();
+
+    if action_count == 0 {
+        end!(
+            "All {} {} are already {}.",
+            pkgs.len(),
+            plural_packages(pkgs.len()),
+            action.past_participle()
+        );
+
+        return false;
+    }
+
+    print_plan(pkgs, orphaned, state, action, action_count);
+
+    if !output.is_empty() {
+        step!(
+            "Directories to link the executables: {}.",
+            output
+                .iter()
+                .map(|path| path.display().quote().to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+    }
+
+    confirm(action, yes)
 }
 
 pub fn list_release_tags(tags: &[String], current: &str, page: u32) {
@@ -351,132 +459,6 @@ pub fn selection_error(a: Action) -> OperationResult {
     );
 
     OperationResult::Failure
-}
-
-pub fn accepted_sync(
-    entries: &[Entry],
-    state: &State,
-    yes: bool,
-    pending_version: bool,
-) -> AcceptSync {
-    let needs_sync = |e: &Entry| -> bool { !Action::Sync.should_skip(state, e) };
-    let action_count = entries.iter().filter(|e| needs_sync(e)).count();
-
-    if action_count == 0 {
-        if pending_version {
-            eprintln!();
-
-            if entries.is_empty() {
-                end!("No packages to sync.");
-            } else {
-                end!("No packages need to be synced with the new registry version.");
-            }
-
-            if confirm_action(&format!("Proceed with {}?", Action::Sync.noun()), yes) {
-                return AcceptSync::YesNoPackages;
-            }
-        }
-
-        if entries.is_empty() {
-            end!("There are no packages to be synced.");
-        } else {
-            end!("All {} package(s) are already synced.", entries.len());
-        }
-
-        return AcceptSync::YesNoPackages;
-    }
-
-    header!(
-        "Packages to be {} ({}):\n",
-        Action::Sync.past_participle(),
-        action_count
-    );
-
-    let rows: Vec<_> = entries
-        .iter()
-        .map(|e| {
-            let current = state
-                .get_package(&e.name)
-                .map(|installed| installed.version.clone())
-                .unwrap_or_else(|| "?".into());
-
-            let synced = !needs_sync(e);
-
-            let registry = if synced {
-                "—".to_string()
-            } else {
-                e.source.purl.version.clone()
-            };
-
-            (e.name.clone(), current, registry, synced)
-        })
-        .collect();
-
-    let width = |s: &str| s.chars().count();
-
-    let name_width = rows
-        .iter()
-        .map(|(n, _, _, _)| width(n))
-        .max()
-        .unwrap_or(0)
-        .max(15);
-
-    let current_width = rows
-        .iter()
-        .map(|(_, c, _, _)| width(c))
-        .max()
-        .unwrap_or(0)
-        .max(15);
-
-    let registry_width = rows
-        .iter()
-        .map(|(_, _, r, _)| width(r))
-        .max()
-        .unwrap_or(0)
-        .max(8);
-
-    let pad = |s: &str, w: usize| format!("{s}{}", " ".repeat(w.saturating_sub(width(s))));
-
-    println!(
-        "{}  {}  {}",
-        pad("Name", name_width).bold(),
-        pad("Current", current_width).bold(),
-        pad("Registry", registry_width).bold(),
-    );
-    println!(
-        "{}",
-        "─"
-            .repeat(name_width + current_width + registry_width + 4)
-            .dimmed()
-    );
-
-    for (name, current, registry, synced) in &rows {
-        let marker = if *synced {
-            format!("  {}", Marker::Synced.render())
-        } else {
-            String::new()
-        };
-
-        let registry_cell = if *synced {
-            pad(registry, registry_width).dimmed().to_string()
-        } else {
-            pad(registry, registry_width).green().to_string()
-        };
-
-        println!(
-            "{}  {}  {}{}",
-            pad(name, name_width),
-            pad(current, current_width).cyan(),
-            registry_cell,
-            marker,
-        );
-    }
-
-    if confirm_action(&format!("Proceed with {}?", Action::Sync.noun()), yes) {
-        AcceptSync::YesWithPackages
-    } else {
-        AcceptSync::No
-    }
 }
 
 pub fn latest_marker(is_latest: bool) -> String {

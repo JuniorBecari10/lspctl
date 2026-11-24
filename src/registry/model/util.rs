@@ -38,21 +38,13 @@ impl<'a> TryFrom<PackageUrl<'a>> for Purl {
             kind: get_install_kind(purl.ty())
                 .ok_or_else(|| anyhow!("Invalid install kind: {}", purl.ty().quote()))?,
 
-            namespace: purl.namespace().map(sanitize_path_component),
-            name: sanitize_path_component(purl.name()),
+            namespace: purl.namespace().map(Into::into),
+            name: purl.name().into(),
 
             version: purl
                 .version()
-                .map(sanitize_path_component)
+                .map(Into::into)
                 .ok_or_else(|| anyhow::anyhow!("Expected version number"))?,
-
-            qualifiers: purl
-                .qualifiers()
-                .iter()
-                .map(|(k, v)| (k.to_string(), v.to_string()))
-                .collect(),
-
-            subpath: purl.subpath().map(sanitize_path_component),
         })
     }
 }
@@ -188,7 +180,7 @@ fn get_install_kind(s: &str) -> Option<InstallKind> {
 
 /// this sanitizes a string to be valid as a file/directory name on your target OS.
 /// this has conditional code that rejects more names in Windows, but '/' is blocked everywhere.
-fn sanitize_path_component(raw: &str) -> String {
+pub fn sanitize_path_component(raw: &str) -> String {
     let mut out: String = raw
         .chars()
         .filter(|c| !c.is_control())

@@ -40,8 +40,6 @@ pub struct Purl {
     pub namespace: Option<String>,
     pub name: String,
     pub version: String,
-    pub qualifiers: HashMap<String, String>,
-    pub subpath: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

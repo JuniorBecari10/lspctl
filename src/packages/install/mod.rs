@@ -16,23 +16,25 @@ use crate::{
     log::{self, Format},
     note, paths,
     registry::model::{
-        Asset, Build, PackageManager, ResolvedDownloads, ResolvedEntry, ResolvedVariant,
+        self, Asset, Build, PackageManager, ResolvedDownloads, ResolvedEntry, ResolvedVariant,
     },
     state::{Executables, State},
 };
 
 pub fn install(entry: &ResolvedEntry, state: &mut State, output: &[PathBuf]) -> anyhow::Result<()> {
-    let tmp_pkg_path = paths::tmp_package_dir(&entry.name);
+    let name_path = model::util::sanitize_path_component(&entry.name);
+
+    let tmp_pkg_path = paths::tmp_package_dir(&name_path);
     fs::create_dir_all(&tmp_pkg_path)?;
 
     // install in tmp and move it to the definitive folder
     install_by_variant(entry, &tmp_pkg_path)?;
-    util::commit_package(&entry.name, state.get_entry(&entry.name))?;
+    util::commit_package(&name_path, state.get_entry(&name_path))?;
 
     // make links in bin and add the entry to state
     let bins = make_links(
         entry,
-        &paths::package_dir(&entry.name),
+        &paths::package_dir(&name_path),
         &tmp_pkg_path,
         output,
     )?;

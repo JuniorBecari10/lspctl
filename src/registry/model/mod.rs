@@ -4,7 +4,7 @@ mod parsed;
 mod raw;
 mod release;
 mod resolved;
-mod util;
+pub mod util;
 
 // Reexport declarations as part of model
 pub use common::*;
