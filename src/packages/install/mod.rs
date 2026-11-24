@@ -29,6 +29,8 @@ pub fn install(entry: &ResolvedEntry, state: &mut State, output: &[PathBuf]) -> 
 
     // install in tmp and move it to the definitive folder
     install_by_variant(entry, &tmp_pkg_path)?;
+
+    disk::make_writable_recursive(&paths::package_dir(&name_path))?;
     util::commit_package(&name_path, state.get_entry(&name_path))?;
 
     // make links in bin and add the entry to state

@@ -354,9 +354,11 @@ pub fn accepted_sync(
                 end!("No packages need to be synced with the new registry version.");
             }
 
-            if confirm(&action, yes) {
-                return AcceptSync::YesNoPackages;
-            }
+            return if confirm(&action, yes) {
+                AcceptSync::YesNoPackages
+            } else {
+                AcceptSync::No
+            };
         }
 
         if entries.is_empty() {
