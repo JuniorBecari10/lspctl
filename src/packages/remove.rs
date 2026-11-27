@@ -12,7 +12,7 @@ use crate::{
 
 pub fn remove(name: &str, state: &mut State) -> anyhow::Result<()> {
     let state_entry = state
-        .get_entry(name)
+        .get_package(name)
         .ok_or_else(|| anyhow::anyhow!("Package {} is not installed", name.quote()))?;
 
     for file in state_entry.bin.values().flat_map(Executables::iter) {

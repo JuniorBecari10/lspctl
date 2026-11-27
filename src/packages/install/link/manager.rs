@@ -13,9 +13,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+// this places a link/shim in lspctl/bin and in the list of directories passed in
 fn link_with(
     bins: &[&str],
-    bin_path: &Path,
+    bin_path: &Path, // the actual binary location
     output: &[PathBuf],
     place: impl Fn(&str, &Path, &Path) -> anyhow::Result<PathBuf>, // (name, source, target_dir)
 ) -> anyhow::Result<HashMap<String, Executables>> {
@@ -33,6 +34,7 @@ fn link_with(
             continue; // binary not in the registry; skip it.
         }
 
+        // link in lspctl/bin
         let bin = place(&name, &file, &bin_dir)?;
         let links = output
             .iter()

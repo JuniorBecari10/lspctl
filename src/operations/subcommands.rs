@@ -357,13 +357,32 @@ pub fn sync_packages(
                 return OperationResult::Failure;
             }
 
+            // TODO: there is a bug here. it treats the files here as directories, so the symlinking process will create folder/gopls/gopls instead of folder/gopls.
+            let outputs = entries
+                .iter()
+                .flat_map(|e| {
+                    {
+                        state.get_package(&e.name).map(|pkg| {
+                            pkg.bin
+                                .values()
+                                .map(|v| v.links.clone())
+                                .collect::<Vec<_>>()
+                        })
+                    }
+                    .unwrap_or_default()
+                })
+                .flatten()
+                .collect::<Vec<_>>();
+
+            dbg!(&outputs);
+
             if matches!(yes, AcceptSync::YesWithPackages) {
                 execute_entries(
                     entries,
                     &[],
                     &Action::Sync,
-                    Vec::new(),
-                    logic::install_pkg,
+                    outputs,
+                    logic::sync_pkg,
                     &platform,
                     &mut state,
                 )

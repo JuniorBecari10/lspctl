@@ -59,16 +59,36 @@ pub fn link_files(from: &Path, to: &Path) -> anyhow::Result<()> {
         );
     }
 
-    if to.exists() || to.is_symlink() {
-        fs::remove_file(to).with_context(|| {
-            format!("failed to remove existing link at {}", to.display().quote())
-        })?;
+    if let Some(parent) = to.parent().filter(|p| !p.as_os_str().is_empty()) {
+        fs::create_dir_all(parent)
+            .with_context(|| format!("failed to create directory {}", parent.display().quote()))?;
+    }
+
+    // symlink_metadata does not follow links, so dangling symlinks are seen too.
+    match fs::symlink_metadata(to) {
+        Ok(meta) => {
+            if meta.is_dir() {
+                anyhow::bail!(
+                    "cannot replace directory with a link: {}",
+                    to.display().quote()
+                );
+            }
+
+            fs::remove_file(to).with_context(|| {
+                format!("failed to remove existing link at {}", to.display().quote())
+            })?;
+        }
+
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => {
+            return Err(e).with_context(|| format!("failed to inspect {}", to.display().quote()));
+        }
     }
 
     #[cfg(unix)]
     std::os::unix::fs::symlink(&real_target, to).with_context(|| {
         format!(
-            "failed to symlink {} -> {}.",
+            "failed to symlink {} -> {}",
             to.display().quote(),
             real_target.display().quote()
         )

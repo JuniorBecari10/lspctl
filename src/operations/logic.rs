@@ -36,3 +36,14 @@ pub fn remove(name: &str, state: &mut State) -> anyhow::Result<()> {
     packages::remove(name, state)?;
     state.save()
 }
+
+// remove and install it again
+pub fn sync_pkg(
+    e: Entry,
+    host: &Platform,
+    state: &mut State,
+    output: &[PathBuf],
+) -> anyhow::Result<()> {
+    remove(&e.name, state)?;
+    install_pkg(e, host, state, output)
+}

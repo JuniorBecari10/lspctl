@@ -99,10 +99,6 @@ impl State {
         );
     }
 
-    pub fn get_entry(&self, name: &str) -> Option<&InstalledPackage> {
-        self.installed.get(name)
-    }
-
     pub fn remove_entry(&mut self, name: &str) {
         self.installed.remove(name);
     }
